@@ -4,7 +4,7 @@ import PlantCard from '../components/PlantCard'
 import AddPlantModal from '../components/AddPlantModal'
 import ArrosageCalendar from '../components/ArrosageCalendar'
 import AssociationsView from '../components/AssociationsView'
-import JardinVisuel from '../components/JardinVisuel'
+import GardenEditor from '../components/GardenEditor'
 import PlantDetailSheet from '../components/PlantDetailSheet'
 import { STATUT_LABELS } from '../data/plants'
 import { ASSOCIATIONS } from '../data/associations'
@@ -12,8 +12,7 @@ import { ASSOCIATIONS } from '../data/associations'
 export default function MonJardin() {
   const { profile, addPlant, removePlant, updatePlantStatus } = useProfile()
   const [showAddModal, setShowAddModal]     = useState(false)
-  const [showVisuel, setShowVisuel]         = useState(false)
-  const [activeTab, setActiveTab]           = useState('plantes') // 'plantes' | 'arrosage' | 'associations'
+  const [activeTab, setActiveTab]           = useState('plantes') // 'plantes' | 'arrosage' | 'associations' | 'jardin3d'
   const [detailSheet, setDetailSheet]       = useState(null) // { plant, tab }
 
   const plants = profile.plants ?? []
@@ -46,16 +45,6 @@ export default function MonJardin() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Bouton vue visuelle */}
-          {plants.length > 0 && (
-            <button
-              onClick={() => setShowVisuel(true)}
-              className="flex items-center gap-1 px-3 py-2 rounded-chip text-sm font-medium"
-              style={{ background: '#0D1A07', color: '#97C459', border: '1px solid #3B6D11' }}
-            >
-              ✨ Visuel
-            </button>
-          )}
           <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-chip font-semibold text-sm"
@@ -89,6 +78,7 @@ export default function MonJardin() {
             { id: 'plantes',      label: '🌱 Plantes' },
             { id: 'arrosage',     label: '💧 Arrosage' },
             { id: 'associations', label: hasConflits ? '⚠️ Voisines' : '🤝 Voisines' },
+            { id: 'jardin3d',     label: '🌿 Jardin 3D' },
           ].map(tab => (
             <button
               key={tab.id}
@@ -152,6 +142,13 @@ export default function MonJardin() {
         <AssociationsView />
       )}
 
+      {/* Onglet Jardin 3D */}
+      {activeTab === 'jardin3d' && (
+        <div style={{ margin: '0 -16px', height: 'calc(100vh - 220px)' }}>
+          <GardenEditor />
+        </div>
+      )}
+
       {/* Modal ajout */}
       {showAddModal && (
         <AddPlantModal
@@ -170,13 +167,6 @@ export default function MonJardin() {
         />
       )}
 
-      {/* Vue Jardin Visuel */}
-      {showVisuel && (
-        <JardinVisuel
-          onClose={() => setShowVisuel(false)}
-          onGoToAssociations={() => { setShowVisuel(false); setActiveTab('associations') }}
-        />
-      )}
     </div>
   )
 }

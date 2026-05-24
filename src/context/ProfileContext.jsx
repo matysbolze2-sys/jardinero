@@ -10,12 +10,18 @@ export const ProfileContext = createContext(null)
 const PROFIL_INITIAL = {
   region:        null,
   soil:          null,
-  coords:        null, // { lat, lon } — coordonnées GPS précises (optionnel)
+  coords:        null,    // { lat, lon } — coordonnées GPS précises (optionnel)
   plants:        [],
-  arrosages:     {}, // { [plantUUID]: ["YYYY-MM-DD", ...] }
-  journal:       {}, // { [plantUUID]: [{ id, date, texte }] }
-  checklistWeek: {}, // { [weekMondayDate]: ["tache text", ...] }
-  historique:    [], // [{ id, name, emoji, plantId, plantedAt, harvestedAt, variety }]
+  arrosages:     {},      // { [plantUUID]: ["YYYY-MM-DD", ...] }
+  journal:       {},      // { [plantUUID]: [{ id, date, texte }] }
+  checklistWeek: {},      // { [weekMondayDate]: ["tache text", ...] }
+  historique:    [],      // [{ id, name, emoji, plantId, plantedAt, harvestedAt, variety }]
+  garden: {
+    width:       null,    // mètres, null = non configuré
+    height:      null,
+    orientation: 'N',     // N/S/E/O
+    plots:       [],      // [{ id, x, y, width, height, plants: [], label: '' }]
+  },
   settings:      { onboardingDone: false },
 }
 
@@ -113,6 +119,37 @@ export function ProfileProvider({ children }) {
     }))
   }, [setProfile])
 
+  // ── Jardin (éditeur) ──────────────────────────────────────────────────────
+
+  const saveGarden = useCallback((gardenData) => {
+    setProfile(prev => ({
+      ...prev,
+      garden: { ...(prev.garden ?? {}), ...gardenData },
+    }))
+  }, [setProfile])
+
+  const assignPlantToPlot = useCallback((plotId, plantId) => {
+    setProfile(prev => {
+      const plots = (prev.garden?.plots ?? []).map(plot =>
+        plot.id === plotId && !plot.plants.includes(plantId)
+          ? { ...plot, plants: [...plot.plants, plantId] }
+          : plot
+      )
+      return { ...prev, garden: { ...(prev.garden ?? {}), plots } }
+    })
+  }, [setProfile])
+
+  const removePlantFromPlot = useCallback((plotId, plantId) => {
+    setProfile(prev => {
+      const plots = (prev.garden?.plots ?? []).map(plot =>
+        plot.id === plotId
+          ? { ...plot, plants: plot.plants.filter(id => id !== plantId) }
+          : plot
+      )
+      return { ...prev, garden: { ...(prev.garden ?? {}), plots } }
+    })
+  }, [setProfile])
+
   // ── Checklist hebdomadaire ────────────────────────────────────────────────
 
   const toggleChecklistTask = useCallback((tacheText) => {
@@ -142,6 +179,9 @@ export function ProfileProvider({ children }) {
       deleteJournalNote,
       toggleChecklistTask,
       addHistorique,
+      saveGarden,
+      assignPlantToPlot,
+      removePlantFromPlot,
     }}>
       {children}
     </ProfileContext.Provider>
