@@ -34,7 +34,7 @@ function JourMeteo({ dateStr, tMax, tMin, pluie, weathercode, isToday }) {
 
 export default function MeteoWidget() {
   const { profile } = useProfile()
-  const { meteo, loading, error, alertes } = useMeteo(profile.region)
+  const { meteo, loading, error, alertes } = useMeteo(profile.region, profile.coords)
 
   if (!profile.region) return null
   if (loading) return (

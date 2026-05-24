@@ -74,9 +74,16 @@ export default function Conseiller() {
           {conseil.intro}
         </p>
 
-        {/* Infos région + sol */}
+        {/* Infos localisation + sol */}
         <div className="flex gap-2 mt-3 flex-wrap">
-          {region && (
+          {profile.coords ? (
+            <span
+              className="inline-flex items-center px-2.5 py-1 rounded-chip text-xs font-medium"
+              style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.85)' }}
+            >
+              📍 {profile.coords.lat.toFixed(2)}°N, {profile.coords.lon.toFixed(2)}°E
+            </span>
+          ) : region && (
             <span
               className="inline-flex items-center px-2.5 py-1 rounded-chip text-xs font-medium"
               style={{ background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.85)' }}

@@ -10,6 +10,7 @@ export const ProfileContext = createContext(null)
 const PROFIL_INITIAL = {
   region:        null,
   soil:          null,
+  coords:        null, // { lat, lon } — coordonnées GPS précises (optionnel)
   plants:        [],
   arrosages:     {}, // { [plantUUID]: ["YYYY-MM-DD", ...] }
   journal:       {}, // { [plantUUID]: [{ id, date, texte }] }
@@ -25,11 +26,12 @@ export function ProfileProvider({ children }) {
     setProfile(prev => ({ ...prev, ...partial }))
   }, [setProfile])
 
-  const completeOnboarding = useCallback((region, soil) => {
+  const completeOnboarding = useCallback((region, soil, coords = null) => {
     setProfile(prev => ({
       ...prev,
       region,
       soil,
+      coords,
       settings: { ...prev.settings, onboardingDone: true },
     }))
   }, [setProfile])
