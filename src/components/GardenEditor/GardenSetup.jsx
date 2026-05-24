@@ -33,23 +33,37 @@ function NumberInput({ label, value, onChange, min = 1, max = 50, unit = 'm' }) 
 }
 
 export default function GardenSetup({ garden, onSave }) {
+  const [name,        setName]        = useState(garden?.name        ?? '')
   const [width,       setWidth]       = useState(garden?.width       ?? 5)
   const [height,      setHeight]      = useState(garden?.height      ?? 4)
   const [orientation, setOrientation] = useState(garden?.orientation ?? 'N')
 
   function handleSave() {
-    onSave({ width, height, orientation })
+    onSave({ name: name.trim() || 'Mon jardin', width, height, orientation })
   }
 
   return (
     <div className="flex flex-col gap-6 px-4 py-5">
       <div>
         <h2 className="font-fraunces text-xl mb-1" style={{ color: '#1A2010' }}>
-          🌿 Dimensions du jardin
+          🌿 Configurer le jardin
         </h2>
         <p className="text-sm" style={{ color: '#5A7040' }}>
-          Définissez la taille de votre espace cultivable.
+          Définissez le nom et la taille de votre espace.
         </p>
+      </div>
+
+      {/* Nom */}
+      <div className="flex flex-col gap-1">
+        <label className="text-xs font-semibold" style={{ color: '#3B6D11' }}>Nom du jardin</label>
+        <input
+          type="text"
+          placeholder="Ex : Potager principal, Balcon…"
+          value={name}
+          onChange={e => setName(e.target.value.slice(0, 40))}
+          className="px-3 py-2.5 rounded-card text-sm"
+          style={{ border: '1.5px solid #97C459', outline: 'none', color: '#1A2010' }}
+        />
       </div>
 
       <div className="flex justify-around">

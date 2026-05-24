@@ -3,7 +3,8 @@ import { useProfile } from '../../hooks/useProfile'
 export default function PlantAssigner({ plotId, onClose }) {
   const { profile, assignPlantToPlot, removePlantFromPlot } = useProfile()
 
-  const plot = profile.garden?.plots?.find(p => p.id === plotId)
+  const activeGarden = (profile.gardens ?? []).find(g => g.id === profile.activeGardenId)
+  const plot = activeGarden?.plots?.find(p => p.id === plotId)
   if (!plot) return null
 
   const assigned = new Set(plot.plants ?? [])

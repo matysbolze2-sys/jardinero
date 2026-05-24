@@ -16,12 +16,8 @@ const PROFIL_INITIAL = {
   journal:       {},      // { [plantUUID]: [{ id, date, texte }] }
   checklistWeek: {},      // { [weekMondayDate]: ["tache text", ...] }
   historique:    [],      // [{ id, name, emoji, plantId, plantedAt, harvestedAt, variety }]
-  garden: {
-    width:       null,    // mètres, null = non configuré
-    height:      null,
-    orientation: 'N',     // N/S/E/O
-    plots:       [],      // [{ id, x, y, width, height, plants: [], label: '' }]
-  },
+  gardens:       [],      // [{ id, name, width, height, orientation, plots }]
+  activeGardenId: null,
   settings:      { onboardingDone: false },
 }
 
@@ -119,35 +115,88 @@ export function ProfileProvider({ children }) {
     }))
   }, [setProfile])
 
-  // ── Jardin (éditeur) ──────────────────────────────────────────────────────
+  // ── Jardins (multi) ───────────────────────────────────────────────────────
 
-  const saveGarden = useCallback((gardenData) => {
+  const addGarden = useCallback((name) => {
+    const newGarden = {
+      id:          crypto.randomUUID(),
+      name:        (name ?? 'Mon jardin').slice(0, 40),
+      width:       null,
+      height:      null,
+      orientation: 'N',
+      plots:       [],
+    }
     setProfile(prev => ({
       ...prev,
-      garden: { ...(prev.garden ?? {}), ...gardenData },
+      gardens:       [...(prev.gardens ?? []), newGarden],
+      activeGardenId: newGarden.id,
+    }))
+  }, [setProfile])
+
+  const removeGarden = useCallback((gardenId) => {
+    setProfile(prev => {
+      const gardens = (prev.gardens ?? []).filter(g => g.id !== gardenId)
+      const activeGardenId = prev.activeGardenId === gardenId
+        ? (gardens[0]?.id ?? null)
+        : prev.activeGardenId
+      return { ...prev, gardens, activeGardenId }
+    })
+  }, [setProfile])
+
+  const renameGarden = useCallback((gardenId, name) => {
+    setProfile(prev => ({
+      ...prev,
+      gardens: (prev.gardens ?? []).map(g =>
+        g.id === gardenId ? { ...g, name: name.slice(0, 40) } : g
+      ),
+    }))
+  }, [setProfile])
+
+  const setActiveGarden = useCallback((gardenId) => {
+    setProfile(prev => ({ ...prev, activeGardenId: gardenId }))
+  }, [setProfile])
+
+  const saveGarden = useCallback((data) => {
+    setProfile(prev => ({
+      ...prev,
+      gardens: (prev.gardens ?? []).map(g =>
+        g.id === prev.activeGardenId ? { ...g, ...data } : g
+      ),
     }))
   }, [setProfile])
 
   const assignPlantToPlot = useCallback((plotId, plantId) => {
-    setProfile(prev => {
-      const plots = (prev.garden?.plots ?? []).map(plot =>
-        plot.id === plotId && !plot.plants.includes(plantId)
-          ? { ...plot, plants: [...plot.plants, plantId] }
-          : plot
-      )
-      return { ...prev, garden: { ...(prev.garden ?? {}), plots } }
-    })
+    setProfile(prev => ({
+      ...prev,
+      gardens: (prev.gardens ?? []).map(g => {
+        if (g.id !== prev.activeGardenId) return g
+        return {
+          ...g,
+          plots: g.plots.map(plot =>
+            plot.id === plotId && !plot.plants.includes(plantId)
+              ? { ...plot, plants: [...plot.plants, plantId] }
+              : plot
+          ),
+        }
+      }),
+    }))
   }, [setProfile])
 
   const removePlantFromPlot = useCallback((plotId, plantId) => {
-    setProfile(prev => {
-      const plots = (prev.garden?.plots ?? []).map(plot =>
-        plot.id === plotId
-          ? { ...plot, plants: plot.plants.filter(id => id !== plantId) }
-          : plot
-      )
-      return { ...prev, garden: { ...(prev.garden ?? {}), plots } }
-    })
+    setProfile(prev => ({
+      ...prev,
+      gardens: (prev.gardens ?? []).map(g => {
+        if (g.id !== prev.activeGardenId) return g
+        return {
+          ...g,
+          plots: g.plots.map(plot =>
+            plot.id === plotId
+              ? { ...plot, plants: plot.plants.filter(id => id !== plantId) }
+              : plot
+          ),
+        }
+      }),
+    }))
   }, [setProfile])
 
   // ── Checklist hebdomadaire ────────────────────────────────────────────────
@@ -179,6 +228,10 @@ export function ProfileProvider({ children }) {
       deleteJournalNote,
       toggleChecklistTask,
       addHistorique,
+      addGarden,
+      removeGarden,
+      renameGarden,
+      setActiveGarden,
       saveGarden,
       assignPlantToPlot,
       removePlantFromPlot,
