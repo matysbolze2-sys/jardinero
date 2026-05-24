@@ -1,0 +1,205 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+
+  body {
+    background-color: #FAF8F3;
+    color: #1A2010;
+    font-family: 'DM Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    margin: 0;
+    min-height: 100dvh;
+    /* Évite le défilement horizontal sur mobile */
+    overflow-x: hidden;
+  }
+
+  #root {
+    max-width: 768px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    /* Ombre latérale sur desktop pour délimiter l'app */
+    box-shadow: 0 0 0 1px #DDE8CC;
+  }
+
+  /* Supprime le style par défaut des boutons */
+  button { cursor: pointer; border: none; background: none; font-family: inherit; }
+
+  /* Supprime le style par défaut des inputs */
+  input, textarea { font-family: inherit; }
+}
+
+@layer utilities {
+  /* Animation d'entrée de page */
+  .page-enter {
+    animation: pageEnter 0.2s ease-out both;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Animation fondu simple */
+  .fade-in {
+    animation: fadeIn 0.25s ease-out both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Scale au hover sur les cartes (desktop) */
+  .card-hover {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  @media (hover: hover) {
+    .card-hover:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(59, 109, 17, 0.13);
+    }
+  }
+
+  /* Tap highlight supprimé sur mobile */
+  .card-hover:active {
+    transform: scale(0.98);
+  }
+
+  /* Scrollbar fine et verte */
+  ::-webkit-scrollbar       { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #97C459; border-radius: 2px; }
+
+  /* Masque la scrollbar horizontale sur les chips overflow */
+  .hide-scrollbar { scrollbar-width: none; }
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* ── Animations Jardin Visuel ── */
+
+  /* Oscillation douce de l'emoji */
+  @keyframes sway {
+    0%, 100% { transform: rotate(-4deg) translateY(0); }
+    50%       { transform: rotate( 4deg) translateY(-3px); }
+  }
+
+  /* Flottement vertical */
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-7px); }
+  }
+
+  /* Reflet lumineux sur la barre de vie */
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
+
+  /* Pulsation du halo de lueur */
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%       { opacity: 1;   transform: scale(1.08); }
+  }
+
+  /* Balancement doux d'une plante */
+  @keyframes plant-sway {
+    0%, 100% { transform: rotate(-3deg) scale(1); }
+    50%       { transform: rotate( 3deg) scale(1.03); }
+  }
+
+  /* Rebond d'une plante prête à récolter */
+  @keyframes bounce-ready {
+    0%, 100% { transform: translateY(0) scale(1.1); }
+    40%       { transform: translateY(-10px) scale(1.15); }
+    60%       { transform: translateY(-6px) scale(1.12); }
+  }
+
+  /* Rotation lente de l'étoile */
+  @keyframes spin-star {
+    from { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.2); }
+    to   { transform: rotate(360deg) scale(1); }
+  }
+
+  /* Dérive des nuages */
+  @keyframes cloud-drift {
+    from { transform: translateX(-30px); }
+    to   { transform: translateX(30px); }
+  }
+
+  /* ── Isometric garden animations ── */
+
+  /* Oscillation des tiges en cours de pousse */
+  @keyframes stem-sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50%       { transform: rotate( 5deg); }
+  }
+
+  /* Pulsation de la bordure des parcelles prêtes */
+  @keyframes tile-glow {
+    0%, 100% { box-shadow: 0 0 12px rgba(250,199,117,0.4), 0 5px 0 #5C3A15, 0 7px 10px rgba(0,0,0,0.4); }
+    50%       { box-shadow: 0 0 26px rgba(250,199,117,0.75), 0 5px 0 #5C3A15, 0 7px 10px rgba(0,0,0,0.4); }
+  }
+
+  /* Rebond léger du badge "Prêt !" */
+  @keyframes badge-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-2px); }
+  }
+
+  /* Explosion de confetti */
+  @keyframes confetti-burst {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+
+  /* Chute des gouttes d'eau */
+  @keyframes water-drop {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    80%  { transform: translateY(40px) scale(0.8); opacity: 0.7; }
+    100% { transform: translateY(55px) scale(0.5); opacity: 0; }
+  }
+
+  /* Balancement de la coccinelle */
+  @keyframes creature-bob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-3px); }
+  }
+
+  /* Vibration du bouton arrosoir activé */
+  @keyframes water-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25%       { transform: rotate(-10deg); }
+    75%       { transform: rotate( 10deg); }
+  }
+
+  /* Chute plein-écran pour les confettis de récolte */
+  @keyframes confettiFall {
+    0%   { opacity: 0; transform: translateY(-5vh) rotate(0deg); }
+    10%  { opacity: 1; }
+    90%  { opacity: 0.8; }
+    100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
+  }
+
+  /* Chute des emojis légumes sur l'écran d'accueil onboarding */
+  @keyframes vegFall {
+    0%   { opacity: 0; transform: translateY(-10px) rotate(0deg); }
+    15%  { opacity: 1; }
+    85%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(140px) rotate(40deg); }
+  }
+
+  /* Sélection de carte avec rebond */
+  @keyframes card-select {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.93); }
+    100% { transform: scale(1); }
+  }
+
+  /* Scale 0.97 au tap pour tous les boutons */
+  .tap-scale:active { transform: scale(0.97); transition: transform 0.1s ease; }
+}

@@ -1,0 +1,147 @@
+import { createContext, useCallback } from 'react'
+import { useLocalStorage } from '../hooks/useLocalStorage'
+import { getToday } from '../utils/arrosageUtils'
+import { getWeekKey } from '../data/taches'
+import { calculatePlantDates } from '../data/plantDurations'
+import { getRegionById } from '../data/regions'
+
+export const ProfileContext = createContext(null)
+
+const PROFIL_INITIAL = {
+  region:        null,
+  soil:          null,
+  plants:        [],
+  arrosages:     {}, // { [plantUUID]: ["YYYY-MM-DD", ...] }
+  journal:       {}, // { [plantUUID]: [{ id, date, texte }] }
+  checklistWeek: {}, // { [weekMondayDate]: ["tache text", ...] }
+  historique:    [], // [{ id, name, emoji, plantId, plantedAt, harvestedAt, variety }]
+  settings:      { onboardingDone: false },
+}
+
+export function ProfileProvider({ children }) {
+  const [profile, setProfile] = useLocalStorage('jardinero_profile', PROFIL_INITIAL)
+
+  const updateProfile = useCallback((partial) => {
+    setProfile(prev => ({ ...prev, ...partial }))
+  }, [setProfile])
+
+  const completeOnboarding = useCallback((region, soil) => {
+    setProfile(prev => ({
+      ...prev,
+      region,
+      soil,
+      settings: { ...prev.settings, onboardingDone: true },
+    }))
+  }, [setProfile])
+
+  const addPlant = useCallback((plant) => {
+    setProfile(prev => {
+      const regionOffset = getRegionById(prev.region)?.offset ?? 0
+      const dates = calculatePlantDates(plant.plantId, plant.plantedAt, regionOffset)
+      return {
+        ...prev,
+        plants: [...(prev.plants ?? []), { ...plant, ...dates }],
+      }
+    })
+  }, [setProfile])
+
+  const removePlant = useCallback((plantId) => {
+    setProfile(prev => {
+      const arrosages = { ...(prev.arrosages ?? {}) }
+      const journal   = { ...(prev.journal ?? {}) }
+      delete arrosages[plantId]
+      delete journal[plantId]
+      return {
+        ...prev,
+        plants: prev.plants.filter(p => p.id !== plantId),
+        arrosages,
+        journal,
+      }
+    })
+  }, [setProfile])
+
+  const updatePlantStatus = useCallback((plantId, status) => {
+    setProfile(prev => ({
+      ...prev,
+      plants: prev.plants.map(p => p.id === plantId ? { ...p, status } : p),
+    }))
+  }, [setProfile])
+
+  const marquerArrose = useCallback((plantId) => {
+    const today = getToday()
+    setProfile(prev => {
+      const history = prev.arrosages?.[plantId] ?? []
+      if (history.includes(today)) return prev
+      return {
+        ...prev,
+        arrosages: { ...(prev.arrosages ?? {}), [plantId]: [...history, today] },
+      }
+    })
+  }, [setProfile])
+
+  // ── Journal ──────────────────────────────────────────────────────────────
+
+  const addJournalNote = useCallback((plantId, texte) => {
+    const note = { id: crypto.randomUUID(), date: getToday(), texte: texte.slice(0, 500) }
+    setProfile(prev => {
+      const current = prev.journal?.[plantId] ?? []
+      return {
+        ...prev,
+        journal: { ...(prev.journal ?? {}), [plantId]: [note, ...current] },
+      }
+    })
+  }, [setProfile])
+
+  const deleteJournalNote = useCallback((plantId, noteId) => {
+    setProfile(prev => {
+      const current = prev.journal?.[plantId] ?? []
+      return {
+        ...prev,
+        journal: { ...(prev.journal ?? {}), [plantId]: current.filter(n => n.id !== noteId) },
+      }
+    })
+  }, [setProfile])
+
+  // ── Historique des récoltes ───────────────────────────────────────────────
+
+  const addHistorique = useCallback((entry) => {
+    setProfile(prev => ({
+      ...prev,
+      historique: [entry, ...(prev.historique ?? [])],
+    }))
+  }, [setProfile])
+
+  // ── Checklist hebdomadaire ────────────────────────────────────────────────
+
+  const toggleChecklistTask = useCallback((tacheText) => {
+    const weekKey = getWeekKey()
+    setProfile(prev => {
+      const checked = prev.checklistWeek?.[weekKey] ?? []
+      const next    = checked.includes(tacheText)
+        ? checked.filter(t => t !== tacheText)
+        : [...checked, tacheText]
+      return {
+        ...prev,
+        checklistWeek: { ...(prev.checklistWeek ?? {}), [weekKey]: next },
+      }
+    })
+  }, [setProfile])
+
+  return (
+    <ProfileContext.Provider value={{
+      profile,
+      updateProfile,
+      completeOnboarding,
+      addPlant,
+      removePlant,
+      updatePlantStatus,
+      marquerArrose,
+      addJournalNote,
+      deleteJournalNote,
+      toggleChecklistTask,
+      addHistorique,
+    }}>
+      {children}
+    </ProfileContext.Provider>
+  )
+}
