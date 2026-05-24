@@ -146,10 +146,15 @@ function StepRegion({ selected, coords, geoLoading, geoError, onSelect, onBack, 
 
 function StepSol({ selected, coords, onSelect, onBack }) {
   console.log('[StepSol] coords reçus :', coords)
-  const { soilId, clay, sand, silt, loading, error } = useSoilData(coords?.lat, coords?.lon)
+  const { soilId, clay, sand, silt, isFallback, loading } = useSoilData(coords?.lat, coords?.lon)
   const [dismissed, setDismissed] = useState(false)
 
-  const showAutoCard = coords && !dismissed && !error
+  const showAutoCard = coords && !dismissed
+
+  const soilData    = SOILS.find(s => s.id === soilId)
+  const headerLabel = isFallback
+    ? '🗺️ Sol suggéré par zone géographique'
+    : '🛰️ Sol détecté automatiquement via SoilGrids'
 
   return (
     <div className="flex flex-col" style={{ flex: 1, minHeight: 0 }}>
@@ -162,10 +167,9 @@ function StepSol({ selected, coords, onSelect, onBack }) {
       <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
         {/* Carte de détection automatique */}
         {showAutoCard && (
-          <div className="mb-4 rounded-xl overflow-hidden" style={{ border: '2px solid #97C459' }}>
-            <div className="px-4 py-2 flex items-center gap-2" style={{ background: '#3B6D11' }}>
-              <span style={{ fontSize: 16 }}>🛰️</span>
-              <p className="text-xs font-bold text-white">Sol détecté automatiquement via SoilGrids</p>
+          <div className="mb-4 rounded-xl overflow-hidden" style={{ border: `2px solid ${isFallback ? '#FAC775' : '#97C459'}` }}>
+            <div className="px-4 py-2 flex items-center gap-2" style={{ background: isFallback ? '#C27C12' : '#3B6D11' }}>
+              <p className="text-xs font-bold text-white">{headerLabel}</p>
             </div>
 
             {loading ? (
@@ -174,16 +178,22 @@ function StepSol({ selected, coords, onSelect, onBack }) {
                 <p className="text-sm" style={{ color: '#6B7A5C' }}>Analyse du sol en cours…</p>
               </div>
             ) : soilId ? (
-              <div className="px-4 py-4" style={{ background: '#F8FFF4' }}>
-                <div className="flex items-center gap-3 mb-3">
-                  <span style={{ fontSize: 36 }}>{SOILS.find(s => s.id === soilId)?.emoji ?? '🌱'}</span>
+              <div className="px-4 py-4" style={{ background: isFallback ? '#FFFBEB' : '#F8FFF4' }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <span style={{ fontSize: 36 }}>{soilData?.emoji ?? '🌱'}</span>
                   <div>
                     <p className="font-bold text-base" style={{ color: '#1A2010' }}>
-                      {SOILS.find(s => s.id === soilId)?.label ?? SOIL_LABELS[soilId]}
+                      {soilData?.label ?? soilId}
                     </p>
-                    <p className="text-xs" style={{ color: '#6B7A5C' }}>
-                      Argile {clay ?? '?'}% · Sable {sand ?? '?'}% · Limon {silt ?? '?'}%
-                    </p>
+                    {isFallback ? (
+                      <p className="text-xs" style={{ color: '#C27C12' }}>
+                        Données non disponibles pour cette zone — sol suggéré
+                      </p>
+                    ) : (
+                      <p className="text-xs" style={{ color: '#6B7A5C' }}>
+                        Argile {clay}% · Sable {sand}% · Limon {silt}%
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -192,7 +202,7 @@ function StepSol({ selected, coords, onSelect, onBack }) {
                     className="flex-1 py-2.5 rounded-xl text-sm font-bold tap-scale"
                     style={{
                       background: selected === soilId ? '#3B6D11' : '#EAF3DE',
-                      color:      selected === soilId ? 'white' : '#3B6D11',
+                      color:      selected === soilId ? 'white'   : '#3B6D11',
                     }}
                   >
                     {selected === soilId ? '✓ Sélectionné' : 'Utiliser ce sol'}
