@@ -145,7 +145,8 @@ function StepRegion({ selected, coords, geoLoading, geoError, onSelect, onBack, 
 // ─── Étape 3 : Sol + détection automatique ────────────────────────────────────
 
 function StepSol({ selected, coords, onSelect, onBack }) {
-  const { soilId, clay, sand, silt, loading, error } = useSoilData(coords?.lat ?? null, coords?.lon ?? null)
+  console.log('[StepSol] coords reçus :', coords)
+  const { soilId, clay, sand, silt, loading, error } = useSoilData(coords?.lat, coords?.lon)
   const [dismissed, setDismissed] = useState(false)
 
   const showAutoCard = coords && !dismissed && !error
@@ -329,12 +330,14 @@ export default function OnboardingModal({ onComplete }) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const c = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+        console.log('[GPS] coordonnées obtenues :', c)
         setCoords(c)
         setGeoLoading(false)
-        // Auto-détecte la région la plus proche pour le calendrier agricole
         const closest = getClosestRegion(c.lat, c.lon)
+        console.log('[GPS] région la plus proche :', closest.id)
         setSelectedRegion(closest.id)
-        setStep(3) // avance directement à l'étape Sol
+        console.log('[GPS] passage à step 3 avec coords :', c)
+        setStep(3)
       },
       () => {
         setGeoError('Localisation refusée. Sélectionne ta région manuellement.')

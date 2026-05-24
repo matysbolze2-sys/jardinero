@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 
-// Détermine le type de sol à partir des pourcentages argile/sable/limon
 function classifySoil(clay, sand, silt) {
   if (clay != null && clay > 35) return 'argileux'
   if (sand != null && sand > 50) return 'sableux'
@@ -9,15 +8,18 @@ function classifySoil(clay, sand, silt) {
   return 'inconnu'
 }
 
-// Appelle SoilGrids REST API v2 pour obtenir la composition du sol à partir de coordonnées GPS.
-// Les valeurs retournées sont en g/kg → on divise par 10 pour obtenir des %.
 export function useSoilData(lat, lon) {
   const [data, setData]       = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState(null)
 
   useEffect(() => {
-    if (lat == null || lon == null) return
+    console.log('[useSoilData] useEffect déclenché — lat:', lat, 'lon:', lon)
+
+    if (!lat || !lon) {
+      console.log('[useSoilData] coords invalides, fetch ignoré')
+      return
+    }
 
     setLoading(true)
     setError(null)
@@ -29,9 +31,13 @@ export function useSoilData(lat, lon) {
       `&property=clay&property=sand&property=silt` +
       `&depth=0-5cm&value=mean`
 
+    console.log('[useSoilData] fetch →', url)
+
     fetch(url)
-      .then(r => { if (!r.ok) throw new Error(`SoilGrids ${r.status}`); return r.json() })
+      .then(r => { if (!r.ok) throw new Error(`SoilGrids HTTP ${r.status}`); return r.json() })
       .then(json => {
+        console.log('[useSoilData] réponse API :', json)
+
         const layers = json.properties?.layers ?? []
 
         const getVal = (name) => {
@@ -44,14 +50,22 @@ export function useSoilData(lat, lon) {
         const sand = getVal('sand')
         const silt = getVal('silt')
 
+        console.log('[useSoilData] clay:', clay, 'sand:', sand, 'silt:', silt)
+
         setData({ soilId: classifySoil(clay, sand, silt), clay, sand, silt })
         setLoading(false)
       })
       .catch(err => {
+        console.error('[useSoilData] erreur fetch :', err.message)
         setError(err.message)
         setLoading(false)
       })
   }, [lat, lon])
+
+  // Guard après les hooks — retour neutre si pas de coordonnées valides
+  if (!lat || !lon) {
+    return { soilId: null, clay: null, sand: null, silt: null, loading: false, error: null }
+  }
 
   return {
     soilId:  data?.soilId ?? null,
