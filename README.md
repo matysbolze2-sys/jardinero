@@ -1,16 +1,35 @@
-# React + Vite
+# jardinero-design-system
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Drop ces fichiers dans ton repo :
 
-Currently, two official plugins are available:
+```
+ton-repo/
+├── CLAUDE.md           ← à la racine (lu par Claude Code)
+├── public/
+│   └── openmoji/       ← (optionnel, pour la prod) télécharge depuis openmoji.org
+├── src/
+│   ├── styles/
+│   │   └── tokens.css  ← importe-le dans ton entry CSS global
+│   └── components/
+│       ├── openmoji.ts
+│       └── EmojiIllo.tsx
+└── ...
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Quick start
 
-## React Compiler
+1. **`CLAUDE.md`** → racine du repo. Claude Code le lira à chaque session.
+2. **`tokens.css`** → importe-le en global :
+   ```css
+   @import './styles/tokens.css';
+   /* ou dans Next.js : import './tokens.css' dans _app.tsx */
+   ```
+3. **`openmoji.ts` + `EmojiIllo.tsx`** → ajuste les paths selon ta structure (composants partagés).
+4. Ajoute la balise `<link>` Google Fonts (Plus Jakarta Sans + Manrope + JetBrains Mono) dans ton `<head>` — voir section 2 de CLAUDE.md.
+5. Ouvre ton premier prompt Claude Code : *"Refais l'écran Accueil en suivant CLAUDE.md, en gardant la data actuelle"*.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Crédit OpenMoji (obligatoire)
 
-## Expanding the ESLint configuration
+Met ça dans ton footer / page À propos :
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+> Illustrations: © [OpenMoji](https://openmoji.org/) – CC BY-SA 4.0
