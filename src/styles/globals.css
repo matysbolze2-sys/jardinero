@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,13 +8,12 @@
   * { box-sizing: border-box; }
 
   body {
-    background-color: #FAF8F3;
-    color: #1A2010;
+    background-color: #0D1208;
+    color: #F0F7E8;
     font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
     margin: 0;
     min-height: 100dvh;
-    /* Évite le défilement horizontal sur mobile */
     overflow-x: hidden;
   }
 
@@ -24,160 +23,113 @@
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
-    /* Ombre latérale sur desktop pour délimiter l'app */
-    box-shadow: 0 0 0 1px #DDE8CC;
+    position: relative;
   }
 
-  /* Supprime le style par défaut des boutons */
   button { cursor: pointer; border: none; background: none; font-family: inherit; }
-
-  /* Supprime le style par défaut des inputs */
   input, textarea { font-family: inherit; }
 }
 
 @layer utilities {
-  /* Animation d'entrée de page */
-  .page-enter {
-    animation: pageEnter 0.2s ease-out both;
+
+  .noise {
+    position: relative;
   }
-  @keyframes pageEnter {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .noise::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 0;
   }
 
-  /* Animation fondu simple */
-  .fade-in {
-    animation: fadeIn 0.25s ease-out both;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  /* Scale au hover sur les cartes (desktop) */
-  .card-hover {
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-  }
-  @media (hover: hover) {
-    .card-hover:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(59, 109, 17, 0.13);
-    }
+  .glass-card {
+    background: rgba(21, 30, 15, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 0.5px solid rgba(123, 201, 0, 0.15);
+    border-radius: 20px;
   }
 
-  /* Tap highlight supprimé sur mobile */
-  .card-hover:active {
-    transform: scale(0.98);
+  .glow-green {
+    box-shadow: 0 0 20px rgba(123, 201, 0, 0.2), 0 0 40px rgba(123, 201, 0, 0.08);
   }
 
-  /* Scrollbar fine et verte */
-  ::-webkit-scrollbar       { width: 4px; height: 4px; }
+  .card-dark {
+    background: #151E0F;
+    border: 0.5px solid rgba(123, 201, 0, 0.12);
+    border-radius: 20px;
+  }
+
+  .chip-dark {
+    background: #1C2914;
+    border: 0.5px solid rgba(123, 201, 0, 0.2);
+    border-radius: 9999px;
+    color: #7BC900;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+  }
+
+  .btn-primary {
+    background: #7BC900;
+    color: #0D1208;
+    border-radius: 14px;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 14px 24px;
+    transition: all 0.15s;
+  }
+  .btn-primary:active { transform: scale(0.97); background: #6AB000; }
+
+  .btn-secondary {
+    background: #1C2914;
+    color: #7BC900;
+    border: 0.5px solid rgba(123, 201, 0, 0.3);
+    border-radius: 14px;
+    font-weight: 500;
+    font-size: 15px;
+    padding: 13px 24px;
+    transition: all 0.15s;
+  }
+  .btn-secondary:active { transform: scale(0.97); }
+
+  .tap-scale:active { transform: scale(0.97); transition: transform 0.1s ease; }
+
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #97C459; border-radius: 2px; }
-
-  /* Masque la scrollbar horizontale sur les chips overflow */
+  ::-webkit-scrollbar-thumb { background: #2D5A10; border-radius: 2px; }
   .hide-scrollbar { scrollbar-width: none; }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* ── Animations Jardin Visuel ── */
-
-  /* Oscillation douce de l'emoji */
-  @keyframes sway {
-    0%, 100% { transform: rotate(-4deg) translateY(0); }
-    50%       { transform: rotate( 4deg) translateY(-3px); }
+  .page-enter {
+    animation: pageEnter 0.22s ease-out both;
+  }
+  @keyframes pageEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Flottement vertical */
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50%       { transform: translateY(-7px); }
+  .fade-in {
+    animation: fadeIn 0.22s ease-out both;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Reflet lumineux sur la barre de vie */
-  @keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position:  200% center; }
+  .card-hover { transition: transform 0.15s ease; }
+  @media (hover: hover) {
+    .card-hover:hover { transform: translateY(-2px); }
   }
 
-  /* Pulsation du halo de lueur */
-  @keyframes glow-pulse {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50%       { opacity: 1;   transform: scale(1.08); }
-  }
-
-  /* Balancement doux d'une plante */
-  @keyframes plant-sway {
-    0%, 100% { transform: rotate(-3deg) scale(1); }
-    50%       { transform: rotate( 3deg) scale(1.03); }
-  }
-
-  /* Rebond d'une plante prête à récolter */
   @keyframes bounce-ready {
-    0%, 100% { transform: translateY(0) scale(1.1); }
-    40%       { transform: translateY(-10px) scale(1.15); }
-    60%       { transform: translateY(-6px) scale(1.12); }
+    0%, 100% { transform: translateY(0) scale(1.05); }
+    50%       { transform: translateY(-8px) scale(1.1); }
   }
 
-  /* Rotation lente de l'étoile */
-  @keyframes spin-star {
-    from { transform: rotate(0deg) scale(1); }
-    50%  { transform: rotate(180deg) scale(1.2); }
-    to   { transform: rotate(360deg) scale(1); }
-  }
-
-  /* Dérive des nuages */
-  @keyframes cloud-drift {
-    from { transform: translateX(-30px); }
-    to   { transform: translateX(30px); }
-  }
-
-  /* ── Isometric garden animations ── */
-
-  /* Oscillation des tiges en cours de pousse */
-  @keyframes stem-sway {
-    0%, 100% { transform: rotate(-5deg); }
-    50%       { transform: rotate( 5deg); }
-  }
-
-  /* Pulsation de la bordure des parcelles prêtes */
-  @keyframes tile-glow {
-    0%, 100% { box-shadow: 0 0 12px rgba(250,199,117,0.4), 0 5px 0 #5C3A15, 0 7px 10px rgba(0,0,0,0.4); }
-    50%       { box-shadow: 0 0 26px rgba(250,199,117,0.75), 0 5px 0 #5C3A15, 0 7px 10px rgba(0,0,0,0.4); }
-  }
-
-  /* Rebond léger du badge "Prêt !" */
-  @keyframes badge-bounce {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-2px); }
-  }
-
-  /* Explosion de confetti */
-  @keyframes confetti-burst {
-    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
-    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
-  }
-
-  /* Chute des gouttes d'eau */
-  @keyframes water-drop {
-    0%   { transform: translateY(0) scale(1); opacity: 1; }
-    80%  { transform: translateY(40px) scale(0.8); opacity: 0.7; }
-    100% { transform: translateY(55px) scale(0.5); opacity: 0; }
-  }
-
-  /* Balancement de la coccinelle */
-  @keyframes creature-bob {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-3px); }
-  }
-
-  /* Vibration du bouton arrosoir activé */
-  @keyframes water-wiggle {
-    0%, 100% { transform: rotate(0deg); }
-    25%       { transform: rotate(-10deg); }
-    75%       { transform: rotate( 10deg); }
-  }
-
-  /* Chute plein-écran pour les confettis de récolte */
   @keyframes confettiFall {
     0%   { opacity: 0; transform: translateY(-5vh) rotate(0deg); }
     10%  { opacity: 1; }
@@ -185,7 +137,6 @@
     100% { opacity: 0; transform: translateY(110vh) rotate(720deg); }
   }
 
-  /* Chute des emojis légumes sur l'écran d'accueil onboarding */
   @keyframes vegFall {
     0%   { opacity: 0; transform: translateY(-10px) rotate(0deg); }
     15%  { opacity: 1; }
@@ -193,13 +144,44 @@
     100% { opacity: 0; transform: translateY(140px) rotate(40deg); }
   }
 
-  /* Sélection de carte avec rebond */
-  @keyframes card-select {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(0.93); }
-    100% { transform: scale(1); }
+  @keyframes confetti-burst {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
   }
 
-  /* Scale 0.97 au tap pour tous les boutons */
-  .tap-scale:active { transform: scale(0.97); transition: transform 0.1s ease; }
+  @keyframes water-drop {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    100% { transform: translateY(50px) scale(0.5); opacity: 0; }
+  }
+
+  @keyframes stem-sway {
+    0%, 100% { transform: rotate(-4deg); }
+    50%       { transform: rotate( 4deg); }
+  }
+
+  @keyframes tile-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(123,201,0,0.3); }
+    50%       { box-shadow: 0 0 24px rgba(123,201,0,0.6); }
+  }
+
+  @keyframes badge-bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-2px); }
+  }
+
+  @keyframes creature-bob {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-3px); }
+  }
+
+  @keyframes water-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25%       { transform: rotate(-10deg); }
+    75%       { transform: rotate(10deg); }
+  }
+
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position:  200% center; }
+  }
 }
