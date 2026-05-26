@@ -12,9 +12,12 @@ export function useAuth() {
       (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
-        // Clean up the #access_token=... hash left by the OAuth redirect
+        // Clean up the #access_token=... hash left by the OAuth redirect.
+        // Deferred so Supabase finishes reading the token before we remove it.
         if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
-          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+          setTimeout(() => {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search)
+          }, 100)
         }
       }
     )
@@ -33,7 +36,7 @@ export function useAuth() {
   const signInWithGoogle = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: `${window.location.origin}/` },
     })
     if (error) console.error('Erreur connexion Google:', error)
   }
