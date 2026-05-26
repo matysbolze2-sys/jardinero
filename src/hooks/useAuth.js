@@ -12,13 +12,6 @@ export function useAuth() {
       (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
-        // Clean up the #access_token=... hash left by the OAuth redirect.
-        // Deferred so Supabase finishes reading the token before we remove it.
-        if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
-          setTimeout(() => {
-            window.history.replaceState(null, '', window.location.pathname + window.location.search)
-          }, 100)
-        }
       }
     )
 
