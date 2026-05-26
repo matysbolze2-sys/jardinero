@@ -1,17 +1,19 @@
 import { useState } from 'react'
 import { ProfileProvider } from './context/ProfileContext'
 import { useProfile } from './hooks/useProfile'
+import { useAuth } from './hooks/useAuth'
 import BottomNav from './components/BottomNav'
 import OnboardingModal from './components/OnboardingModal'
+import LoginPage from './pages/LoginPage'
 import Home from './pages/Home'
 import Conseiller from './pages/Conseiller'
 import Calendrier from './pages/Calendrier'
 import MonJardin from './pages/MonJardin'
 
-// Composant interne qui accède au contexte profil
 function AppContent() {
   const [activePage, setActivePage] = useState('home')
-  const { profile, completeOnboarding } = useProfile()
+  const { user, loading: authLoading } = useAuth()
+  const { profile, loading: profileLoading, completeOnboarding } = useProfile()
 
   const renderPage = () => {
     switch (activePage) {
@@ -23,21 +25,36 @@ function AppContent() {
     }
   }
 
+  if (authLoading || profileLoading) {
+    return (
+      <div
+        className="min-h-dvh flex items-center justify-center"
+        style={{ background: 'var(--jd-bg)' }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <p style={{ fontSize: 48 }}>🌱</p>
+          <p style={{ color: 'var(--jd-ink-muted)', fontSize: 14 }}>
+            Chargement de votre jardin…
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) return <LoginPage />
+
   return (
-    <div className="flex flex-col min-h-dvh bg-jd-bg">
-      {/* Modal onboarding au premier lancement */}
+    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--jd-bg)' }}>
       {!profile.settings.onboardingDone && (
         <OnboardingModal onComplete={completeOnboarding} />
       )}
 
-      {/* Contenu de la page — padding bas pour la nav fixe */}
       <main className="flex-1" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         <div key={activePage} className="page-enter">
           {renderPage()}
         </div>
       </main>
 
-      {/* Navigation fixe en bas */}
       <BottomNav activePage={activePage} onNavigate={setActivePage} />
     </div>
   )

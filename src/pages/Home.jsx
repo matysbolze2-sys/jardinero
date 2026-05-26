@@ -1,4 +1,5 @@
 import { useProfile } from '../hooks/useProfile'
+import { useAuth } from '../hooks/useAuth'
 import { useMeteo } from '../hooks/useMeteo'
 import { getRegionById } from '../data/regions'
 import { MOIS_LABELS } from '../data/plants'
@@ -216,6 +217,7 @@ function ChecklistSemaine({ plants, moisIdx, regionOffset, checkedTaches, weekKe
 
 export default function Home({ onNavigate }) {
   const { profile, toggleChecklistTask } = useProfile()
+  const { signOut, user } = useAuth()
   const region      = getRegionById(profile.region)
   const regionOffset = region?.offset ?? 0
   const moisIdx     = new Date().getMonth()
@@ -367,6 +369,20 @@ export default function Home({ onNavigate }) {
           </div>
         </div>
       )}
+
+      {/* Sign-out */}
+      <div className="mt-8 flex items-center justify-between" style={{ opacity: 0.55 }}>
+        <span className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
+          {user?.email}
+        </span>
+        <button
+          onClick={signOut}
+          className="text-xs tap-scale"
+          style={{ color: 'var(--jd-ink-muted)' }}
+        >
+          Se déconnecter
+        </button>
+      </div>
 
     </div>
   )
