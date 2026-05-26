@@ -6,11 +6,9 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
-
+    // onAuthStateChange fires INITIAL_SESSION immediately on subscription,
+    // processing the URL hash (#access_token=...) from OAuth redirects.
+    // No need for a separate getSession() call — that can race with hash parsing.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null)
