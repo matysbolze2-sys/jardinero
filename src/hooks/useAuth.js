@@ -6,22 +6,12 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Subscribe FIRST — ensures no SIGNED_IN / INITIAL_SESSION event is missed
-    // while getSession() is in flight
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
       }
     )
-
-    // Fallback: for page refreshes with an existing localStorage session,
-    // onAuthStateChange fires INITIAL_SESSION asynchronously which can be slow.
-    // getSession() resolves immediately from cache and unblocks the UI.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
 
     return () => subscription.unsubscribe()
   }, [])
