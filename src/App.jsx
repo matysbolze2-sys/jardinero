@@ -5,6 +5,7 @@ import { useAuth } from './hooks/useAuth'
 import BottomNav from './components/BottomNav'
 import OnboardingModal from './components/OnboardingModal'
 import LoginPage from './pages/LoginPage'
+import AuthCallback from './pages/AuthCallback'
 import Home from './pages/Home'
 import Conseiller from './pages/Conseiller'
 import Calendrier from './pages/Calendrier'
@@ -61,6 +62,10 @@ function AppContent() {
 }
 
 export default function App() {
+  if (window.location.pathname === '/auth/callback') {
+    return <AuthCallback />
+  }
+
   return (
     <ProfileProvider>
       <AppContent />
