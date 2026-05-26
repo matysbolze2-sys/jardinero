@@ -1,3 +1,4 @@
+// @deprecated — utiliser plantsUnified.js (PLANTS_BY_CATEGORY_UNIFIED, CATEGORIES_UNIFIED)
 // Plantes par catégorie — waterDays = intervalle de base en jours entre deux arrosages
 // (sol limoneux, printemps/automne). Les multiplicateurs sol+saison s'appliquent ensuite.
 

@@ -1,61 +1,94 @@
-import { STATUT_LABELS } from '../data/plants'
+import EmojiIllo from './EmojiIllo'
+import { useProfile } from '../hooks/useProfile'
+import { getRegionById } from '../data/regions'
+import { getEffectiveStatus, getCycleProgress, ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
 
 export default function PlantCard({ plant, onOpenDetail }) {
-  const statut       = STATUT_LABELS[plant.status] ?? STATUT_LABELS.sowed
-  const statutKeys   = Object.keys(STATUT_LABELS)
-  const currentIndex = statutKeys.indexOf(plant.status)
+  const { profile } = useProfile()
+  const regionOffset = getRegionById(profile.region)?.offset ?? 0
+
+  const effectiveStatus  = getEffectiveStatus(plant, regionOffset)
+  const progress         = getCycleProgress(plant, regionOffset)
+  const statut           = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
+  const isManual         = plant.statusOverride != null
 
   const daysSincePlanted = plant.plantedAt
-    ? Math.floor((Date.now() - new Date(plant.plantedAt)) / 86400000)
+    ? Math.floor((Date.now() - new Date(plant.plantedAt + 'T12:00:00')) / 86400000)
     : null
 
   return (
     <button
       onClick={() => onOpenDetail(plant, 'infos')}
-      className="bg-white rounded-card p-4 card-hover flex flex-col gap-3 w-full text-left"
-      style={{ border: '1px solid #DDE8CC' }}
+      className="w-full text-left card-hover"
+      style={{
+        background:           'var(--jd-surface-glass)',
+        backdropFilter:       'blur(var(--jd-blur))',
+        WebkitBackdropFilter: 'blur(var(--jd-blur))',
+        border:               '1px solid var(--jd-border)',
+        borderRadius:         'var(--jd-radius)',
+        padding:              12,
+        display:              'flex',
+        gap:                  14,
+        alignItems:           'center',
+      }}
     >
-      {/* Emoji + nom + J+ */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <span className="text-3xl leading-none">{plant.emoji}</span>
-          <div>
-            <p className="font-semibold text-sm" style={{ color: '#1A2010' }}>{plant.name}</p>
-            {plant.variety && (
-              <p className="text-xs" style={{ color: '#6B7A5C' }}>{plant.variety}</p>
+      <EmojiIllo emoji={plant.emoji} size={56} ring />
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="flex items-baseline justify-between">
+          <p
+            className="font-bold text-sm leading-snug"
+            style={{ color: 'var(--jd-ink)', letterSpacing: '-0.01em', fontSize: 15 }}
+          >
+            {plant.name}
+          </p>
+          {daysSincePlanted !== null && (
+            <span style={{ fontSize: 10, color: 'var(--jd-ink-muted)', fontFamily: 'var(--jd-font-mono)', flexShrink: 0 }}>
+              J+{daysSincePlanted}
+            </span>
+          )}
+        </div>
+
+        {plant.variety && (
+          <p className="text-xs mt-0.5" style={{ color: 'var(--jd-ink-muted)', fontSize: 10.5 }}>{plant.variety}</p>
+        )}
+
+        {/* Progress bar */}
+        <div className="rounded-full mt-2 overflow-hidden" style={{ height: 4, background: 'rgba(255,255,255,0.08)' }}>
+          {progress > 0 ? (
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${progress}%`, background: statut.color }}
+            />
+          ) : (
+            // Perennial or no data: solid color band showing current state
+            <div className="h-full rounded-full" style={{ width: '100%', background: statut.color + '66' }} />
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mt-1.5">
+          <span
+            className="jd-chip"
+            style={{
+              background: statut.color + '22',
+              color:      statut.color,
+              border:     `1px solid ${statut.color}44`,
+              fontSize: 10,
+              padding: '3px 8px',
+            }}
+          >
+            {statut.label}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {isManual && (
+              <span style={{ fontSize: 9, fontFamily: 'var(--jd-font-mono)', color: 'var(--jd-ink-muted)' }}>
+                Manuel
+              </span>
             )}
+            <span style={{ fontSize: 10, color: 'var(--jd-ink-muted)' }}>Toucher →</span>
           </div>
         </div>
-        {daysSincePlanted !== null && (
-          <span className="text-xs flex-shrink-0 mt-0.5" style={{ color: '#9CAB8C' }}>
-            J+{daysSincePlanted}
-          </span>
-        )}
       </div>
-
-      {/* Badge statut */}
-      <span
-        className="self-start inline-flex items-center px-2.5 py-1 rounded-chip text-xs font-semibold"
-        style={{ background: statut.color + '22', color: statut.color, border: `1px solid ${statut.color}55` }}
-      >
-        {statut.label}
-      </span>
-
-      {/* Barre de progression */}
-      <div className="flex gap-1">
-        {statutKeys.map((key, i) => (
-          <div
-            key={key}
-            className="flex-1 h-1.5 rounded-full transition-all"
-            style={{ background: i <= currentIndex ? '#97C459' : '#DDE8CC' }}
-          />
-        ))}
-      </div>
-
-      {/* Hint */}
-      <p className="text-xs" style={{ color: '#BCC9A8' }}>
-        Toucher pour gérer →
-      </p>
     </button>
   )
 }

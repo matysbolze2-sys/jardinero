@@ -24,7 +24,7 @@ function AppContent() {
   }
 
   return (
-    <div className="flex flex-col min-h-dvh bg-cream">
+    <div className="flex flex-col min-h-dvh bg-jd-bg">
       {/* Modal onboarding au premier lancement */}
       {!profile.settings.onboardingDone && (
         <OnboardingModal onComplete={completeOnboarding} />

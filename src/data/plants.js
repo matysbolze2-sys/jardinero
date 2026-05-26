@@ -1,3 +1,4 @@
+// @deprecated — utiliser plantsUnified.js (PLANTS_UNIFIED, getPlantById)
 // Calendrier : tableau 12 valeurs (Jan → Déc)
 // 0=rien | 1=semis | 2=croissance | 3=récolte
 //

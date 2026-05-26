@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { REGIONS } from '../data/regions'
 import { SOILS } from '../data/soils'
 import { useSoilData } from '../hooks/useSoilData'
+import EmojiIllo from './EmojiIllo'
 
 const REGION_EMOJI = {
   'nord': '❄️', 'idf': '🏙️', 'grand-est': '🌲', 'bretagne': '🌊',
@@ -12,9 +13,6 @@ const REGION_EMOJI = {
 const MOIS_FR    = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre']
 const VEG_EMOJIS = ['🥕','🍅','🥦','🌽','🥒','🧅','🫑','🥬','🫛']
 
-const SOIL_LABELS = { argileux: 'Argileux', sableux: 'Sableux', limoneux: 'Limoneux', humifere: 'Humifère', inconnu: 'Inconnu' }
-
-// Trouve la région la plus proche des coordonnées GPS
 function getClosestRegion(lat, lon) {
   return REGIONS.reduce((best, r) => {
     const d    = (r.lat - lat) ** 2 + (r.lon - lon) ** 2
@@ -45,11 +43,11 @@ function StepWelcome({ onNext }) {
 
       <div className="text-center flex-1 flex flex-col items-center justify-center py-6">
         <p className="text-6xl mb-4">🌱</p>
-        <h1 className="font-fraunces font-bold mb-3" style={{ fontSize: 42, color: '#3B6D11', fontStyle: 'italic', lineHeight: 1.1 }}>
+        <h1 className="font-display font-extrabold mb-3" style={{ fontSize: 42, color: 'var(--jd-accent)', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
           Jardinero
         </h1>
-        <p className="text-base font-medium mb-1" style={{ color: '#6B7A5C' }}>Votre potager intelligent</p>
-        <p className="text-sm" style={{ color: '#97C459' }}>Calendrier · Conseils · Météo</p>
+        <p className="text-base font-medium mb-1" style={{ color: 'var(--jd-ink)' }}>Votre potager intelligent</p>
+        <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>Calendrier · Conseils · Météo</p>
       </div>
 
       <div className="w-full grid grid-cols-3 gap-3 mb-8">
@@ -58,14 +56,14 @@ function StepWelcome({ onNext }) {
           { icon: '📅', label: 'Calendrier\npersonnalisé' },
           { icon: '💧', label: 'Arrosage\nintelligent' },
         ].map(f => (
-          <div key={f.label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl" style={{ background: '#EAF3DE' }}>
-            <span style={{ fontSize: 28 }}>{f.icon}</span>
-            <p className="text-xs text-center font-medium leading-tight" style={{ color: '#3B6D11', whiteSpace: 'pre-line' }}>{f.label}</p>
+          <div key={f.label} className="flex flex-col items-center gap-1.5 p-3 rounded-xl" style={{ background: 'var(--jd-surface-alt)' }}>
+            <EmojiIllo emoji={f.icon} size={36} ring={false} />
+            <p className="text-xs text-center font-medium leading-tight" style={{ color: 'var(--jd-ink-muted)', whiteSpace: 'pre-line' }}>{f.label}</p>
           </div>
         ))}
       </div>
 
-      <button onClick={onNext} className="w-full py-4 rounded-card font-bold text-base tap-scale" style={{ background: '#3B6D11', color: 'white' }}>
+      <button onClick={onNext} className="w-full py-4 rounded-card font-bold text-base tap-scale" style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}>
         Commencer →
       </button>
     </div>
@@ -78,19 +76,18 @@ function StepRegion({ selected, coords, geoLoading, geoError, onSelect, onBack, 
   return (
     <div className="flex flex-col" style={{ flex: 1, minHeight: 0 }}>
       <div className="px-5 pt-5 pb-3 flex-shrink-0">
-        <button onClick={onBack} className="text-sm font-semibold mb-3" style={{ color: '#6B7A5C' }}>← Retour</button>
-        <h2 className="font-fraunces text-2xl font-bold" style={{ color: '#1A2010' }}>Où est ton jardin ?</h2>
-        <p className="text-sm mt-1 mb-4" style={{ color: '#6B7A5C' }}>Pour la météo et le calendrier des semis.</p>
+        <button onClick={onBack} className="text-sm font-semibold mb-3" style={{ color: 'var(--jd-ink-muted)' }}>← Retour</button>
+        <h2 className="font-display font-extrabold text-2xl" style={{ color: 'var(--jd-ink)' }}>Où est ton jardin ?</h2>
+        <p className="text-sm mt-1 mb-4" style={{ color: 'var(--jd-ink-muted)' }}>Pour la météo et le calendrier des semis.</p>
 
-        {/* Bouton GPS */}
         <button
           onClick={onRequestGPS}
           disabled={geoLoading}
           className="w-full flex items-center justify-center gap-2 py-3 rounded-card font-semibold text-sm mb-2 tap-scale"
           style={{
-            background: coords ? '#EAF3DE' : '#3B6D11',
-            color:      coords ? '#3B6D11' : 'white',
-            border:     coords ? '2px solid #97C459' : 'none',
+            background: coords ? 'var(--jd-surface-alt)' : 'var(--jd-accent)',
+            color:      coords ? 'var(--jd-accent)'      : 'var(--jd-accent-ink)',
+            border:     coords ? '1px solid var(--jd-accent-ring)' : 'none',
           }}
         >
           {geoLoading ? (
@@ -109,7 +106,7 @@ function StepRegion({ selected, coords, geoLoading, geoError, onSelect, onBack, 
           <p className="text-xs mb-3 px-1" style={{ color: '#E05A3A' }}>⚠️ {geoError}</p>
         )}
 
-        <p className="text-xs font-semibold mb-2" style={{ color: '#6B7A5C' }}>
+        <p className="text-xs font-semibold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
           {coords ? 'Ou choisis une région pour le calendrier :' : 'Ou sélectionne ta région :'}
         </p>
       </div>
@@ -124,14 +121,14 @@ function StepRegion({ selected, coords, geoLoading, geoError, onSelect, onBack, 
                 onClick={() => onSelect(region.id)}
                 className="flex items-start gap-3 p-3 rounded-card text-left tap-scale transition-all"
                 style={{
-                  background: isSelected ? '#EAF3DE' : 'white',
-                  border: `2px solid ${isSelected ? '#97C459' : '#DDE8CC'}`,
+                  background: isSelected ? 'var(--jd-surface-alt)' : 'var(--jd-surface)',
+                  border: `1px solid ${isSelected ? 'var(--jd-accent-ring)' : 'var(--jd-border)'}`,
                 }}
               >
-                <span style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>{REGION_EMOJI[region.id] ?? '🌍'}</span>
+                <EmojiIllo emoji={REGION_EMOJI[region.id] ?? '🌍'} size={36} ring={isSelected} />
                 <div>
-                  <p className="text-xs font-bold leading-tight" style={{ color: isSelected ? '#3B6D11' : '#1A2010' }}>{region.label}</p>
-                  <p className="text-xs mt-0.5 leading-tight" style={{ color: '#6B7A5C' }}>{region.desc}</p>
+                  <p className="text-xs font-bold leading-tight" style={{ color: isSelected ? 'var(--jd-accent)' : 'var(--jd-ink)' }}>{region.label}</p>
+                  <p className="text-xs mt-0.5 leading-tight" style={{ color: 'var(--jd-ink-muted)' }}>{region.desc}</p>
                 </div>
               </button>
             )
@@ -150,7 +147,6 @@ function StepSol({ selected, coords, onSelect, onBack }) {
   const [dismissed, setDismissed] = useState(false)
 
   const showAutoCard = coords && !dismissed
-
   const soilData    = SOILS.find(s => s.id === soilId)
   const headerLabel = isFallback
     ? '🗺️ Sol suggéré par zone géographique'
@@ -159,38 +155,37 @@ function StepSol({ selected, coords, onSelect, onBack }) {
   return (
     <div className="flex flex-col" style={{ flex: 1, minHeight: 0 }}>
       <div className="px-5 pt-5 pb-3 flex-shrink-0">
-        <button onClick={onBack} className="text-sm font-semibold mb-3" style={{ color: '#6B7A5C' }}>← Retour</button>
-        <h2 className="font-fraunces text-2xl font-bold" style={{ color: '#1A2010' }}>Quel type de sol ?</h2>
-        <p className="text-sm mt-1" style={{ color: '#6B7A5C' }}>Les conseils d'arrosage s'ajustent à ton sol.</p>
+        <button onClick={onBack} className="text-sm font-semibold mb-3" style={{ color: 'var(--jd-ink-muted)' }}>← Retour</button>
+        <h2 className="font-display font-extrabold text-2xl" style={{ color: 'var(--jd-ink)' }}>Quel type de sol ?</h2>
+        <p className="text-sm mt-1" style={{ color: 'var(--jd-ink-muted)' }}>Les conseils d'arrosage s'ajustent à ton sol.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
-        {/* Carte de détection automatique */}
         {showAutoCard && (
-          <div className="mb-4 rounded-xl overflow-hidden" style={{ border: `2px solid ${isFallback ? '#FAC775' : '#97C459'}` }}>
-            <div className="px-4 py-2 flex items-center gap-2" style={{ background: isFallback ? '#C27C12' : '#3B6D11' }}>
-              <p className="text-xs font-bold text-white">{headerLabel}</p>
+          <div className="mb-4 rounded-xl overflow-hidden" style={{ border: `1px solid ${isFallback ? 'rgba(240,184,108,0.4)' : 'var(--jd-accent-ring)'}` }}>
+            <div className="px-4 py-2 flex items-center gap-2" style={{ background: isFallback ? 'var(--jd-warning-soft)' : 'var(--jd-accent-soft)' }}>
+              <p className="text-xs font-bold" style={{ color: isFallback ? 'var(--jd-warning)' : 'var(--jd-accent)' }}>{headerLabel}</p>
             </div>
 
             {loading ? (
-              <div className="px-4 py-5 flex items-center gap-3" style={{ background: '#F8FFF4' }}>
+              <div className="px-4 py-5 flex items-center gap-3" style={{ background: 'var(--jd-surface)' }}>
                 <span style={{ fontSize: 22, animation: 'spin-star 1.2s linear infinite', display: 'inline-block' }}>⟳</span>
-                <p className="text-sm" style={{ color: '#6B7A5C' }}>Analyse du sol en cours…</p>
+                <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>Analyse du sol en cours…</p>
               </div>
             ) : soilId ? (
-              <div className="px-4 py-4" style={{ background: isFallback ? '#FFFBEB' : '#F8FFF4' }}>
+              <div className="px-4 py-4" style={{ background: 'var(--jd-surface)' }}>
                 <div className="flex items-center gap-3 mb-2">
-                  <span style={{ fontSize: 36 }}>{soilData?.emoji ?? '🌱'}</span>
+                  <EmojiIllo emoji={soilData?.emoji ?? '🌱'} size={36} />
                   <div>
-                    <p className="font-bold text-base" style={{ color: '#1A2010' }}>
+                    <p className="font-bold text-base" style={{ color: 'var(--jd-ink)' }}>
                       {soilData?.label ?? soilId}
                     </p>
                     {isFallback ? (
-                      <p className="text-xs" style={{ color: '#C27C12' }}>
+                      <p className="text-xs" style={{ color: 'var(--jd-warning)' }}>
                         Données non disponibles pour cette zone — sol suggéré
                       </p>
                     ) : (
-                      <p className="text-xs" style={{ color: '#6B7A5C' }}>
+                      <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
                         Argile {clay}% · Sable {sand}% · Limon {silt}%
                       </p>
                     )}
@@ -201,8 +196,8 @@ function StepSol({ selected, coords, onSelect, onBack }) {
                     onClick={() => onSelect(soilId)}
                     className="flex-1 py-2.5 rounded-xl text-sm font-bold tap-scale"
                     style={{
-                      background: selected === soilId ? '#3B6D11' : '#EAF3DE',
-                      color:      selected === soilId ? 'white'   : '#3B6D11',
+                      background: selected === soilId ? 'var(--jd-accent)' : 'var(--jd-surface-alt)',
+                      color:      selected === soilId ? 'var(--jd-accent-ink)' : 'var(--jd-accent)',
                     }}
                   >
                     {selected === soilId ? '✓ Sélectionné' : 'Utiliser ce sol'}
@@ -210,7 +205,7 @@ function StepSol({ selected, coords, onSelect, onBack }) {
                   <button
                     onClick={() => setDismissed(true)}
                     className="px-3 py-2.5 rounded-xl text-xs tap-scale"
-                    style={{ background: '#F3F4F6', color: '#6B7A5C' }}
+                    style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)' }}
                   >
                     Choisir manuellement
                   </button>
@@ -220,7 +215,6 @@ function StepSol({ selected, coords, onSelect, onBack }) {
           </div>
         )}
 
-        {/* Sélection manuelle */}
         {(!showAutoCard || dismissed) && (
           <div className="flex flex-col gap-2 pb-4">
             {SOILS.map(soil => {
@@ -231,25 +225,24 @@ function StepSol({ selected, coords, onSelect, onBack }) {
                   onClick={() => onSelect(soil.id)}
                   className="flex items-center gap-4 px-4 py-4 rounded-card text-left tap-scale transition-all"
                   style={{
-                    background: isSelected ? '#EAF3DE' : 'white',
-                    border: `2px solid ${isSelected ? '#97C459' : '#DDE8CC'}`,
+                    background: isSelected ? 'var(--jd-surface-alt)' : 'var(--jd-surface)',
+                    border: `1px solid ${isSelected ? 'var(--jd-accent-ring)' : 'var(--jd-border)'}`,
                   }}
                 >
-                  <span style={{ fontSize: 36, lineHeight: 1, flexShrink: 0 }}>{soil.emoji}</span>
+                  <EmojiIllo emoji={soil.emoji} size={36} ring={isSelected} />
                   <div className="flex-1">
-                    <p className="text-sm font-bold" style={{ color: isSelected ? '#3B6D11' : '#1A2010' }}>{soil.label}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#6B7A5C' }}>{soil.desc}</p>
+                    <p className="text-sm font-bold" style={{ color: isSelected ? 'var(--jd-accent)' : 'var(--jd-ink)' }}>{soil.label}</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--jd-ink-muted)' }}>{soil.desc}</p>
                   </div>
-                  {isSelected && <span style={{ color: '#97C459', fontSize: 20 }}>✓</span>}
+                  {isSelected && <span style={{ color: 'var(--jd-accent)', fontSize: 20 }}>✓</span>}
                 </button>
               )
             })}
           </div>
         )}
 
-        {/* Bouton continuer si sol auto sélectionné et carte visible */}
         {showAutoCard && !dismissed && selected && (
-          <p className="text-xs text-center pb-4" style={{ color: '#6B7A5C' }}>
+          <p className="text-xs text-center pb-4" style={{ color: 'var(--jd-ink-muted)' }}>
             Sol sélectionné — passe à l'étape suivante ↑
           </p>
         )}
@@ -265,34 +258,34 @@ function StepConfirmation({ region, soil, coords, onConfirm, onSkip, onBack }) {
 
   return (
     <div className="flex flex-col px-5 pt-5" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
-      <button onClick={onBack} className="text-sm font-semibold mb-4" style={{ color: '#6B7A5C' }}>← Retour</button>
-      <h2 className="font-fraunces text-2xl font-bold mb-1" style={{ color: '#1A2010' }}>Tout est prêt !</h2>
-      <p className="text-sm mb-5" style={{ color: '#6B7A5C' }}>Voici ton profil pour ce mois de {mois}.</p>
+      <button onClick={onBack} className="text-sm font-semibold mb-4" style={{ color: 'var(--jd-ink-muted)' }}>← Retour</button>
+      <h2 className="font-display font-extrabold text-2xl mb-1" style={{ color: 'var(--jd-ink)' }}>Tout est prêt !</h2>
+      <p className="text-sm mb-5" style={{ color: 'var(--jd-ink-muted)' }}>Voici ton profil pour ce mois de {mois}.</p>
 
       <div className="flex gap-3 mb-5">
-        <div className="flex-1 rounded-xl p-4 flex flex-col items-center gap-1" style={{ background: '#EAF3DE', border: '2px solid #DDE8CC' }}>
+        <div className="flex-1 rounded-xl p-4 flex flex-col items-center gap-1" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
           {coords ? (
             <>
-              <span style={{ fontSize: 28 }}>📍</span>
-              <p className="text-xs font-bold text-center mt-1" style={{ color: '#3B6D11' }}>
+              <EmojiIllo emoji="📍" size={36} />
+              <p className="text-xs font-bold text-center mt-1" style={{ color: 'var(--jd-accent)' }}>
                 {coords.lat.toFixed(2)}°N, {coords.lon.toFixed(2)}°E
               </p>
-              <p className="text-xs text-center" style={{ color: '#6B7A5C' }}>GPS précis</p>
+              <p className="text-xs text-center" style={{ color: 'var(--jd-ink-muted)' }}>GPS précis</p>
             </>
           ) : (
             <>
-              <span style={{ fontSize: 32 }}>{REGION_EMOJI[region?.id] ?? '🌍'}</span>
-              <p className="text-xs font-bold text-center mt-1" style={{ color: '#3B6D11' }}>{region?.label ?? '—'}</p>
+              <EmojiIllo emoji={REGION_EMOJI[region?.id] ?? '🌍'} size={36} />
+              <p className="text-xs font-bold text-center mt-1" style={{ color: 'var(--jd-accent)' }}>{region?.label ?? '—'}</p>
             </>
           )}
         </div>
-        <div className="flex-1 rounded-xl p-4 flex flex-col items-center gap-1" style={{ background: '#EAF3DE', border: '2px solid #DDE8CC' }}>
-          <span style={{ fontSize: 32 }}>{soil?.emoji ?? '🌱'}</span>
-          <p className="text-xs font-bold text-center mt-1" style={{ color: '#3B6D11' }}>Sol {soil?.label ?? '—'}</p>
+        <div className="flex-1 rounded-xl p-4 flex flex-col items-center gap-1" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
+          <EmojiIllo emoji={soil?.emoji ?? '🌱'} size={36} />
+          <p className="text-xs font-bold text-center mt-1" style={{ color: 'var(--jd-accent)' }}>Sol {soil?.label ?? '—'}</p>
         </div>
       </div>
 
-      <div className="rounded-xl p-4 mb-6" style={{ background: '#F8FFF4', border: '1px solid #DDE8CC' }}>
+      <div className="rounded-xl p-4 mb-6" style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}>
         {[
           { icon: '🌦️', text: `Météo ${coords ? 'ultra-précise à ta position GPS' : `locale adaptée à ${region?.label ?? 'ta région'}`}` },
           { icon: '📅', text: 'Calendrier des semis personnalisé pour ce mois de ' + mois },
@@ -300,15 +293,15 @@ function StepConfirmation({ region, soil, coords, onConfirm, onSkip, onBack }) {
         ].map(f => (
           <div key={f.icon} className="flex items-start gap-3 py-2">
             <span style={{ fontSize: 20, flexShrink: 0 }}>{f.icon}</span>
-            <p className="text-sm leading-snug" style={{ color: '#1A2010' }}>{f.text}</p>
+            <p className="text-sm leading-snug" style={{ color: 'var(--jd-ink)' }}>{f.text}</p>
           </div>
         ))}
       </div>
 
-      <button onClick={onConfirm} className="w-full py-4 rounded-card font-bold text-base mb-3 tap-scale" style={{ background: '#3B6D11', color: 'white' }}>
+      <button onClick={onConfirm} className="w-full py-4 rounded-card font-bold text-base mb-3 tap-scale" style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}>
         C'est parti ! 🌱
       </button>
-      <button onClick={onSkip} className="w-full py-2 text-sm" style={{ color: '#6B7A5C' }}>
+      <button onClick={onSkip} className="w-full py-2 text-sm" style={{ color: 'var(--jd-ink-muted)' }}>
         Passer pour l'instant
       </button>
     </div>
@@ -323,7 +316,7 @@ export default function OnboardingModal({ onComplete }) {
   const [step, setStep]                         = useState(1)
   const [selectedRegion, setSelectedRegion]     = useState(null)
   const [selectedSoil, setSelectedSoil]         = useState(null)
-  const [coords, setCoords]                     = useState(null)  // { lat, lon }
+  const [coords, setCoords]                     = useState(null)
   const [geoLoading, setGeoLoading]             = useState(false)
   const [geoError, setGeoError]                 = useState(null)
 
@@ -376,10 +369,10 @@ export default function OnboardingModal({ onComplete }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex flex-col justify-end" style={{ background: 'rgba(26,32,16,0.72)' }}>
+    <div className="fixed inset-0 z-[80] flex flex-col justify-end" style={{ background: 'rgba(13,20,15,0.88)' }}>
       <div
         className="fade-in w-full max-w-[768px] mx-auto rounded-t-[28px] flex flex-col"
-        style={{ background: '#FAF8F3', maxHeight: '93dvh', boxShadow: '0 -4px 28px rgba(0,0,0,0.2)' }}
+        style={{ background: 'var(--jd-surface)', maxHeight: '93dvh', boxShadow: '0 -4px 28px rgba(0,0,0,0.5)' }}
       >
         {/* Barre de progression */}
         <div className="flex gap-1.5 px-5 pt-4 pb-0 flex-shrink-0">
@@ -387,7 +380,7 @@ export default function OnboardingModal({ onComplete }) {
             <div
               key={i}
               className="flex-1 h-1 rounded-full transition-all duration-300"
-              style={{ background: i + 1 <= step ? '#97C459' : '#DDE8CC' }}
+              style={{ background: i + 1 <= step ? 'var(--jd-accent)' : 'var(--jd-accent-soft)' }}
             />
           ))}
         </div>

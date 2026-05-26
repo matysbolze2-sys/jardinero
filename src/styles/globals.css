@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@400;500;600&display=swap');
+@import './tokens.css';
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -8,9 +9,9 @@
   * { box-sizing: border-box; }
 
   body {
-    background-color: #0D1208;
-    color: #F0F7E8;
-    font-family: 'DM Sans', sans-serif;
+    background-color: var(--jd-bg);
+    color: var(--jd-ink);
+    font-family: var(--jd-font-sans);
     -webkit-font-smoothing: antialiased;
     margin: 0;
     min-height: 100dvh;
@@ -46,49 +47,49 @@
   }
 
   .glass-card {
-    background: rgba(21, 30, 15, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 0.5px solid rgba(123, 201, 0, 0.15);
-    border-radius: 20px;
+    background: var(--jd-surface-glass);
+    backdrop-filter: blur(var(--jd-blur));
+    -webkit-backdrop-filter: blur(var(--jd-blur));
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius);
   }
 
   .glow-green {
-    box-shadow: 0 0 20px rgba(123, 201, 0, 0.2), 0 0 40px rgba(123, 201, 0, 0.08);
+    box-shadow: 0 0 20px var(--jd-accent-ring), 0 0 40px var(--jd-accent-soft);
   }
 
   .card-dark {
-    background: #151E0F;
-    border: 0.5px solid rgba(123, 201, 0, 0.12);
-    border-radius: 20px;
+    background: var(--jd-surface);
+    border: 1px solid var(--jd-border);
+    border-radius: var(--jd-radius);
   }
 
   .chip-dark {
-    background: #1C2914;
-    border: 0.5px solid rgba(123, 201, 0, 0.2);
-    border-radius: 9999px;
-    color: #7BC900;
+    background: var(--jd-accent-soft);
+    border: 1px solid var(--jd-accent-ring);
+    border-radius: var(--jd-radius-pill);
+    color: var(--jd-accent);
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     padding: 4px 12px;
   }
 
   .btn-primary {
-    background: #7BC900;
-    color: #0D1208;
-    border-radius: 14px;
+    background: var(--jd-accent);
+    color: var(--jd-accent-ink);
+    border-radius: var(--jd-radius);
     font-weight: 600;
     font-size: 15px;
     padding: 14px 24px;
     transition: all 0.15s;
   }
-  .btn-primary:active { transform: scale(0.97); background: #6AB000; }
+  .btn-primary:active { transform: scale(0.97); filter: brightness(0.92); }
 
   .btn-secondary {
-    background: #1C2914;
-    color: #7BC900;
-    border: 0.5px solid rgba(123, 201, 0, 0.3);
-    border-radius: 14px;
+    background: var(--jd-surface-alt);
+    color: var(--jd-accent);
+    border: 1px solid var(--jd-accent-ring);
+    border-radius: var(--jd-radius);
     font-weight: 500;
     font-size: 15px;
     padding: 13px 24px;
@@ -100,7 +101,7 @@
 
   ::-webkit-scrollbar { width: 3px; height: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #2D5A10; border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: var(--jd-accent-dim); border-radius: 2px; }
   .hide-scrollbar { scrollbar-width: none; }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 
@@ -160,8 +161,8 @@
   }
 
   @keyframes tile-glow {
-    0%, 100% { box-shadow: 0 0 10px rgba(123,201,0,0.3); }
-    50%       { box-shadow: 0 0 24px rgba(123,201,0,0.6); }
+    0%, 100% { box-shadow: 0 0 10px var(--jd-accent-ring); }
+    50%       { box-shadow: 0 0 24px var(--jd-accent-soft); }
   }
 
   @keyframes badge-bounce {
@@ -183,5 +184,10 @@
   @keyframes shimmer {
     0%   { background-position: -200% center; }
     100% { background-position:  200% center; }
+  }
+
+  @keyframes spin-star {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
   }
 }

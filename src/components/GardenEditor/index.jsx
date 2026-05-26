@@ -11,7 +11,7 @@ function deriveInitialMode(garden) {
   return 'view'
 }
 
-// ── Sélecteur / liste de jardins ─────────────────────────────────────────────
+// ── Garden picker ─────────────────────────────────────────────────────────────
 function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }) {
   const [adding,   setAdding]   = useState(false)
   const [newName,  setNewName]  = useState('')
@@ -32,25 +32,32 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
   }
 
   return (
-    <div className="flex flex-col gap-0">
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 py-3"
-        style={{ borderBottom: '1px solid #DDE8CC' }}
-      >
-        <h2 className="font-fraunces text-base" style={{ color: '#1A2010' }}>Mes jardins</h2>
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 16px',
+        borderBottom: '1px solid var(--jd-border)',
+      }}>
+        <div className="jd-kicker">Mes jardins</div>
         <button
           onClick={() => setAdding(true)}
-          className="text-sm font-semibold px-3 py-1.5 rounded-chip"
-          style={{ background: '#3B6D11', color: 'white' }}
+          className="tap-scale"
+          style={{
+            fontSize: 12, fontWeight: 600,
+            padding: '6px 14px', borderRadius: 999,
+            background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)',
+          }}
         >
           + Nouveau
         </button>
       </div>
 
-      {/* New garden form */}
       {adding && (
-        <div className="flex gap-2 px-4 py-3" style={{ background: '#F8FBF3', borderBottom: '1px solid #DDE8CC' }}>
+        <div style={{
+          display: 'flex', gap: 8, padding: '10px 16px',
+          background: 'var(--jd-surface-alt)',
+          borderBottom: '1px solid var(--jd-border)',
+        }}>
           <input
             autoFocus
             type="text"
@@ -58,26 +65,31 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
             value={newName}
             onChange={e => setNewName(e.target.value.slice(0, 40))}
             onKeyDown={e => { if (e.key === 'Enter') confirmAdd(); if (e.key === 'Escape') setAdding(false) }}
-            className="flex-1 px-3 py-1.5 rounded-chip text-sm"
-            style={{ border: '1.5px solid #97C459', outline: 'none' }}
+            style={{
+              flex: 1, padding: '7px 12px', borderRadius: 999, fontSize: 13,
+              background: 'var(--jd-surface)', color: 'var(--jd-ink)',
+              border: '1.5px solid var(--jd-accent-ring)', outline: 'none',
+            }}
           />
-          <button onClick={confirmAdd} className="text-sm font-semibold px-3 py-1.5 rounded-chip" style={{ background: '#3B6D11', color: 'white' }}>OK</button>
-          <button onClick={() => setAdding(false)} className="text-sm px-2 py-1.5 rounded-chip" style={{ background: '#EAF3DE', color: '#5A7040' }}>✕</button>
+          <button onClick={confirmAdd} style={{ fontSize: 12, fontWeight: 700, padding: '7px 14px', borderRadius: 999, background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}>OK</button>
+          <button onClick={() => setAdding(false)} style={{ fontSize: 12, padding: '7px 10px', borderRadius: 999, background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)', border: '1px solid var(--jd-border)' }}>✕</button>
         </div>
       )}
 
-      {/* List */}
-      <div className="flex flex-col divide-y" style={{ borderColor: '#EAF3DE' }}>
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
         {gardens.length === 0 && (
-          <p className="px-4 py-10 text-sm text-center" style={{ color: '#5A7040' }}>
+          <p style={{ padding: '40px 16px', textAlign: 'center', fontSize: 13, color: 'var(--jd-ink-muted)' }}>
             Aucun jardin — créez-en un !
           </p>
         )}
         {gardens.map(g => (
           <div
             key={g.id}
-            className="flex items-center gap-3 px-4 py-3"
-            style={{ background: g.id === activeId ? '#EAF3DE' : 'white' }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px',
+              background: g.id === activeId ? 'var(--jd-surface-alt)' : 'transparent',
+              borderBottom: '1px solid var(--jd-border)',
+            }}
           >
             {editId === g.id ? (
               <>
@@ -87,22 +99,16 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
                   value={editName}
                   onChange={e => setEditName(e.target.value.slice(0, 40))}
                   onKeyDown={e => { if (e.key === 'Enter') confirmRename(g.id); if (e.key === 'Escape') setEditId(null) }}
-                  className="flex-1 px-2 py-1 rounded text-sm"
-                  style={{ border: '1.5px solid #97C459', outline: 'none' }}
+                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 13, background: 'var(--jd-surface)', color: 'var(--jd-ink)', border: '1.5px solid var(--jd-accent)', outline: 'none' }}
                 />
-                <button onClick={() => confirmRename(g.id)} className="text-xs font-semibold" style={{ color: '#3B6D11' }}>✓</button>
-                <button onClick={() => setEditId(null)} className="text-xs" style={{ color: '#5A7040' }}>✕</button>
+                <button onClick={() => confirmRename(g.id)} style={{ fontSize: 12, fontWeight: 700, color: 'var(--jd-accent)' }}>✓</button>
+                <button onClick={() => setEditId(null)} style={{ fontSize: 12, color: 'var(--jd-ink-muted)' }}>✕</button>
               </>
             ) : (
               <>
-                <button
-                  onClick={() => onSelect(g.id)}
-                  className="flex-1 text-left"
-                >
-                  <p className="text-sm font-semibold" style={{ color: '#1A2010' }}>
-                    🌿 {g.name}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#5A7040' }}>
+                <button onClick={() => onSelect(g.id)} style={{ flex: 1, textAlign: 'left' }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--jd-ink)' }}>🌿 {g.name}</p>
+                  <p style={{ fontSize: 11, marginTop: 2, color: 'var(--jd-ink-muted)' }}>
                     {g.width && g.height
                       ? `${g.width} × ${g.height} m · ${g.plots?.length ?? 0} parcelle${(g.plots?.length ?? 0) !== 1 ? 's' : ''}`
                       : 'Non configuré'}
@@ -110,22 +116,14 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
                 </button>
                 <button
                   onClick={() => { setEditId(g.id); setEditName(g.name) }}
-                  className="text-xs px-2 py-1 rounded"
-                  style={{ color: '#5A7040' }}
+                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, color: 'var(--jd-ink-muted)' }}
                   title="Renommer"
-                >
-                  ✏️
-                </button>
+                >✏️</button>
                 <button
-                  onClick={() => {
-                    if (window.confirm(`Supprimer « ${g.name} » ?`)) onDelete(g.id)
-                  }}
-                  className="text-xs px-2 py-1 rounded"
-                  style={{ color: '#DC2626' }}
+                  onClick={() => { if (window.confirm(`Supprimer « ${g.name} » ?`)) onDelete(g.id) }}
+                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, color: '#E05A3A' }}
                   title="Supprimer"
-                >
-                  🗑
-                </button>
+                >🗑</button>
               </>
             )}
           </div>
@@ -135,41 +133,38 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
   )
 }
 
-// ── Éditeur d'un jardin sélectionné ──────────────────────────────────────────
+// ── Active garden editor ──────────────────────────────────────────────────────
 function ActiveGardenEditor({ garden, plants }) {
-  const { saveGarden, assignPlantToPlot, removePlantFromPlot } = useProfile()
+  const { saveGarden } = useProfile()
   const [mode,            setMode]            = useState(() => deriveInitialMode(garden))
   const [assigningPlotId, setAssigningPlotId] = useState(null)
 
-  function handleSetupSave(data) {
-    saveGarden(data)
-    setMode('edit')
-  }
-
-  function handlePlotSave(data) {
-    saveGarden(data)
-    setMode('view')
-  }
-
   const gardenReady = garden.width && garden.height
 
+  const TABS = [
+    { id: 'setup', label: '⚙️ Taille'   },
+    { id: 'edit',  label: '🗺️ Parcelles' },
+    { id: 'view',  label: '🌿 Vue 3D'    },
+  ]
+
   return (
-    <div className="flex flex-col h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Tab bar */}
       {gardenReady && (
-        <div className="flex border-b" style={{ borderColor: '#DDE8CC' }}>
-          {[
-            { id: 'setup', label: '⚙️ Taille'    },
-            { id: 'edit',  label: '🗺️ Parcelles'  },
-            { id: 'view',  label: '🌿 Vue 3D'     },
-          ].map(tab => (
+        <div style={{
+          display: 'flex',
+          borderBottom: '1px solid var(--jd-border)',
+          background: 'var(--jd-surface)',
+        }}>
+          {TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setMode(tab.id)}
-              className="flex-1 py-2.5 text-xs font-semibold"
               style={{
-                color:        mode === tab.id ? '#3B6D11' : '#5A7040',
-                borderBottom: mode === tab.id ? '2px solid #3B6D11' : '2px solid transparent',
+                flex: 1, padding: '10px 0',
+                fontSize: 11, fontWeight: 600,
+                color:        mode === tab.id ? 'var(--jd-accent)' : 'var(--jd-ink-muted)',
+                borderBottom: mode === tab.id ? '2px solid var(--jd-accent)' : '2px solid transparent',
                 background:   'transparent',
               }}
             >
@@ -179,79 +174,39 @@ function ActiveGardenEditor({ garden, plants }) {
         </div>
       )}
 
-      {/* Header du jardin actif */}
-      <div className="px-4 py-2" style={{ background: '#F8FBF3', borderBottom: '1px solid #DDE8CC' }}>
-        <p className="text-xs font-semibold" style={{ color: '#3B6D11' }}>🌿 {garden.name}</p>
+      {/* Garden name header */}
+      <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--jd-border)', background: 'var(--jd-surface-alt)' }}>
+        <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--jd-accent)' }}>🌿 {garden.name}</p>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <div style={{ flex: 1, overflowY: 'auto' }}>
         {mode === 'setup' && (
-          <GardenSetup garden={garden} onSave={handleSetupSave} />
+          <GardenSetup garden={garden} onSave={data => { saveGarden(data); setMode('edit') }} />
         )}
 
         {mode === 'edit' && gardenReady && (
           <PlotEditor
             garden={garden}
-            onSave={handlePlotSave}
+            onSave={data => { saveGarden(data); setMode('view') }}
             onBack={() => setMode('setup')}
           />
         )}
 
         {mode === 'view' && gardenReady && (
-          <div className="flex flex-col gap-3 p-4">
-            <div
-              className="rounded-card overflow-hidden"
-              style={{ height: 300, border: '1px solid #DDE8CC' }}
-            >
-              <GardenView3D garden={garden} plants={plants} />
-            </div>
-
-            {garden.plots?.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-2" style={{ color: '#3B6D11' }}>Parcelles</h3>
-                <div className="flex flex-col gap-2">
-                  {garden.plots.map(plot => {
-                    const assignedPlants = (plot.plants ?? [])
-                      .map(id => plants?.find(p => p.id === id))
-                      .filter(Boolean)
-                    return (
-                      <div
-                        key={plot.id}
-                        className="flex items-center justify-between px-3 py-2.5 rounded-card"
-                        style={{ background: '#F8FBF3', border: '1px solid #DDE8CC' }}
-                      >
-                        <div>
-                          <p className="text-sm font-medium" style={{ color: '#1A2010' }}>
-                            {plot.label || 'Parcelle'}{' '}
-                            <span className="text-xs font-normal" style={{ color: '#5A7040' }}>
-                              {plot.width}×{plot.height}m
-                            </span>
-                          </p>
-                          <p className="text-xs mt-0.5" style={{ color: '#5A7040' }}>
-                            {assignedPlants.length > 0
-                              ? assignedPlants.map(p => p.emoji).join(' ')
-                              : 'Aucune plante'}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => setAssigningPlotId(plot.id)}
-                          className="text-xs font-semibold px-3 py-1.5 rounded-chip"
-                          style={{ background: '#EAF3DE', color: '#3B6D11' }}
-                        >
-                          Gérer
-                        </button>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
+          <div style={{ padding: 16 }}>
+            <GardenView3D garden={garden} plants={plants} />
 
             <button
               onClick={() => setMode('edit')}
-              className="text-sm font-medium py-2 rounded-card"
-              style={{ background: '#EAF3DE', color: '#3B6D11' }}
+              className="w-full tap-scale"
+              style={{
+                marginTop: 14, padding: '10px 0', fontSize: 13, fontWeight: 600,
+                borderRadius: 'var(--jd-radius)',
+                background: 'var(--jd-surface-alt)',
+                border: '1px solid var(--jd-border)',
+                color: 'var(--jd-accent)',
+              }}
             >
               ✏️ Modifier les parcelles
             </button>
@@ -266,15 +221,14 @@ function ActiveGardenEditor({ garden, plants }) {
   )
 }
 
-// ── Orchestrateur principal ───────────────────────────────────────────────────
+// ── Root ──────────────────────────────────────────────────────────────────────
 export default function GardenEditor() {
   const { profile, addGarden, removeGarden, renameGarden, setActiveGarden } = useProfile()
 
-  const gardens      = profile.gardens      ?? []
+  const gardens      = profile.gardens       ?? []
   const activeId     = profile.activeGardenId ?? null
   const activeGarden = gardens.find(g => g.id === activeId) ?? null
 
-  // Vue liste ou vue éditeur
   const [view, setView] = useState(activeGarden ? 'editor' : 'list')
 
   function handleSelect(id) {
@@ -288,14 +242,12 @@ export default function GardenEditor() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Breadcrumb / back */}
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--jd-bg)' }}>
       {view === 'editor' && activeGarden && (
-        <div className="flex items-center gap-2 px-4 py-2" style={{ borderBottom: '1px solid #DDE8CC' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--jd-border)' }}>
           <button
             onClick={() => setView('list')}
-            className="text-sm font-medium"
-            style={{ color: '#5A7040' }}
+            style={{ fontSize: 13, fontWeight: 500, color: 'var(--jd-ink-muted)' }}
           >
             ← Tous les jardins
           </button>

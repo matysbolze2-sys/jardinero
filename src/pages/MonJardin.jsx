@@ -10,14 +10,13 @@ import { STATUT_LABELS } from '../data/plants'
 import { ASSOCIATIONS } from '../data/associations'
 
 export default function MonJardin() {
-  const { profile, addPlant, removePlant, updatePlantStatus } = useProfile()
-  const [showAddModal, setShowAddModal]     = useState(false)
-  const [activeTab, setActiveTab]           = useState('plantes') // 'plantes' | 'arrosage' | 'associations' | 'jardin3d'
-  const [detailSheet, setDetailSheet]       = useState(null) // { plant, tab }
+  const { profile, addPlant } = useProfile()
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [activeTab,    setActiveTab]    = useState('plantes')
+  const [detailSheet,  setDetailSheet]  = useState(null)
 
   const plants = profile.plants ?? []
 
-  // Détecte si des conflits d'associations existent dans le jardin actuel
   const hasConflits = plants.some(p => {
     if (!p.plantId || !ASSOCIATIONS[p.plantId]) return false
     return ASSOCIATIONS[p.plantId].mauvaises.some(m =>
@@ -34,46 +33,41 @@ export default function MonJardin() {
 
   return (
     <div className="px-4 pt-6 pb-4 relative">
-      {/* En-tête */}
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h1 className="font-fraunces text-2xl" style={{ color: '#3B6D11' }}>Mon Jardin</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#6B7A5C' }}>
+          <h1 className="font-display font-extrabold text-2xl" style={{ color: 'var(--jd-accent)' }}>Mon Jardin</h1>
+          <p className="text-sm mt-0.5" style={{ color: 'var(--jd-ink-muted)' }}>
             {plants.length === 0
               ? 'Aucune plante pour le moment'
               : `${plants.length} plante${plants.length > 1 ? 's' : ''} en cours`}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-chip font-semibold text-sm"
-            style={{ background: '#3B6D11', color: 'white' }}
-          >
-            + Ajouter
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="flex items-center gap-1.5 px-4 py-2 rounded-chip font-semibold text-sm tap-scale"
+          style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
+        >
+          + Ajouter
+        </button>
       </div>
 
-      {/* Barre de progression globale */}
       {plants.length > 0 && (
         <div className="mb-4">
-          <div className="flex justify-between text-xs mb-1.5" style={{ color: '#6B7A5C' }}>
+          <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--jd-ink-muted)' }}>
             <span>Progression globale</span>
-            <span className="font-semibold" style={{ color: '#3B6D11' }}>{progressScore}%</span>
+            <span className="font-semibold" style={{ color: 'var(--jd-accent)' }}>{progressScore}%</span>
           </div>
-          <div className="h-2 rounded-full" style={{ background: '#DDE8CC' }}>
+          <div className="h-2 rounded-full" style={{ background: 'var(--jd-accent-soft)' }}>
             <div
               className="h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progressScore}%`, background: '#97C459' }}
+              style={{ width: `${progressScore}%`, background: 'var(--jd-accent)' }}
             />
           </div>
         </div>
       )}
 
-      {/* Onglets Plantes / Arrosage / Associations */}
       {plants.length > 0 && (
-        <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ background: '#EAF3DE' }}>
+        <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ background: 'var(--jd-surface)' }}>
           {[
             { id: 'plantes',      label: '🌱 Plantes' },
             { id: 'arrosage',     label: '💧 Arrosage' },
@@ -83,11 +77,11 @@ export default function MonJardin() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
               style={{
-                background: activeTab === tab.id ? 'white' : 'transparent',
-                color:      activeTab === tab.id ? '#3B6D11' : '#6B7A5C',
-                boxShadow:  activeTab === tab.id ? '0 1px 4px rgba(59,109,17,0.15)' : 'none',
+                background: activeTab === tab.id ? 'var(--jd-surface-alt)' : 'transparent',
+                color:      activeTab === tab.id ? 'var(--jd-accent)'      : 'var(--jd-ink-muted)',
+                boxShadow:  activeTab === tab.id ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
               }}
             >
               {tab.label}
@@ -96,32 +90,30 @@ export default function MonJardin() {
         </div>
       )}
 
-      {/* État vide */}
       {plants.length === 0 && (
         <div
           className="mt-8 flex flex-col items-center text-center py-12 px-6 rounded-card"
-          style={{ background: '#EAF3DE', border: '2px dashed #97C459' }}
+          style={{ background: 'var(--jd-surface)', border: '1px dashed var(--jd-accent-ring)' }}
         >
           <span className="text-5xl mb-4">🌱</span>
-          <p className="font-fraunces text-lg mb-1" style={{ color: '#3B6D11' }}>
+          <p className="font-display font-bold text-lg mb-1" style={{ color: 'var(--jd-accent)' }}>
             Votre jardin est vide
           </p>
-          <p className="text-sm mb-5" style={{ color: '#6B7A5C' }}>
+          <p className="text-sm mb-5" style={{ color: 'var(--jd-ink-muted)' }}>
             Ajoutez vos premières plantes pour commencer à suivre votre potager.
           </p>
           <button
             onClick={() => setShowAddModal(true)}
-            className="px-6 py-3 rounded-card font-semibold text-sm"
-            style={{ background: '#3B6D11', color: 'white' }}
+            className="px-6 py-3 rounded-card font-semibold text-sm tap-scale"
+            style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
           >
             Ajouter ma première plante
           </button>
         </div>
       )}
 
-      {/* Onglet Mes plantes */}
       {plants.length > 0 && activeTab === 'plantes' && (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="flex flex-col gap-3">
           {plants.map(plant => (
             <PlantCard
               key={plant.id}
@@ -132,24 +124,16 @@ export default function MonJardin() {
         </div>
       )}
 
-      {/* Onglet Arrosage */}
-      {plants.length > 0 && activeTab === 'arrosage' && (
-        <ArrosageCalendar />
-      )}
+      {plants.length > 0 && activeTab === 'arrosage' && <ArrosageCalendar />}
 
-      {/* Onglet Associations */}
-      {plants.length > 0 && activeTab === 'associations' && (
-        <AssociationsView />
-      )}
+      {plants.length > 0 && activeTab === 'associations' && <AssociationsView />}
 
-      {/* Onglet Jardin 3D */}
       {activeTab === 'jardin3d' && (
         <div style={{ margin: '0 -16px', height: 'calc(100vh - 220px)' }}>
           <GardenEditor />
         </div>
       )}
 
-      {/* Modal ajout */}
       {showAddModal && (
         <AddPlantModal
           onAdd={addPlant}
@@ -157,7 +141,6 @@ export default function MonJardin() {
         />
       )}
 
-      {/* Fiche détail plante */}
       {detailSheet && (
         <PlantDetailSheet
           plant={detailSheet.plant}
@@ -166,7 +149,6 @@ export default function MonJardin() {
           onReplant={() => { setDetailSheet(null); setShowAddModal(true) }}
         />
       )}
-
     </div>
   )
 }

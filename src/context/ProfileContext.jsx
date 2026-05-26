@@ -1,4 +1,4 @@
-import { createContext, useCallback } from 'react'
+import { createContext, useCallback, useEffect } from 'react'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { getToday } from '../utils/arrosageUtils'
 import { getWeekKey } from '../data/taches'
@@ -38,13 +38,25 @@ export function ProfileProvider({ children }) {
     }))
   }, [setProfile])
 
+  // Migration: ensure all plants have statusOverride field (added in v2)
+  useEffect(() => {
+    const needsMigration = (profile.plants ?? []).some(p => !('statusOverride' in p))
+    if (!needsMigration) return
+    setProfile(prev => ({
+      ...prev,
+      plants: (prev.plants ?? []).map(p =>
+        'statusOverride' in p ? p : { ...p, statusOverride: null }
+      ),
+    }))
+  }, [profile.plants, setProfile])
+
   const addPlant = useCallback((plant) => {
     setProfile(prev => {
       const regionOffset = getRegionById(prev.region)?.offset ?? 0
       const dates = calculatePlantDates(plant.plantId, plant.plantedAt, regionOffset)
       return {
         ...prev,
-        plants: [...(prev.plants ?? []), { ...plant, ...dates }],
+        plants: [...(prev.plants ?? []), { ...plant, statusOverride: null, ...dates }],
       }
     })
   }, [setProfile])
@@ -68,6 +80,16 @@ export function ProfileProvider({ children }) {
     setProfile(prev => ({
       ...prev,
       plants: prev.plants.map(p => p.id === plantId ? { ...p, status } : p),
+    }))
+  }, [setProfile])
+
+  // status === null → revert to automatic computation
+  const updatePlantStatusOverride = useCallback((plantId, status) => {
+    setProfile(prev => ({
+      ...prev,
+      plants: prev.plants.map(p =>
+        p.id === plantId ? { ...p, statusOverride: status } : p
+      ),
     }))
   }, [setProfile])
 
@@ -223,6 +245,7 @@ export function ProfileProvider({ children }) {
       addPlant,
       removePlant,
       updatePlantStatus,
+      updatePlantStatusOverride,
       marquerArrose,
       addJournalNote,
       deleteJournalNote,

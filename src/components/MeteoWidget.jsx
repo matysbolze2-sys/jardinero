@@ -12,19 +12,19 @@ function JourMeteo({ dateStr, tMax, tMin, pluie, weathercode, isToday }) {
     <div
       className="flex flex-col items-center gap-0.5 flex-1"
       style={{
-        background:   isToday ? 'rgba(255,255,255,0.18)' : 'transparent',
+        background:   isToday ? 'rgba(123,201,0,0.12)' : 'transparent',
         borderRadius: 8,
         padding:      '6px 2px',
       }}
     >
-      <span className="text-xs font-semibold" style={{ color: isToday ? 'white' : 'rgba(255,255,255,0.7)' }}>
+      <span className="text-xs font-semibold" style={{ color: isToday ? '#F0F7E8' : 'rgba(240,247,232,0.6)' }}>
         {label}
       </span>
       <span style={{ fontSize: 20, lineHeight: 1.2 }}>{emoji}</span>
-      <span className="text-xs font-bold" style={{ color: 'white' }}>{Math.round(tMax)}°</span>
-      <span className="text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>{Math.round(tMin)}°</span>
+      <span className="text-xs font-bold" style={{ color: '#F0F7E8' }}>{Math.round(tMax)}°</span>
+      <span className="text-xs" style={{ color: 'rgba(240,247,232,0.5)' }}>{Math.round(tMin)}°</span>
       {pluie >= 1 && (
-        <span className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
+        <span className="text-xs font-medium" style={{ color: '#7BC900' }}>
           {Math.round(pluie)}mm
         </span>
       )}
@@ -38,7 +38,7 @@ export default function MeteoWidget() {
 
   if (!profile.region) return null
   if (loading) return (
-    <div className="rounded-card p-4 mb-4 flex items-center gap-2" style={{ background: '#EAF3DE', color: '#3B6D11' }}>
+    <div className="rounded-card p-4 mb-4 flex items-center gap-2" style={{ background: '#1C2914', color: '#7BC900' }}>
       <span>🌤️</span>
       <span className="text-sm font-medium">Chargement météo…</span>
     </div>
@@ -56,12 +56,12 @@ export default function MeteoWidget() {
           className="rounded-card px-4 py-3 mb-2 flex items-center gap-2"
           style={
             alerte.type === 'gel'
-              ? { background: '#EFF6FF', border: '2px solid #BAE6FD' }
-              : { background: '#FFFBEB', border: '2px solid #FDE68A' }
+              ? { background: '#0D1520', border: '1px solid rgba(147,197,253,0.3)' }
+              : { background: '#1A1208', border: '1px solid rgba(250,199,117,0.3)' }
           }
         >
           <span className="text-xl flex-shrink-0">{alerte.type === 'gel' ? '🧊' : '☀️'}</span>
-          <p className="text-sm font-semibold" style={{ color: alerte.type === 'gel' ? '#0369A1' : '#92400E' }}>
+          <p className="text-sm font-semibold" style={{ color: alerte.type === 'gel' ? '#93C5FD' : '#FAC775' }}>
             {alerte.type === 'gel'
               ? `Risque de gel ${alerte.dansNJours === 0 ? "aujourd'hui" : alerte.dansNJours === 1 ? 'demain' : `dans ${alerte.dansNJours} jours`} — protégez vos semis !`
               : '4+ jours sans pluie — pensez à arroser'}
@@ -69,12 +69,15 @@ export default function MeteoWidget() {
         </div>
       ))}
 
-      {/* Widget 7 jours — palette verte */}
+      {/* Widget 7 jours */}
       <div
         className="rounded-card p-3 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #2D5A0E 0%, #3B6D11 55%, #527A20 100%)' }}
+        style={{
+          background: 'linear-gradient(135deg, #0D1208 0%, #151E0F 100%)',
+          border: '0.5px solid rgba(123,201,0,0.15)',
+        }}
       >
-        <p className="text-xs font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>
+        <p className="text-xs font-semibold mb-2" style={{ color: '#8FAF78' }}>
           ☁️ Météo 7 jours
         </p>
         <div className="flex gap-1">
