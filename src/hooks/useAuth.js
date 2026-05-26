@@ -6,15 +6,26 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // onAuthStateChange fires INITIAL_SESSION immediately on subscription,
-    // processing the URL hash (#access_token=...) from OAuth redirects.
-    // No need for a separate getSession() call — that can race with hash parsing.
+    // Subscribe FIRST — ensures no SIGNED_IN / INITIAL_SESSION event is missed
+    // while getSession() is in flight
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
+        // Clean up the #access_token=... hash left by the OAuth redirect
+        if (event === 'SIGNED_IN' && window.location.hash.includes('access_token')) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search)
+        }
       }
     )
+
+    // Fallback: for page refreshes with an existing localStorage session,
+    // onAuthStateChange fires INITIAL_SESSION asynchronously which can be slow.
+    // getSession() resolves immediately from cache and unblocks the UI.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
 
     return () => subscription.unsubscribe()
   }, [])
