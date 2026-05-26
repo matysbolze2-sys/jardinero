@@ -1,5 +1,7 @@
 import { useProfile } from '../hooks/useProfile'
-import { getEtatArrosage, getFrequencePlante } from '../utils/arrosageUtils'
+import { getRegionById } from '../data/regions'
+import { getEffectiveStatus } from '../utils/plantStatusUtils'
+import { getEtatArrosage, getFrequencePlante, shouldWaterToday } from '../utils/arrosageUtils'
 
 const iconStyle = {
   width: 20, height: 20,
@@ -47,14 +49,17 @@ const TABS = [
 
 function useGardenBadge() {
   const { profile } = useProfile()
-  const plants    = profile.plants ?? []
-  const soilId    = profile.soil
-  const arrosages = profile.arrosages ?? {}
+  const plants       = profile.plants ?? []
+  const soilId       = profile.soil
+  const arrosages    = profile.arrosages ?? {}
+  const regionOffset = getRegionById(profile.region)?.offset ?? 0
 
   let count = 0
   for (const p of plants) {
-    if (p.status === 'ready') { count++; continue }
-    const freq = getFrequencePlante(p, soilId)
+    const status = getEffectiveStatus(p, regionOffset)
+    if (status === 'ready') { count++; continue }
+    if (!shouldWaterToday(p, regionOffset)) continue
+    const freq = getFrequencePlante(p, soilId, regionOffset)
     const etat = getEtatArrosage(p.id, p.plantedAt, arrosages, freq)
     if (etat === 'due' || etat === 'overdue') count++
   }

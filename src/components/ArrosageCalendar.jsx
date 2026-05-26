@@ -1,12 +1,17 @@
 import { useProfile } from '../hooks/useProfile'
 import { getSoilById } from '../data/soils'
+import { getRegionById } from '../data/regions'
 import { useMeteo } from '../hooks/useMeteo'
+import { getEffectiveStatus, getStageMessage } from '../utils/plantStatusUtils'
 import {
   getFrequencePlante,
   getPlanning7Jours,
   getEtatArrosage,
+  shouldWaterToday,
   ETAT_CONFIG,
 } from '../utils/arrosageUtils'
+
+// ── JourDot ────────────────────────────────────────────────────────────────────
 
 function JourDot({ jour, isToday, onArroser, pluiePrevue }) {
   const { wasWatered, needsWatering, label } = jour
@@ -15,10 +20,10 @@ function JourDot({ jour, isToday, onArroser, pluiePrevue }) {
   let icon      = '·'
   let textColor = 'var(--jd-ink-muted)'
 
-  if (wasWatered)                        { bg = 'var(--jd-accent)';     icon = '✓';   textColor = 'var(--jd-accent-ink)' }
-  else if (pluiePrevue && needsWatering) { bg = '#93C5FD';              icon = '🌧️';  textColor = '#0D1520' }
-  else if (isToday && needsWatering)     { bg = '#E05A3A';              icon = '💧';  textColor = 'white'                }
-  else if (isToday)                      { bg = 'var(--jd-accent-soft)'; icon = '·'; textColor = 'var(--jd-accent)'     }
+  if (wasWatered)                        { bg = 'var(--jd-accent)';      icon = '✓';   textColor = 'var(--jd-accent-ink)' }
+  else if (pluiePrevue && needsWatering) { bg = '#93C5FD';               icon = '🌧️'; textColor = '#0D1520' }
+  else if (isToday && needsWatering)     { bg = '#E05A3A';               icon = '💧'; textColor = 'white'                }
+  else if (isToday)                      { bg = 'var(--jd-accent-soft)'; icon = '·';   textColor = 'var(--jd-accent)'    }
   else if (needsWatering)                { bg = 'var(--jd-accent-soft)'; icon = '💧'; textColor = 'var(--jd-ink-muted)' }
 
   const canClick = isToday && needsWatering && !wasWatered && !pluiePrevue
@@ -45,7 +50,19 @@ function JourDot({ jour, isToday, onArroser, pluiePrevue }) {
   )
 }
 
-function LignePlante({ plant, frequence, arrosages, onArroser, aPluiePrevue }) {
+// ── Frequency label ────────────────────────────────────────────────────────────
+
+function freqLabel(frequence, status) {
+  const ctx = {
+    perennial_producing: ' (production)',
+    perennial_growing:   ' (végétation)',
+  }[status] ?? ''
+  return `tous les ${frequence} jour${frequence > 1 ? 's' : ''}${ctx}`
+}
+
+// ── LignePlante (active) ───────────────────────────────────────────────────────
+
+function LignePlante({ plant, frequence, status, stageMessage, arrosages, onArroser, aPluiePrevue }) {
   const planning = getPlanning7Jours(plant.id, plant.plantedAt, arrosages, frequence)
   const etat     = getEtatArrosage(plant.id, plant.plantedAt, arrosages, frequence)
   const cfg      = ETAT_CONFIG[etat]
@@ -56,18 +73,20 @@ function LignePlante({ plant, frequence, arrosages, onArroser, aPluiePrevue }) {
   return (
     <div
       className="rounded-card p-3 mb-3"
-      style={{
-        background: 'var(--jd-surface)',
-        border:     `1px solid ${arrosAuj ? 'var(--jd-accent-ring)' : 'var(--jd-border)'}`,
-      }}
+      style={{ background: 'var(--jd-surface)', border: `1px solid ${arrosAuj ? 'var(--jd-accent-ring)' : 'var(--jd-border)'}` }}
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <span className="text-xl leading-none">{plant.emoji}</span>
           <div>
             <span className="font-semibold text-sm" style={{ color: 'var(--jd-ink)' }}>{plant.name}</span>
+            {stageMessage && (
+              <span className="block" style={{ fontSize: 10, color: '#6B7A5C', marginTop: 1 }}>
+                {stageMessage}
+              </span>
+            )}
             <span className="block text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
-              tous les {frequence} jour{frequence > 1 ? 's' : ''}
+              {freqLabel(frequence, status)}
             </span>
           </div>
         </div>
@@ -121,11 +140,33 @@ function LignePlante({ plant, frequence, arrosages, onArroser, aPluiePrevue }) {
   )
 }
 
+// ── LigneDormante ──────────────────────────────────────────────────────────────
+
+function LigneDormante({ plant }) {
+  return (
+    <div
+      className="rounded-card p-3 mb-3 flex items-center gap-3"
+      style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)', opacity: 0.6 }}
+    >
+      <span className="text-xl leading-none" style={{ filter: 'grayscale(1)' }}>{plant.emoji}</span>
+      <div>
+        <span className="font-semibold text-sm" style={{ color: 'var(--jd-ink-muted)' }}>{plant.name}</span>
+        <span className="block text-xs mt-0.5" style={{ color: 'var(--jd-ink-muted)' }}>
+          ❄️ En repos hivernal — arrosage suspendu
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── ArrosageCalendar ───────────────────────────────────────────────────────────
+
 export default function ArrosageCalendar() {
   const { profile, marquerArrose } = useProfile()
-  const plants    = profile.plants ?? []
-  const arrosages = profile.arrosages ?? {}
-  const sol       = getSoilById(profile.soil)
+  const plants       = profile.plants ?? []
+  const arrosages    = profile.arrosages ?? {}
+  const sol          = getSoilById(profile.soil)
+  const regionOffset = getRegionById(profile.region)?.offset ?? 0
   const { aPluiePrevue } = useMeteo(profile.region)
 
   if (plants.length === 0) return null
@@ -147,12 +188,21 @@ export default function ArrosageCalendar() {
       </p>
 
       {plants.map(plant => {
-        const frequence = getFrequencePlante(plant, profile.soil)
+        if (!shouldWaterToday(plant, regionOffset)) {
+          return <LigneDormante key={plant.id} plant={plant} />
+        }
+
+        const status       = getEffectiveStatus(plant, regionOffset)
+        const stageMessage = getStageMessage(plant, regionOffset)
+        const frequence    = getFrequencePlante(plant, profile.soil, regionOffset)
+
         return (
           <LignePlante
             key={plant.id}
             plant={plant}
             frequence={frequence}
+            status={status}
+            stageMessage={stageMessage}
             arrosages={arrosages}
             onArroser={marquerArrose}
             aPluiePrevue={aPluiePrevue}

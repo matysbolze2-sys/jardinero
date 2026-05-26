@@ -3,15 +3,17 @@ import { useProfile } from '../hooks/useProfile'
 import { getRegionById } from '../data/regions'
 import { MOIS_LABELS } from '../data/plants'
 import CalendarTable from '../components/CalendarTable'
+import PlantDetailSheet from '../components/PlantDetailSheet'
 import { ASSOCIATIONS } from '../data/associations'
 
 const FILTRES = [
-  { id: null,       label: 'Tous' },
-  { id: 'semer',    label: '🌱 À semer' },
-  { id: 'recolter', label: '🧺 À récolter' },
+  { id: null,          label: 'Tous' },
+  { id: 'semer',       label: '🌱 À semer' },
+  { id: 'recolter',    label: '🧺 À récolter' },
+  { id: 'mes-plantes', label: '🌿 Mes plantes' },
 ]
 
-function SowSheet({ plant, monthIdx, onClose, onAdd }) {
+function SowSheet({ plant, monthIdx, onClose, onAdd, alreadyInGarden, onGoToGarden }) {
   const moisLabel = MOIS_LABELS[monthIdx]
   const assocs    = ASSOCIATIONS[plant.id]?.bonnes?.slice(0, 3) ?? []
 
@@ -23,12 +25,7 @@ function SowSheet({ plant, monthIdx, onClose, onAdd }) {
       <div
         onClick={e => e.stopPropagation()}
         className="fade-in w-full max-w-[768px] mx-auto flex flex-col"
-        style={{
-          background:   'var(--jd-surface)',
-          borderRadius: '20px 20px 0 0',
-          maxHeight:    '80vh',
-          boxShadow:    '0 -4px 28px rgba(0,0,0,0.5)',
-        }}
+        style={{ background: 'var(--jd-surface)', borderRadius: '20px 20px 0 0', maxHeight: '80vh', boxShadow: '0 -4px 28px rgba(0,0,0,0.5)' }}
       >
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--jd-accent-ring)' }} />
@@ -47,26 +44,38 @@ function SowSheet({ plant, monthIdx, onClose, onAdd }) {
             </div>
           </div>
 
-          <div className="rounded-xl p-3 mb-4 flex items-start gap-2" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
-            <span style={{ fontSize: 20, flexShrink: 0 }}>☀️</span>
-            <p className="text-sm" style={{ color: 'var(--jd-ink)' }}>
-              C'est le bon moment pour semer{' '}
-              <strong style={{ color: 'var(--jd-accent)' }}>{plant.label}</strong> — {moisLabel} est idéal pour cette variété dans ta région.
-            </p>
-          </div>
+          {alreadyInGarden ? (
+            <div className="rounded-xl p-3 mb-4 flex items-start gap-2" style={{ background: 'var(--jd-accent-soft)', border: '1px solid var(--jd-accent-ring)' }}>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>✅</span>
+              <div>
+                <p className="text-sm font-semibold" style={{ color: 'var(--jd-accent)' }}>
+                  Déjà dans ton jardin !
+                </p>
+                <button
+                  onClick={() => { onClose(); onGoToGarden?.() }}
+                  className="text-xs mt-1 font-semibold tap-scale"
+                  style={{ color: 'var(--jd-accent)', textDecoration: 'underline' }}
+                >
+                  Voir la plante →
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl p-3 mb-4 flex items-start gap-2" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
+              <span style={{ fontSize: 20, flexShrink: 0 }}>☀️</span>
+              <p className="text-sm" style={{ color: 'var(--jd-ink)' }}>
+                C'est le bon moment pour semer{' '}
+                <strong style={{ color: 'var(--jd-accent)' }}>{plant.label}</strong> — {moisLabel} est idéal pour cette variété dans ta région.
+              </p>
+            </div>
+          )}
 
           {assocs.length > 0 && (
             <div className="mb-4">
-              <p className="text-xs font-bold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
-                BONNES ASSOCIATIONS
-              </p>
+              <p className="text-xs font-bold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>BONNES ASSOCIATIONS</p>
               <div className="flex flex-col gap-2">
                 {assocs.map(a => (
-                  <div
-                    key={a.plante}
-                    className="flex items-start gap-3 px-3 py-2 rounded-xl"
-                    style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}
-                  >
+                  <div key={a.plante} className="flex items-start gap-3 px-3 py-2 rounded-xl" style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}>
                     <span style={{ fontSize: 20, flexShrink: 0 }}>{a.emoji}</span>
                     <div>
                       <p className="text-sm font-semibold" style={{ color: 'var(--jd-ink)' }}>{a.plante}</p>
@@ -78,13 +87,15 @@ function SowSheet({ plant, monthIdx, onClose, onAdd }) {
             </div>
           )}
 
-          <button
-            onClick={() => { onAdd(plant); onClose() }}
-            className="w-full py-4 rounded-card font-bold text-sm tap-scale"
-            style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
-          >
-            Ajouter {plant.label} à mon jardin →
-          </button>
+          {!alreadyInGarden && (
+            <button
+              onClick={() => { onAdd(plant); onClose() }}
+              className="w-full py-4 rounded-card font-bold text-sm tap-scale"
+              style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
+            >
+              Ajouter {plant.label} à mon jardin →
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -93,13 +104,19 @@ function SowSheet({ plant, monthIdx, onClose, onAdd }) {
 
 export default function Calendrier({ onNavigate }) {
   const { profile, addPlant } = useProfile()
-  const [filterType, setFilterType] = useState(null)
-  const [sowSheet, setSowSheet]     = useState(null)
+  const [filterType,    setFilterType]    = useState(null)
+  const [sowSheet,      setSowSheet]      = useState(null)
+  const [selectedPlant, setSelectedPlant] = useState(null)
 
   const region       = getRegionById(profile.region)
   const offsetWeeks  = region?.offset ?? 0
   const currentMonth = new Date().getMonth()
-  const filterValue  = filterType === 'semer' ? 1 : filterType === 'recolter' ? 3 : null
+  const plants       = profile.plants ?? []
+
+  // Filter derived values
+  const filterValue     = filterType === 'semer' ? 1 : filterType === 'recolter' ? 3 : null
+  const filterMonth     = (filterType && filterType !== 'mes-plantes') ? currentMonth : null
+  const onlyUserPlants  = filterType === 'mes-plantes'
 
   const handleAddFromCalendar = (plant) => {
     addPlant({
@@ -114,6 +131,10 @@ export default function Calendrier({ onNavigate }) {
     onNavigate?.('mon-jardin')
   }
 
+  const handleSowClick = (plant, mi) => {
+    setSowSheet({ plant, monthIdx: mi })
+  }
+
   return (
     <div className="px-4 pt-6 pb-4">
       <h1 className="font-display font-extrabold text-2xl" style={{ color: 'var(--jd-accent)' }}>
@@ -124,9 +145,7 @@ export default function Calendrier({ onNavigate }) {
       </p>
 
       {offsetWeeks !== 0 && (
-        <div
-          className="jd-chip inline-flex mt-2"
-        >
+        <div className="jd-chip inline-flex mt-2">
           🗺️ Décalage régional :{' '}
           {offsetWeeks > 0 ? `+${offsetWeeks}` : offsetWeeks} semaines
         </div>
@@ -151,9 +170,12 @@ export default function Calendrier({ onNavigate }) {
 
       <CalendarTable
         offsetWeeks={offsetWeeks}
-        filterMonth={filterType ? currentMonth : null}
+        filterMonth={filterMonth}
         filterValue={filterValue}
-        onSowClick={(plant, mi) => setSowSheet({ plant, monthIdx: mi })}
+        onlyUserPlants={onlyUserPlants}
+        onSowClick={handleSowClick}
+        userPlants={plants}
+        onPlantClick={plant => setSelectedPlant(plant)}
       />
 
       {sowSheet && (
@@ -162,6 +184,15 @@ export default function Calendrier({ onNavigate }) {
           monthIdx={sowSheet.monthIdx}
           onClose={() => setSowSheet(null)}
           onAdd={handleAddFromCalendar}
+          alreadyInGarden={plants.some(p => p.plantId === sowSheet.plant.id)}
+          onGoToGarden={() => onNavigate?.('mon-jardin')}
+        />
+      )}
+
+      {selectedPlant && (
+        <PlantDetailSheet
+          plant={selectedPlant}
+          onClose={() => setSelectedPlant(null)}
         />
       )}
     </div>

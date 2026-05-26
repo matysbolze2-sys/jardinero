@@ -1,18 +1,83 @@
+import { useState } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import { getRegionById } from '../data/regions'
 import { getSoilById } from '../data/soils'
 import { CONSEILS_MENSUELS } from '../data/conseils'
-import { getPlantsToSowThisMonth, getPlantsToHarvestThisMonth } from '../utils/calendarUtils'
 import { MOIS_LABELS } from '../data/plants'
+import { ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
+import { getPersonalizedAdvice, getEnrichedMonthlyAdvice } from '../utils/adviceEngine'
 
-function ConseilCard({ text, index }) {
+// ── PlantAdviceCard ────────────────────────────────────────────────────────────
+
+function PlantAdviceCard({ plant, stade, conseils }) {
+  const [expanded, setExpanded] = useState(false)
+
+  const statut   = ALL_STATUT_LABELS[stade] ?? ALL_STATUT_LABELS.sowed
+  const visible  = expanded ? conseils : conseils.slice(0, 2)
+  const hasMore  = conseils.length > 2
+
+  return (
+    <div
+      className="rounded-card p-4 mb-3"
+      style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: 22, lineHeight: 1 }}>{plant.emoji}</span>
+          <span className="font-semibold text-sm" style={{ color: 'var(--jd-ink)' }}>
+            {plant.name}
+          </span>
+        </div>
+        <span
+          className="text-xs font-semibold px-2.5 py-1 rounded-chip"
+          style={{ background: 'var(--jd-surface-alt)', color: statut.color }}
+        >
+          {statut.label}
+        </span>
+      </div>
+
+      {conseils.length === 0 ? (
+        <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>
+          Pas de conseil spécifique pour ce stade — continue sur ta lancée !
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {visible.map((c, i) => (
+            <div
+              key={i}
+              className="flex gap-2.5 text-sm"
+              style={{ color: 'var(--jd-ink)' }}
+            >
+              <span className="flex-shrink-0 mt-0.5" style={{ color: 'var(--jd-accent)', fontSize: 11 }}>▸</span>
+              <p className="leading-relaxed">{c}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasMore && (
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="mt-3 text-xs font-semibold tap-scale"
+          style={{ color: 'var(--jd-accent)' }}
+        >
+          {expanded ? '▲ Voir moins' : `▼ Voir les ${conseils.length - 2} autres conseils`}
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── ConseilUniversel ───────────────────────────────────────────────────────────
+
+function ConseilUniversel({ text, index }) {
   return (
     <div
       className="flex gap-3 p-4 rounded-card"
       style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}
     >
       <span
-        className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+        className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
         style={{ background: 'var(--jd-accent-soft)', color: 'var(--jd-accent)' }}
       >
         {index + 1}
@@ -22,37 +87,28 @@ function ConseilCard({ text, index }) {
   )
 }
 
-function PlantesDuMoment({ title, emoji, plants }) {
-  if (plants.length === 0) return null
-  return (
-    <div className="mb-5">
-      <h3 className="font-semibold text-sm mb-2" style={{ color: 'var(--jd-accent)' }}>
-        {emoji} {title}
-      </h3>
-      <div className="flex flex-wrap gap-2">
-        {plants.map(p => (
-          <span key={p.id} className="jd-chip">
-            {p.emoji} {p.label}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
+// ── Conseiller ─────────────────────────────────────────────────────────────────
 
-export default function Conseiller() {
-  const { profile } = useProfile()
+export default function Conseiller({ onNavigate }) {
+  const { profile }  = useProfile()
+  const [showAllConseils, setShowAllConseils] = useState(false)
+
   const region  = getRegionById(profile.region)
   const sol     = getSoilById(profile.soil)
   const moisIdx = new Date().getMonth()
   const conseil = CONSEILS_MENSUELS[moisIdx]
 
-  const offsetWeeks    = region?.offset ?? 0
-  const plantesSemer   = getPlantsToSowThisMonth(offsetWeeks)
-  const plantesRecolte = getPlantsToHarvestThisMonth(offsetWeeks)
+  const offsetWeeks      = region?.offset ?? 0
+  const plants           = profile.plants ?? []
+  const personalizedList = getPersonalizedAdvice(plants, offsetWeeks, profile.soil)
+  const enrichments      = getEnrichedMonthlyAdvice(moisIdx, plants, offsetWeeks)
+
+  const universalConseils = conseil.conseils
+  const visibleConseils   = showAllConseils ? universalConseils : universalConseils.slice(0, 2)
 
   return (
     <div className="px-4 pt-6 pb-4">
+
       {/* En-tête mois */}
       <div
         className="rounded-card p-5 mb-5"
@@ -86,23 +142,83 @@ export default function Conseiller() {
         </div>
       </div>
 
-      <PlantesDuMoment title="À semer ce mois-ci"   emoji="🌱" plants={plantesSemer}   />
-      <PlantesDuMoment title="À récolter ce mois-ci" emoji="🧺" plants={plantesRecolte} />
+      {/* Enrichissements contextuels */}
+      {enrichments.length > 0 && (
+        <div className="flex flex-col gap-2 mb-5">
+          {enrichments.map((e, i) => (
+            <div
+              key={i}
+              className="px-4 py-3 rounded-xl text-sm"
+              style={{ background: 'var(--jd-accent-soft)', color: 'var(--jd-accent)', border: '1px solid var(--jd-accent-ring)' }}
+            >
+              {e}
+            </div>
+          ))}
+        </div>
+      )}
 
-      <div>
+      {/* Mes plantes ce mois-ci */}
+      <div className="mb-5">
+        <h2 className="font-display font-bold text-lg mb-3" style={{ color: 'var(--jd-accent)' }}>
+          🌿 Mes plantes ce mois-ci
+        </h2>
+
+        {plants.length === 0 ? (
+          <div
+            className="rounded-card p-5 flex flex-col items-center text-center"
+            style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}
+          >
+            <span style={{ fontSize: 40, lineHeight: 1, marginBottom: 12 }}>🪴</span>
+            <p className="text-sm mb-4" style={{ color: 'var(--jd-ink-muted)' }}>
+              Ajoute tes plantes pour recevoir des conseils personnalisés adaptés à chaque stade.
+            </p>
+            <button
+              onClick={() => onNavigate?.('mon-jardin')}
+              className="px-5 py-2.5 rounded-card text-sm font-semibold tap-scale"
+              style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
+            >
+              Ajoute tes plantes pour des conseils personnalisés →
+            </button>
+          </div>
+        ) : (
+          personalizedList.map(({ plant, stade, conseils }) => (
+            <PlantAdviceCard
+              key={plant.id}
+              plant={plant}
+              stade={stade}
+              conseils={conseils}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Conseils pratiques universels */}
+      <div className="mb-5">
         <h2 className="font-display font-bold text-lg mb-3" style={{ color: 'var(--jd-accent)' }}>
           Conseils pratiques
         </h2>
         <div className="flex flex-col gap-2">
-          {conseil.conseils.map((c, i) => (
-            <ConseilCard key={i} text={c} index={i} />
+          {visibleConseils.map((c, i) => (
+            <ConseilUniversel key={i} text={c} index={i} />
           ))}
         </div>
+        {universalConseils.length > 2 && (
+          <button
+            onClick={() => setShowAllConseils(v => !v)}
+            className="mt-3 text-sm font-semibold tap-scale"
+            style={{ color: 'var(--jd-accent)' }}
+          >
+            {showAllConseils
+              ? '▲ Voir moins'
+              : `▼ Voir les ${universalConseils.length - 2} autres conseils`}
+          </button>
+        )}
       </div>
 
+      {/* Sol */}
       {sol && sol.id !== 'inconnu' && (
         <div
-          className="mt-5 p-4 rounded-card"
+          className="p-4 rounded-card"
           style={{ background: 'var(--jd-warning-soft)', border: '1px solid rgba(240,184,108,0.3)' }}
         >
           <p className="text-xs font-semibold mb-1" style={{ color: 'var(--jd-warning)' }}>

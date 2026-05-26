@@ -1,4 +1,5 @@
 import { PLANTS } from '../data/plants'
+import { PLANT_DURATIONS } from '../data/plantDurations'
 
 // Applique l'offset régional sur le calendrier d'une plante
 // L'offset représente un retard en semaines (positif = plus tard)
@@ -60,5 +61,17 @@ export function getPlantsToHarvestThisMonth(offsetWeeks) {
   return PLANTS.filter(plant => {
     const cal = getCalendarWithOffset(plant.calendar, offsetWeeks)
     return cal[month] === 3
+  })
+}
+
+// Génère un calendrier 12 mois pour une vivace :
+// 0 = dormance/inactif · 2 = végétation · 3 = production
+export function getCalendarForPerennial(plantId) {
+  const d = PLANT_DURATIONS[plantId]
+  if (!d || d.type !== 'perennial') return Array(12).fill(0)
+  return Array.from({ length: 12 }, (_, i) => {
+    if (d.dormancyMonths?.includes(i)) return 0
+    if (d.productionMonths?.includes(i)) return 3
+    return 2
   })
 }

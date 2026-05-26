@@ -2,6 +2,20 @@ import { useState } from 'react'
 import { useProfile } from '../../hooks/useProfile'
 import EmojiIllo from '../EmojiIllo'
 import { openmoji } from '../../utils/openmoji'
+import { ALL_STATUT_LABELS } from '../../utils/plantStatusUtils'
+
+// Stage-aware visual config for ISO/top dots
+const STATUS_CONFIG = {
+  sowed:               { color: '#8B9A50', r: 0.8 },
+  growing:             { color: '#97C459', r: 1.0 },
+  flowering:           { color: '#F9C84A', r: 1.0 },
+  ready:               { color: '#F9A825', r: 1.2 },
+  perennial_dormant:   { color: '#8B7355', r: 0.7 },
+  perennial_growing:   { color: '#7DB87A', r: 0.9 },
+  perennial_producing: { color: '#F9A825', r: 1.1 },
+  perennial_longcycle: { color: '#A0A0A0', r: 0.5 },
+}
+const DEFAULT_CFG = { color: '#97C459', r: 1.0 }
 
 const PX  = 30
 const A30 = Math.PI / 6
@@ -313,14 +327,15 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
           let slotIdx = 0
           for (const ap of p.assigned) {
             const slots = Math.min(ap.qty, Math.max(1, Math.round(ap.qty / Math.max(p.count, 1) * 8)))
+            const cfg   = STATUS_CONFIG[ap.effectiveStatus] ?? DEFAULT_CFG
             for (let i = 0; i < slots && dotPositions.length < 8; i++) {
-              dotPositions.push({ idx: slotIdx, emoji: ap.emoji })
+              dotPositions.push({ idx: slotIdx, emoji: ap.emoji, cfg })
               slotIdx++
             }
           }
           // fill remaining with generic
           while (dotPositions.length < Math.min(p.count, 8)) {
-            dotPositions.push({ idx: slotIdx++, emoji: null })
+            dotPositions.push({ idx: slotIdx++, emoji: null, cfg: DEFAULT_CFG })
           }
 
           return (
@@ -354,17 +369,18 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
                 />
               )}
 
-              {/* Plants — luminous dots */}
-              {dotPositions.map((_, i) => {
+              {/* Plants — luminous dots sized/colored by stage */}
+              {dotPositions.map((dot, i) => {
                 const px2 = p.x + (i % 4 + 0.5) * (p.w / 4)
                 const py2 = p.y + (Math.floor(i / 4) + 0.5) * (p.h / 2)
                 const pt  = iso(px2, py2, 0.23, CX, CY)
+                const { color, r } = dot.cfg
                 return (
                   <g key={i}>
-                    <circle cx={pt.x} cy={pt.y} r="4"   fill="var(--jd-accent)" opacity="0.25" filter="url(#jd3d-glow)" />
-                    <circle cx={pt.x} cy={pt.y} r="1.6" fill="var(--jd-accent)" />
-                    <line x1={pt.x} y1={pt.y - 2} x2={pt.x} y2={pt.y - 6}
-                      stroke="var(--jd-accent)" strokeWidth="1" strokeLinecap="round" />
+                    <circle cx={pt.x} cy={pt.y} r={4 * r}   fill={color} opacity="0.25" filter="url(#jd3d-glow)" />
+                    <circle cx={pt.x} cy={pt.y} r={1.6 * r} fill={color} />
+                    <line x1={pt.x} y1={pt.y - 2} x2={pt.x} y2={pt.y - 2 - (4 * r)}
+                      stroke={color} strokeWidth="1" strokeLinecap="round" />
                   </g>
                 )
               })}
@@ -426,16 +442,28 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
                 stroke={sel ? 'var(--jd-accent)' : 'rgba(90,58,34,0.8)'}
                 strokeWidth={sel ? 2 : 1.5} rx="2" />
               {sel && <rect x={x} y={y} width={w} height={h} fill="rgba(166,227,107,0.10)" stroke="none" rx="2" />}
-              {p.count > 0 && Array.from({ length: Math.min(p.count, 8) }).map((_, i) => {
-                const px2 = x + (i % 4 + 0.5) * (w / 4)
-                const py2 = y + (Math.floor(i / 4) + 0.5) * (h / 2)
-                return (
-                  <g key={i}>
-                    <circle cx={px2} cy={py2} r="3.5" fill="var(--jd-accent)" opacity="0.25" filter="url(#jd3d-glow-t)" />
-                    <circle cx={px2} cy={py2} r="1.5" fill="var(--jd-accent)" />
-                  </g>
-                )
-              })}
+              {p.count > 0 && (() => {
+                // Build same dotPositions for top view
+                const dots = []
+                let si = 0
+                for (const ap of p.assigned) {
+                  const slots = Math.min(ap.qty, Math.max(1, Math.round(ap.qty / Math.max(p.count, 1) * 8)))
+                  const cfg   = STATUS_CONFIG[ap.effectiveStatus] ?? DEFAULT_CFG
+                  for (let k = 0; k < slots && dots.length < 8; k++) dots.push({ si: si++, cfg })
+                }
+                while (dots.length < Math.min(p.count, 8)) dots.push({ si: si++, cfg: DEFAULT_CFG })
+                return dots.map((dot, i) => {
+                  const px2 = x + (i % 4 + 0.5) * (w / 4)
+                  const py2 = y + (Math.floor(i / 4) + 0.5) * (h / 2)
+                  const { color, r } = dot.cfg
+                  return (
+                    <g key={i}>
+                      <circle cx={px2} cy={py2} r={3.5 * r} fill={color} opacity="0.25" filter="url(#jd3d-glow-t)" />
+                      <circle cx={px2} cy={py2} r={1.5 * r} fill={color} />
+                    </g>
+                  )
+                })
+              })()}
               <circle cx={x + w/2} cy={y + h/2} r={sel ? 11 : 9}
                 fill="var(--jd-bg)" stroke="var(--jd-accent)" strokeOpacity={sel ? 0.85 : 0.45} strokeWidth={sel ? 1.2 : 0.7} />
               <text x={x + w/2} y={y + h/2 + 4} textAnchor="middle" fontSize="11">{p.emoji}</text>
@@ -534,7 +562,29 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
                       {p.size}
                     </span>
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--jd-ink-muted)', marginTop: 1 }}>{p.crop}</div>
+                  {p.assigned.length > 0 ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                      {p.assigned.map(ap => {
+                        const statut = ALL_STATUT_LABELS[ap.effectiveStatus] ?? ALL_STATUT_LABELS.sowed
+                        return (
+                          <span
+                            key={ap.id}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 3,
+                              fontSize: 10, fontWeight: 600,
+                              padding: '2px 6px', borderRadius: 999,
+                              background: 'var(--jd-surface-alt)',
+                              color: statut.color,
+                            }}
+                          >
+                            {ap.emoji} {statut.label}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11, color: 'var(--jd-ink-muted)', marginTop: 1 }}>{p.crop}</div>
+                  )}
                 </div>
                 {p.count > 0 && (
                   <div style={{

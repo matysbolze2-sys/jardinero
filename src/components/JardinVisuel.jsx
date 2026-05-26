@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import { ASSOCIATIONS } from '../data/associations'
 import { getFrequencePlante } from '../utils/arrosageUtils'
+import { getEffectiveStatus, getStageMessage, getCycleProgress, ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
+import { getRegionById } from '../data/regions'
 import AddPlantModal from './AddPlantModal'
 
 const COLS = 3
@@ -45,6 +47,22 @@ function nextWaterLabel(plant, profile) {
   if (diff <= 0) return "Aujourd'hui ⚠️"
   if (diff === 1) return 'Demain'
   return `Dans ${diff} jours`
+}
+
+// ─── Soil background per effective status ────────────────────────────────────
+
+function getSoilBg(effectiveStatus, isWatered, isEmpty) {
+  if (isEmpty) return 'repeating-conic-gradient(#7A5020 0%, #7A5020 25%, #6A4018 0%, #6A4018 50%) 0 0 / 10px 10px'
+  if (isWatered) return 'radial-gradient(ellipse at 50% 70%, #2E1A0A 0%, #1A0E04 100%)'
+  switch (effectiveStatus) {
+    case 'ready':               return 'radial-gradient(ellipse at 50% 60%, #8B6914 0%, #5C4A0A 100%)'
+    case 'sowed':               return 'radial-gradient(ellipse at 50% 70%, #6B3A1C 0%, #4A2810 100%)'
+    case 'flowering':           return 'radial-gradient(ellipse at 50% 70%, #5A3818 0%, #3A2010 100%)'
+    case 'perennial_dormant':   return 'radial-gradient(ellipse at 50% 70%, #8A7050 0%, #6A5438 100%)'
+    case 'perennial_producing': return 'radial-gradient(ellipse at 50% 60%, #7A6014 0%, #4A3C08 100%)'
+    case 'perennial_longcycle': return 'radial-gradient(ellipse at 50% 70%, #565660 0%, #3A3A44 100%)'
+    default:                    return 'radial-gradient(ellipse at 50% 70%, #5A3818 0%, #3A2010 100%)'
+  }
 }
 
 // ─── Confetti ────────────────────────────────────────────────────────────────
@@ -101,29 +119,150 @@ function WaterDrops() {
   )
 }
 
+// ─── Plot tile content per stage ─────────────────────────────────────────────
+
+function TileContent({ effectiveStatus, plot, stageMsg }) {
+  switch (effectiveStatus) {
+    case 'sowed':
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: 10, height: 10, borderRadius: '50%',
+            background: '#97C459',
+            boxShadow: '0 0 8px rgba(151,196,89,0.6)',
+            margin: '0 auto 4px',
+          }} />
+          <p style={{ fontSize: 8, color: 'rgba(255,225,170,0.55)', fontWeight: 600, lineHeight: 1.2, padding: '0 2px' }}>
+            {plot.name}
+          </p>
+        </div>
+      )
+
+    case 'growing':
+    case 'perennial_growing':
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 1, marginBottom: 1 }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                fontSize: 13, display: 'inline-block',
+                animation: 'stem-sway 2s ease-in-out infinite',
+                animationDelay: `${i * 0.38}s`,
+                transformOrigin: 'bottom center',
+              }}>🌱</span>
+            ))}
+          </div>
+          <span style={{ fontSize: effectiveStatus === 'perennial_growing' ? 16 : 11 }}>{plot.emoji}</span>
+        </div>
+      )
+
+    case 'flowering':
+      return (
+        <div style={{ textAlign: 'center', position: 'relative', paddingTop: 8 }}>
+          <span style={{
+            position: 'absolute', top: -4, left: '50%', transform: 'translateX(-50%)',
+            fontSize: 10,
+            animation: 'stem-sway 3s ease-in-out infinite',
+            display: 'block',
+          }}>✿</span>
+          <span style={{ fontSize: 20, display: 'block', lineHeight: 1 }}>{plot.emoji}</span>
+        </div>
+      )
+
+    case 'ready':
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <span style={{
+            fontSize: 30, display: 'block', lineHeight: 1,
+            animation: 'bounce-ready 0.9s ease-in-out infinite',
+          }}>{plot.emoji}</span>
+          <div style={{
+            display: 'inline-block',
+            background: '#FAC775', color: '#7A4E00',
+            fontSize: 8, fontWeight: 800,
+            padding: '2px 5px', borderRadius: 4, marginTop: 2,
+            animation: 'badge-bounce 1s ease-in-out infinite',
+          }}>Prêt !</div>
+        </div>
+      )
+
+    case 'perennial_dormant':
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <span style={{ fontSize: 20, display: 'block', filter: 'grayscale(1)', opacity: 0.55 }}>{plot.emoji}</span>
+          <div style={{
+            display: 'inline-block',
+            background: 'rgba(138,112,80,0.4)', color: '#D4C4A8',
+            fontSize: 8, fontWeight: 700,
+            padding: '2px 5px', borderRadius: 4, marginTop: 2,
+          }}>Repos</div>
+        </div>
+      )
+
+    case 'perennial_producing':
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <span style={{
+            fontSize: 28, display: 'block', lineHeight: 1,
+            animation: 'tile-glow 2.2s ease-in-out infinite',
+          }}>{plot.emoji}</span>
+          <div style={{
+            display: 'inline-block',
+            background: 'rgba(249,168,37,0.2)', color: '#F9C84A',
+            fontSize: 8, fontWeight: 700,
+            padding: '2px 5px', borderRadius: 4, marginTop: 2,
+          }}>✨ Récolte</div>
+        </div>
+      )
+
+    case 'perennial_longcycle':
+      return (
+        <div style={{ textAlign: 'center' }}>
+          <span style={{ fontSize: 18, display: 'block', lineHeight: 1 }}>⏳</span>
+          <p style={{ fontSize: 7, color: 'rgba(200,200,230,0.65)', fontWeight: 600, marginTop: 3, lineHeight: 1.2, padding: '0 2px' }}>
+            {stageMsg ?? 'Longue culture'}
+          </p>
+        </div>
+      )
+
+    default:
+      return null
+  }
+}
+
 // ─── Individual plot tile ────────────────────────────────────────────────────
 
-function PlotTile({ plot, index, isConflict, waterMode, onTap, profile }) {
-  const [fx, setFx] = useState(null) // 'harvest' | 'water' | null
+function PlotTile({ plot, index, isConflict, waterMode, onTap, profile, regionOffset }) {
+  const [fx, setFx] = useState(null)
 
-  const isEmpty   = !plot
-  const isReady   = plot?.status === 'ready'
-  const isGrowing = plot?.status === 'growing' || plot?.status === 'flowering'
-  const isSowed   = plot?.status === 'sowed'
+  const isEmpty        = !plot
+  const effectiveStatus = isEmpty ? null : getEffectiveStatus(plot, regionOffset)
+  const stageMsg        = isEmpty ? null : getStageMessage(plot, regionOffset)
+
+  const isReady            = effectiveStatus === 'ready'
+  const isPerennialProducing = effectiveStatus === 'perennial_producing'
+  const isDormant          = effectiveStatus === 'perennial_dormant'
+  const isLongCycle        = effectiveStatus === 'perennial_longcycle'
+  const isGrowingAny       = effectiveStatus === 'growing' || effectiveStatus === 'flowering'
+
   const isWatered = plot && (profile.arrosages?.[plot.id] ?? []).includes(TODAY)
 
-  const soilBg = isEmpty
-    ? 'repeating-conic-gradient(#7A5020 0%, #7A5020 25%, #6A4018 0%, #6A4018 50%) 0 0 / 10px 10px'
-    : isReady
-    ? 'radial-gradient(ellipse at 50% 60%, #8B6914 0%, #5C4A0A 100%)'
-    : isWatered
-    ? 'radial-gradient(ellipse at 50% 70%, #2E1A0A 0%, #1A0E04 100%)'
-    : isSowed
-    ? 'radial-gradient(ellipse at 50% 70%, #6B3A1C 0%, #4A2810 100%)'
-    : 'radial-gradient(ellipse at 50% 70%, #5A3818 0%, #3A2010 100%)'
+  const soilBg     = getSoilBg(effectiveStatus, isWatered && !isEmpty, isEmpty)
+  const woodColor  = isConflict ? '#C05010' : '#5C3A15'
+  const borderColor = isConflict
+    ? '#F97316'
+    : (isReady || isPerennialProducing) ? '#FAC775'
+    : isDormant ? '#8A7050'
+    : isLongCycle ? '#666680'
+    : '#7A4E20'
 
-  const woodColor   = isConflict ? '#C05010' : '#5C3A15'
-  const borderColor = isConflict ? '#F97316' : isReady ? '#FAC775' : '#7A4E20'
+  const glowAnim = (isReady || isPerennialProducing) ? 'tile-glow 2.2s ease-in-out infinite' : 'none'
+  const boxShadow = (isReady || isPerennialProducing)
+    ? `0 0 18px rgba(250,199,117,0.55), 0 5px 0 ${woodColor}, 0 7px 10px rgba(0,0,0,0.4)`
+    : `0 5px 0 ${woodColor}, 0 7px 10px rgba(0,0,0,0.35)`
+
+  const showProgress = isGrowingAny
+  const pct = effectiveStatus === 'flowering' ? 75 : effectiveStatus === 'growing' ? 40 : 0
 
   function handleClick() {
     if (waterMode) {
@@ -142,12 +281,8 @@ function PlotTile({ plot, index, isConflict, waterMode, onTap, profile }) {
     onTap(index, plot)
   }
 
-  const pct = plot?.status === 'flowering' ? 75 : plot?.status === 'growing' ? 40 : 0
-
   return (
     <div onClick={handleClick} style={{ position: 'relative', cursor: 'pointer', marginBottom: 10 }}>
-
-      {/* Top face */}
       <div
         style={{
           width: '100%',
@@ -156,10 +291,8 @@ function PlotTile({ plot, index, isConflict, waterMode, onTap, profile }) {
           borderRadius: 7,
           background: soilBg,
           border: `2px solid ${borderColor}`,
-          boxShadow: isReady
-            ? `0 0 18px rgba(250,199,117,0.55), 0 5px 0 ${woodColor}, 0 7px 10px rgba(0,0,0,0.4)`
-            : `0 5px 0 ${woodColor}, 0 7px 10px rgba(0,0,0,0.35)`,
-          animation: isReady ? 'tile-glow 2.2s ease-in-out infinite' : 'none',
+          boxShadow,
+          animation: glowAnim,
           overflow: 'hidden',
         }}
       >
@@ -170,78 +303,32 @@ function PlotTile({ plot, index, isConflict, waterMode, onTap, profile }) {
           pointerEvents: 'none',
         }} />
 
-        {/* Content */}
         <div style={{
           position: 'absolute', inset: 0, display: 'flex',
           flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         }}>
-
-          {/* Empty */}
           {isEmpty && (
             <span style={{ fontSize: 22, color: 'rgba(255,210,140,0.35)', fontWeight: 700 }}>+</span>
           )}
 
-          {/* Sowed */}
-          {isSowed && (
-            <div style={{ textAlign: 'center', padding: '0 4px' }}>
-              <span style={{ fontSize: 18 }}>{plot.emoji}</span>
-              <p style={{ fontSize: 8, color: 'rgba(255,225,170,0.65)', fontWeight: 600, marginTop: 2, lineHeight: 1.2 }}>
-                {plot.name}
-              </p>
-            </div>
+          {!isEmpty && (
+            <TileContent effectiveStatus={effectiveStatus} plot={plot} stageMsg={stageMsg} />
           )}
 
-          {/* Growing */}
-          {isGrowing && (
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 1, marginBottom: 1 }}>
-                {[0, 1, 2].map(i => (
-                  <span key={i} style={{
-                    fontSize: 13, display: 'inline-block',
-                    animation: 'stem-sway 2s ease-in-out infinite',
-                    animationDelay: `${i * 0.38}s`,
-                    transformOrigin: 'bottom center',
-                  }}>🌱</span>
-                ))}
-              </div>
-              <span style={{ fontSize: 11 }}>{plot.emoji}</span>
-            </div>
-          )}
-
-          {/* Ready */}
-          {isReady && (
-            <div style={{ textAlign: 'center' }}>
-              <span style={{
-                fontSize: 30, display: 'block', lineHeight: 1,
-                animation: 'bounce-ready 0.9s ease-in-out infinite',
-              }}>{plot.emoji}</span>
-              <div style={{
-                display: 'inline-block',
-                background: '#FAC775', color: '#7A4E00',
-                fontSize: 8, fontWeight: 800,
-                padding: '2px 5px', borderRadius: 4, marginTop: 2,
-                animation: 'badge-bounce 1s ease-in-out infinite',
-              }}>Prêt !</div>
-            </div>
-          )}
-
-          {/* Conflict badge */}
           {isConflict && (
             <span style={{ position: 'absolute', top: 3, right: 3, fontSize: 10 }}>⚠️</span>
           )}
-          {/* Watered badge */}
           {isWatered && !isEmpty && (
             <span style={{ position: 'absolute', top: 3, left: 3, fontSize: 10 }}>💧</span>
           )}
 
-          {/* Effects */}
           {fx === 'harvest' && <Confetti />}
           {fx === 'water' && <WaterDrops />}
         </div>
       </div>
 
-      {/* Growth progress bar */}
-      {isGrowing && (
+      {/* Growth progress bar — annual only */}
+      {showProgress && (
         <div style={{
           position: 'absolute', bottom: -10, left: 2, right: 2,
           height: 3, background: 'rgba(0,0,0,0.25)', borderRadius: 2, overflow: 'hidden',
@@ -261,28 +348,26 @@ function PlotTile({ plot, index, isConflict, waterMode, onTap, profile }) {
 
 // ─── Main component ──────────────────────────────────────────────────────────
 
-export default function JardinVisuel({ onClose, onGoToAssociations }) {
+export default function JardinVisuel({ onClose, onGoToAssociations, ctaBanner, onCtaClick }) {
   const raw = useProfile()
   const { profile, addPlant, removePlant, marquerArrose } = raw
 
-  // Inject marquerArrose into profile for tile access
   profile._marquerArrose = marquerArrose
 
+  const regionOffset = getRegionById(profile.region)?.offset ?? 0
   const plants = profile.plants ?? []
 
-  // Build slot array — min 6 slots, always multiple of COLS, at least 1 empty slot
   const slotCount = Math.max(
     MIN_SLOTS,
     Math.ceil((plants.length + 1) / COLS) * COLS
   )
-  const plots = Array.from({ length: slotCount }, (_, i) => plants[i] ?? null)
+  const plots      = Array.from({ length: slotCount }, (_, i) => plants[i] ?? null)
   const conflictSet = getConflictSet(plots)
 
-  const [waterMode, setWaterMode]     = useState(false)
-  const [popup, setPopup]             = useState(null)    // { plant }
+  const [waterMode,    setWaterMode]    = useState(false)
+  const [popup,        setPopup]        = useState(null)
   const [showAddModal, setShowAddModal] = useState(false)
 
-  // Roaming creature
   const [creatureSlot, setCreatureSlot] = useState(0)
   useEffect(() => {
     const id = setInterval(() => {
@@ -297,15 +382,14 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
 
   function handleTap(index, plot) {
     if (!plot) { setShowAddModal(true); return }
-    if (plot.status === 'ready') {
-      // Harvest handled inside PlotTile (confetti then remove)
+    const eff = getEffectiveStatus(plot, regionOffset)
+    if (eff === 'ready') {
       setTimeout(() => removePlant(plot.id), 850)
       return
     }
     setPopup({ plant: plot })
   }
 
-  // Creature position (approximate, for the overlay)
   const creatureRow = Math.floor(creatureSlot / COLS)
   const creatureCol = creatureSlot % COLS
 
@@ -314,7 +398,7 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
       className="fixed inset-0 z-[70] flex flex-col overflow-hidden"
       style={{ maxWidth: 768, left: '50%', transform: 'translateX(-50%)', background: '#162B0A' }}
     >
-      {/* ── Header ── */}
+      {/* Header */}
       <div style={{
         flexShrink: 0,
         background: '#0D1A07',
@@ -323,7 +407,7 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
         paddingTop: 'calc(12px + env(safe-area-inset-top))',
       }}>
         <button onClick={onClose} style={{ color: '#97C459', fontWeight: 600, fontSize: 14 }}>← Retour</button>
-        <p className="font-fraunces" style={{ color: 'white', fontWeight: 700, fontSize: 15 }}>🌿 Mon Jardin</p>
+        <p style={{ color: 'white', fontWeight: 700, fontSize: 15, fontFamily: 'var(--jd-font-display)' }}>🌿 Mon Jardin</p>
         <button
           onClick={() => setWaterMode(m => !m)}
           style={{
@@ -333,12 +417,26 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
             border: waterMode ? '2px solid #93C5FD' : '2px solid #97C459',
             boxShadow: waterMode ? '0 0 10px rgba(147,197,253,0.5)' : 'none',
             transition: 'all 0.2s',
-            animation: waterMode ? 'water-wiggle 0.4s ease' : 'none',
           }}
         >💧</button>
       </div>
 
-      {/* Watering mode banner */}
+      {/* Optional CTA banner */}
+      {ctaBanner && (
+        <button
+          onClick={onCtaClick}
+          style={{
+            flexShrink: 0,
+            background: 'rgba(166,227,107,0.1)', color: '#97C459',
+            textAlign: 'center', fontSize: 12, fontWeight: 600,
+            padding: '8px 16px',
+            borderBottom: '1px solid rgba(166,227,107,0.2)',
+          }}
+        >
+          {ctaBanner}
+        </button>
+      )}
+
       {waterMode && (
         <div style={{
           flexShrink: 0,
@@ -350,14 +448,10 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
         </div>
       )}
 
-      {/* ── Scrollable garden ── */}
+      {/* Scrollable garden */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 12px 0', paddingBottom: 'max(100px, calc(80px + env(safe-area-inset-bottom)))' }}>
-
-        {/* ISO perspective wrapper */}
         <div style={{ perspective: '900px', perspectiveOrigin: '50% -20%' }}>
           <div style={{ transform: 'rotateX(32deg)', transformOrigin: 'top center' }}>
-
-            {/* Grass board */}
             <div style={{
               background: 'linear-gradient(180deg, #3B8A28 0%, #2D6A1F 100%)',
               borderRadius: 14,
@@ -365,8 +459,6 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
               boxShadow: 'inset 0 0 40px rgba(0,0,0,0.25)',
               position: 'relative',
             }}>
-
-              {/* Wooden fence */}
               <div style={{ display: 'flex', gap: 3, marginBottom: 14 }}>
                 {Array.from({ length: 11 }).map((_, i) => (
                   <div key={i} style={{
@@ -378,7 +470,6 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
                 ))}
               </div>
 
-              {/* Plot grid */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${COLS}, 1fr)`,
@@ -394,10 +485,10 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
                     waterMode={waterMode}
                     onTap={handleTap}
                     profile={profile}
+                    regionOffset={regionOffset}
                   />
                 ))}
 
-                {/* Roaming creature */}
                 <div style={{
                   position: 'absolute',
                   top: `calc(${creatureRow} * (100% / ${Math.ceil(slotCount / COLS)}) + 10px)`,
@@ -410,7 +501,6 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
                 }}>🐞</div>
               </div>
 
-              {/* Fence bottom */}
               <div style={{ display: 'flex', gap: 3, marginTop: 16 }}>
                 {Array.from({ length: 11 }).map((_, i) => (
                   <div key={i} style={{
@@ -426,21 +516,21 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
         </div>
 
         {/* Legend */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
           {[
-            { emoji: '🌱', label: 'Semé' },
-            { emoji: '🌿', label: 'En pousse' },
+            { dot: true,   label: 'Semé' },
+            { emoji: '🌱', label: 'En pousse' },
+            { emoji: '✿',  label: 'En fleurs' },
             { badge: true,  label: 'Prêt !' },
+            { emoji: '⏳',  label: 'Longue culture' },
             { emoji: '💧', label: 'Arrosé' },
             { emoji: '⚠️', label: 'Conflit' },
           ].map(item => (
             <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              {item.badge ? (
-                <span style={{
-                  background: '#FAC775', color: '#7A4E00',
-                  fontSize: 8, fontWeight: 800,
-                  padding: '1px 5px', borderRadius: 3,
-                }}>Prêt !</span>
+              {item.dot ? (
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#97C459', boxShadow: '0 0 4px rgba(151,196,89,0.8)' }} />
+              ) : item.badge ? (
+                <span style={{ background: '#FAC775', color: '#7A4E00', fontSize: 8, fontWeight: 800, padding: '1px 5px', borderRadius: 3 }}>Prêt !</span>
               ) : (
                 <span style={{ fontSize: 12 }}>{item.emoji}</span>
               )}
@@ -450,85 +540,110 @@ export default function JardinVisuel({ onClose, onGoToAssociations }) {
         </div>
       </div>
 
-      {/* ── Popup growing plant ── */}
-      {popup && (
-        <div
-          onClick={() => setPopup(null)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 75,
-            background: 'rgba(0,0,0,0.45)',
-            display: 'flex', alignItems: 'flex-end',
-          }}
-        >
+      {/* Popup */}
+      {popup && (() => {
+        const effStatus = getEffectiveStatus(popup.plant, regionOffset)
+        const stageMsg  = getStageMessage(popup.plant, regionOffset)
+        const progress  = getCycleProgress(popup.plant, regionOffset)
+        const statut    = ALL_STATUT_LABELS[effStatus] ?? ALL_STATUT_LABELS.sowed
+        const isPerennial = effStatus.startsWith('perennial_')
+        const showDays    = !isPerennial && daysUntilReady(effStatus) > 0
+
+        return (
           <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              width: '100%', maxWidth: 768, margin: '0 auto',
-              background: 'white',
-              borderRadius: '20px 20px 0 0',
-              padding: '22px 20px 40px',
-              boxShadow: '0 -4px 28px rgba(0,0,0,0.22)',
-            }}
+            onClick={() => setPopup(null)}
+            style={{ position: 'fixed', inset: 0, zIndex: 75, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'flex-end' }}
           >
-            {/* Plant header */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
-              <span style={{ fontSize: 44, lineHeight: 1 }}>{popup.plant.emoji}</span>
-              <div>
-                <p className="font-fraunces" style={{ fontSize: 20, fontWeight: 700, color: '#1A2010' }}>
-                  {popup.plant.name}
-                </p>
-                <p style={{ fontSize: 12, color: '#6B7A5C' }}>En cours de croissance</p>
+            <div
+              onClick={e => e.stopPropagation()}
+              style={{
+                width: '100%', maxWidth: 768, margin: '0 auto',
+                background: 'white',
+                borderRadius: '20px 20px 0 0',
+                padding: '22px 20px 40px',
+                boxShadow: '0 -4px 28px rgba(0,0,0,0.22)',
+              }}
+            >
+              {/* Plant header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+                <span style={{ fontSize: 44, lineHeight: 1 }}>{popup.plant.emoji}</span>
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 20, fontWeight: 700, color: '#1A2010', fontFamily: 'var(--jd-font-display)' }}>
+                    {popup.plant.name}
+                  </p>
+                  <span style={{
+                    display: 'inline-block', marginTop: 3,
+                    fontSize: 11, fontWeight: 600, color: statut.color,
+                    background: 'rgba(90,120,60,0.1)',
+                    padding: '2px 8px', borderRadius: 999,
+                  }}>
+                    {statut.label}
+                  </span>
+                  {stageMsg && (
+                    <p style={{ fontSize: 11, color: '#6B7A5C', marginTop: 4 }}>{stageMsg}</p>
+                  )}
+                </div>
               </div>
-            </div>
 
-            {/* Info cards */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-              <div style={{ background: '#EAF3DE', borderRadius: 12, padding: '10px 12px' }}>
-                <p style={{ fontSize: 10, color: '#6B7A5C' }}>⏱ Récolte estimée</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#3B6D11', marginTop: 3 }}>
-                  ~{daysUntilReady(popup.plant.status)} jours
-                </p>
-              </div>
-              <div style={{ background: '#EAF3DE', borderRadius: 12, padding: '10px 12px' }}>
-                <p style={{ fontSize: 10, color: '#6B7A5C' }}>💧 Prochain arrosage</p>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#3B6D11', marginTop: 3 }}>
-                  {nextWaterLabel(popup.plant, profile)}
-                </p>
-              </div>
-            </div>
+              {/* Cycle progress bar (annual only) */}
+              {progress > 0 && (
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 10, color: '#6B7A5C' }}>Progression du cycle</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#3B6D11' }}>{progress}%</span>
+                  </div>
+                  <div style={{ height: 4, background: '#EAF3DE', borderRadius: 2, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${progress}%`, background: '#97C459', borderRadius: 2 }} />
+                  </div>
+                </div>
+              )}
 
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button
-                onClick={() => {
-                  setPopup(null)
-                  if (onGoToAssociations) onGoToAssociations()
-                  else onClose()
-                }}
-                style={{
-                  flex: 1, padding: '13px',
-                  background: '#EAF3DE', color: '#3B6D11',
-                  borderRadius: 12, fontWeight: 600, fontSize: 13,
-                  border: '1px solid #97C459',
-                }}
-              >
-                🤝 Associations
-              </button>
-              <button
-                onClick={() => setPopup(null)}
-                style={{
-                  flex: 1, padding: '13px',
-                  background: '#3B6D11', color: 'white',
-                  borderRadius: 12, fontWeight: 600, fontSize: 13,
-                }}
-              >
-                Fermer
-              </button>
+              {/* Info cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: showDays ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 16 }}>
+                {showDays && (
+                  <div style={{ background: '#EAF3DE', borderRadius: 12, padding: '10px 12px' }}>
+                    <p style={{ fontSize: 10, color: '#6B7A5C' }}>⏱ Récolte estimée</p>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#3B6D11', marginTop: 3 }}>
+                      ~{daysUntilReady(effStatus)} jours
+                    </p>
+                  </div>
+                )}
+                {effStatus === 'perennial_dormant' ? (
+                  <div style={{ background: '#F5F0E8', borderRadius: 12, padding: '10px 12px' }}>
+                    <p style={{ fontSize: 10, color: '#8A7050' }}>❄️ En repos hivernal</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#8A7050', marginTop: 3 }}>
+                      Reprendra au printemps
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ background: '#EAF3DE', borderRadius: 12, padding: '10px 12px' }}>
+                    <p style={{ fontSize: 10, color: '#6B7A5C' }}>💧 Prochain arrosage</p>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: '#3B6D11', marginTop: 3 }}>
+                      {nextWaterLabel(popup.plant, profile)}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button
+                  onClick={() => { setPopup(null); if (onGoToAssociations) onGoToAssociations(); else onClose() }}
+                  style={{ flex: 1, padding: '13px', background: '#EAF3DE', color: '#3B6D11', borderRadius: 12, fontWeight: 600, fontSize: 13, border: '1px solid #97C459' }}
+                >
+                  🤝 Associations
+                </button>
+                <button
+                  onClick={() => setPopup(null)}
+                  style={{ flex: 1, padding: '13px', background: '#3B6D11', color: 'white', borderRadius: 12, fontWeight: 600, fontSize: 13 }}
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
-      {/* ── Add plant modal ── */}
       {showAddModal && (
         <AddPlantModal
           onAdd={plant => { addPlant(plant); setShowAddModal(false) }}

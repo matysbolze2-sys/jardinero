@@ -16,7 +16,7 @@ function AppContent() {
   const renderPage = () => {
     switch (activePage) {
       case 'home':       return <Home onNavigate={setActivePage} />
-      case 'conseiller': return <Conseiller />
+      case 'conseiller': return <Conseiller onNavigate={setActivePage} />
       case 'calendrier': return <Calendrier onNavigate={setActivePage} />
       case 'mon-jardin': return <MonJardin />
       default:           return <Home onNavigate={setActivePage} />

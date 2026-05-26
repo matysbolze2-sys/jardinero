@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useProfile } from '../../hooks/useProfile'
+import { getEffectiveStatus } from '../../utils/plantStatusUtils'
+import { getRegionById } from '../../data/regions'
 import GardenSetup   from './GardenSetup'
 import PlotEditor     from './PlotEditor'
 import GardenView3D  from './GardenView3D'
@@ -135,7 +137,12 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
 
 // ── Active garden editor ──────────────────────────────────────────────────────
 function ActiveGardenEditor({ garden, plants }) {
-  const { saveGarden } = useProfile()
+  const { saveGarden, profile } = useProfile()
+  const regionOffset    = getRegionById(profile.region)?.offset ?? 0
+  const enrichedPlants  = (plants ?? []).map(p => ({
+    ...p,
+    effectiveStatus: getEffectiveStatus(p, regionOffset),
+  }))
   const [mode,            setMode]            = useState(() => deriveInitialMode(garden))
   const [assigningPlotId, setAssigningPlotId] = useState(null)
 
@@ -195,7 +202,7 @@ function ActiveGardenEditor({ garden, plants }) {
 
         {mode === 'view' && gardenReady && (
           <div style={{ padding: 16 }}>
-            <GardenView3D garden={garden} plants={plants} />
+            <GardenView3D garden={garden} plants={enrichedPlants} />
 
             <button
               onClick={() => setMode('edit')}

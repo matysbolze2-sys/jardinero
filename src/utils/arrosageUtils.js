@@ -1,5 +1,6 @@
 import { PLANTS } from '../data/plants'
 import { PLANTS_BY_CATEGORY } from '../data/plantsExtended'
+import { getEffectiveStatus } from './plantStatusUtils'
 
 // ─── Multiplicateurs sol ───────────────────────────────────────────────────────
 // Ajustent la fréquence de base selon la capacité de rétention du sol.
@@ -36,14 +37,38 @@ function getWaterDays(plantId) {
   return 3
 }
 
+// ─── Multiplicateurs par stade ────────────────────────────────────────────────
+const STAGE_MULT = {
+  sowed:               0.7,  // germination → arrosage plus fréquent
+  growing:             1.0,  // référence
+  flowering:           0.85, // floraison → un peu plus souvent
+  ready:               1.2,  // prêt à récolter → on peut ralentir
+  perennial_dormant:   3.0,  // quasi rien
+  perennial_growing:   1.0,
+  perennial_producing: 0.85,
+  perennial_longcycle: 1.0,
+}
+
 // ─── Fréquence par plante ─────────────────────────────────────────────────────
-// Combine waterDays propre à la plante × sol × saison.
+// Combine waterDays × sol × saison × stade.
 // C'est la fonction principale à utiliser dans les composants.
-export function getFrequencePlante(gardenPlant, soilId) {
-  const waterDays     = getWaterDays(gardenPlant?.plantId)
-  const solMult       = MULTIPLICATEUR_SOL[soilId] ?? 1.0
-  const saisonMult    = getMultiplicateurSaison()
-  return Math.max(1, Math.round(waterDays * solMult * saisonMult))
+export function getFrequencePlante(gardenPlant, soilId, regionOffset = 0) {
+  if (!gardenPlant) return 3
+  const waterDays  = getWaterDays(gardenPlant.plantId)
+  const solMult    = MULTIPLICATEUR_SOL[soilId] ?? 1.0
+  const saisonMult = getMultiplicateurSaison()
+  const status     = getEffectiveStatus(gardenPlant, regionOffset)
+  const stageMult  = STAGE_MULT[status] ?? 1.0
+  return Math.max(1, Math.round(waterDays * solMult * saisonMult * stageMult))
+}
+
+// ─── Suspension d'arrosage ───────────────────────────────────────────────────
+// Retourne false si la plante n'a pas besoin d'être arrosée (dormance, etc.)
+export function shouldWaterToday(gardenPlant, regionOffset = 0) {
+  if (!gardenPlant) return false
+  const status = getEffectiveStatus(gardenPlant, regionOffset)
+  if (status === 'perennial_dormant') return false
+  return true
 }
 
 // ─── Utilitaires communs ──────────────────────────────────────────────────────
