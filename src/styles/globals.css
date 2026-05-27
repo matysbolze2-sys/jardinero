@@ -99,6 +99,13 @@
 
   .tap-scale:active { transform: scale(0.97); transition: transform 0.1s ease; }
 
+  /* Bottom sheet / dialog — max-height avec fallback svh */
+  .modal-sheet-h {
+    max-height: 90vh;
+    max-height: 90svh;
+    overflow: hidden;
+  }
+
   ::-webkit-scrollbar { width: 3px; height: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--jd-accent-dim); border-radius: 2px; }

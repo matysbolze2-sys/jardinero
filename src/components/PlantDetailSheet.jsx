@@ -442,12 +442,9 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="fade-in w-full rounded-t-[20px] md:rounded-[20px] md:max-w-[600px]"
+        className="modal-sheet-h fade-in w-full rounded-t-[20px] md:rounded-[20px] md:max-w-[600px] flex flex-col"
         style={{
           background: 'var(--jd-surface)',
-          maxHeight: '90svh',
-          display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
           boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
         }}
       >
