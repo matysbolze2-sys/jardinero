@@ -437,19 +437,18 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
     )}
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 70, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'flex-end' }}
+      className="fixed inset-0 z-[70] flex items-end justify-center md:items-center"
+      style={{ background: 'rgba(0,0,0,0.6)' }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="fade-in"
+        className="fade-in w-full rounded-t-[20px] md:rounded-[20px] md:max-w-[600px]"
         style={{
-          width: '100%', maxWidth: 768, margin: '0 auto',
           background: 'var(--jd-surface)',
-          borderRadius: '20px 20px 0 0',
           maxHeight: '90svh',
           display: 'flex', flexDirection: 'column',
           overflow: 'hidden',
-          boxShadow: '0 -4px 28px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
         }}
       >
         {/* Handle */}

@@ -230,13 +230,13 @@ export default function AddPlantModal({ onAdd, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex flex-col justify-end"
+      className="fixed inset-0 z-[70] flex items-end justify-center md:items-center"
       style={{ background: 'rgba(13,20,15,0.85)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="fade-in w-full max-w-[768px] mx-auto rounded-t-[28px] flex flex-col"
-        style={{ background: 'var(--jd-surface)', maxHeight: '90svh', boxShadow: '0 -4px 28px rgba(0,0,0,0.5)', overflow: 'hidden' }}
+        className="fade-in w-full rounded-t-[28px] md:rounded-[28px] md:max-w-[560px] flex flex-col"
+        style={{ background: 'var(--jd-surface)', maxHeight: '90svh', boxShadow: '0 8px 40px rgba(0,0,0,0.6)', overflow: 'hidden' }}
       >
         {/* En-tête */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
