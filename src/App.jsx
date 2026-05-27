@@ -65,6 +65,13 @@ export default function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Nettoie les params d'erreur OAuth (ex: ?error=bad_oauth_state) sans rechargement
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('error')) {
+      console.warn('[OAuth error]', params.get('error_description'))
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setUser(session?.user ?? null)

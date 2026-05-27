@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import { STATUT_LABELS } from '../data/plants'
 import { PLANT_DURATIONS } from '../data/plantDurations'
@@ -414,6 +414,11 @@ const TABS = [
 export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose, onReplant }) {
   const [activeTab, setActiveTab]   = useState(initialTab)
   const [showHarvest, setShowHarvest] = useState(false)
+  const contentRef = useRef(null)
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 })
+  }, [activeTab])
   const { profile } = useProfile()
   const regionOffset = getRegionById(profile.region)?.offset ?? 0
   const effectiveStatusForHeader = getEffectiveStatus(plant, regionOffset)
@@ -441,7 +446,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
           width: '100%', maxWidth: 768, margin: '0 auto',
           background: 'var(--jd-surface)',
           borderRadius: '20px 20px 0 0',
-          maxHeight: '90vh',
+          maxHeight: '90svh',
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 -4px 28px rgba(0,0,0,0.5)',
         }}
@@ -490,7 +495,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
         </div>
 
         {/* Contenu scrollable */}
-        <div className="flex-1 overflow-y-auto px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', overscrollBehavior: 'contain' }}>
           {activeTab === 'infos'      && <TabInfos plant={plant} onClose={onClose} onHarvest={handleHarvest} />}
           {activeTab === 'journal'    && <TabJournal    plant={plant} />}
           {activeTab === 'diagnostic' && <TabDiagnostic plant={plant} />}
