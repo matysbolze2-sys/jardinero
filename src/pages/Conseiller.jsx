@@ -6,6 +6,9 @@ import { CONSEILS_MENSUELS } from '../data/conseils'
 import { MOIS_LABELS } from '../data/plants'
 import { ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
 import { getPersonalizedAdvice, getEnrichedMonthlyAdvice } from '../utils/adviceEngine'
+import SuggestionsProactives from '../components/SuggestionsProactives'
+import AiChat from '../components/AiChat'
+import { useGeminiSuggestions } from '../hooks/useGemini'
 
 // ── PlantAdviceCard ────────────────────────────────────────────────────────────
 
@@ -102,6 +105,9 @@ export default function Conseiller({ onNavigate }) {
   const plants           = profile.plants ?? []
   const personalizedList = getPersonalizedAdvice(plants, offsetWeeks, profile.soil)
   const enrichments      = getEnrichedMonthlyAdvice(moisIdx, plants, offsetWeeks)
+
+  const { suggestions, loading: suggestionsLoading } = useGeminiSuggestions(profile, offsetWeeks)
+  const [chatInitialMessage, setChatInitialMessage]   = useState(null)
 
   const universalConseils = conseil.conseils
   const visibleConseils   = showAllConseils ? universalConseils : universalConseils.slice(0, 2)
@@ -227,6 +233,32 @@ export default function Conseiller({ onNavigate }) {
           <p className="text-sm" style={{ color: 'var(--jd-ink)' }}>{sol.tips}</p>
         </div>
       )}
+
+      {/* Séparateur */}
+      <div style={{ height: 1, background: 'var(--jd-border)', margin: 'var(--jd-space-6) 0' }} />
+
+      {/* Suggestions proactives Gemini */}
+      <SuggestionsProactives
+        suggestions={suggestions}
+        loading={suggestionsLoading}
+        onSuggestionClick={(text) => {
+          setChatInitialMessage(text)
+          document.getElementById('jardinero-chat')?.scrollIntoView({ behavior: 'smooth' })
+        }}
+      />
+
+      <div style={{ height: 'var(--jd-space-6)' }} />
+
+      {/* Chat IA */}
+      <div id="jardinero-chat">
+        <AiChat
+          key={chatInitialMessage}
+          profile={profile}
+          regionOffset={offsetWeeks}
+          initialMessage={chatInitialMessage}
+        />
+      </div>
+
     </div>
   )
 }
