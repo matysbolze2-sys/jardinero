@@ -87,6 +87,25 @@ export function respecteRotation(plantId, harvestedAt) {
   return { ok: false, moisRestants, dateAutorisee: dateAutorisee.toISOString().split('T')[0] }
 }
 
+export function getHistoriqueByPlot(plotId, historique) {
+  return (historique ?? [])
+    .filter(h => h.plotId === plotId)
+    .sort((a, b) => new Date(b.harvestedAt) - new Date(a.harvestedAt))
+}
+
+// Suggested successor families after each family (agronomic rotation logic)
+export const ROTATION_SUCCESSION = {
+  'Solanacées':     ['Légumineuses', 'Astéracées',    'Alliacées'],
+  'Cucurbitacées':  ['Légumineuses', 'Alliacées',     'Apiacées'],
+  'Légumineuses':   ['Solanacées',   'Cucurbitacées', 'Brassicacées'],
+  'Alliacées':      ['Astéracées',   'Cucurbitacées', 'Apiacées'],
+  'Apiacées':       ['Légumineuses', 'Brassicacées',  'Astéracées'],
+  'Brassicacées':   ['Légumineuses', 'Solanacées',    'Cucurbitacées'],
+  'Chénopodiacées': ['Légumineuses', 'Solanacées',    'Apiacées'],
+  'Astéracées':     ['Légumineuses', 'Brassicacées',  'Solanacées'],
+  'Poaceae':        ['Légumineuses', 'Solanacées',    'Cucurbitacées'],
+}
+
 export function getRotationConflicts(plantId, historique) {
   const famille = getFamillePlante(plantId)
   if (!famille) return []

@@ -4,6 +4,7 @@ import PlantCard from '../components/PlantCard'
 import AddPlantModal from '../components/AddPlantModal'
 import ArrosageCalendar from '../components/ArrosageCalendar'
 import AssociationsView from '../components/AssociationsView'
+import RotationDashboard from '../components/RotationDashboard'
 import GardenEditor from '../components/GardenEditor'
 import JardinVisuel from '../components/JardinVisuel'
 import PlantDetailSheet from '../components/PlantDetailSheet'
@@ -14,6 +15,7 @@ export default function MonJardin() {
   const { profile, addPlant } = useProfile()
   const [showAddModal,   setShowAddModal]   = useState(false)
   const [activeTab,      setActiveTab]      = useState('plantes')
+  const [assocSubTab,    setAssocSubTab]    = useState('voisines')
   const [detailSheet,    setDetailSheet]    = useState(null)
   const [showJardinVis,  setShowJardinVis]  = useState(false)
 
@@ -142,7 +144,34 @@ export default function MonJardin() {
 
       {plants.length > 0 && activeTab === 'arrosage' && <ArrosageCalendar />}
 
-      {plants.length > 0 && activeTab === 'associations' && <AssociationsView onAddPlant={() => setShowAddModal(true)} />}
+      {plants.length > 0 && activeTab === 'associations' && (
+        <>
+          {/* Sub-toggle Voisines / Rotation */}
+          <div className="flex gap-1 p-1 rounded-xl mb-4" style={{ background: 'var(--jd-surface)' }}>
+            {[
+              { id: 'voisines', label: '🤝 Voisines' },
+              { id: 'rotation', label: '🔄 Rotation' },
+            ].map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => setAssocSubTab(sub.id)}
+                className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                style={{
+                  background: assocSubTab === sub.id ? 'var(--jd-surface-alt)' : 'transparent',
+                  color:      assocSubTab === sub.id ? 'var(--jd-accent)'      : 'var(--jd-ink-muted)',
+                  boxShadow:  assocSubTab === sub.id ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+                }}
+              >
+                {sub.label}
+              </button>
+            ))}
+          </div>
+          {assocSubTab === 'voisines'
+            ? <AssociationsView onAddPlant={() => setShowAddModal(true)} />
+            : <RotationDashboard />
+          }
+        </>
+      )}
 
       {activeTab === 'jardin3d' && has3DGarden && (
         <div style={{ margin: '0 -16px', height: 'calc(100vh - 220px)' }}>
