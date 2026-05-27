@@ -1,4 +1,5 @@
 import EmojiIllo from './EmojiIllo'
+import CompatibilityBadge from './CompatibilityBadge'
 import { useProfile } from '../hooks/useProfile'
 import { getRegionById } from '../data/regions'
 import { getEffectiveStatus, getCycleProgress, ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
@@ -11,6 +12,8 @@ export default function PlantCard({ plant, onOpenDetail }) {
   const progress         = getCycleProgress(plant, regionOffset)
   const statut           = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
   const isManual         = plant.statusOverride != null
+
+  const otherPlants      = (profile.plants ?? []).filter(p => p.id !== plant.id)
 
   const daysSincePlanted = plant.plantedAt
     ? Math.floor((Date.now() - new Date(plant.plantedAt + 'T12:00:00')) / 86400000)
@@ -67,18 +70,21 @@ export default function PlantCard({ plant, onOpenDetail }) {
         </div>
 
         <div className="flex items-center justify-between mt-1.5">
-          <span
-            className="jd-chip"
-            style={{
-              background: statut.color + '22',
-              color:      statut.color,
-              border:     `1px solid ${statut.color}44`,
-              fontSize: 10,
-              padding: '3px 8px',
-            }}
-          >
-            {statut.label}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span
+              className="jd-chip"
+              style={{
+                background: statut.color + '22',
+                color:      statut.color,
+                border:     `1px solid ${statut.color}44`,
+                fontSize: 10,
+                padding: '3px 8px',
+              }}
+            >
+              {statut.label}
+            </span>
+            <CompatibilityBadge plantId={plant.plantId} gardenPlants={otherPlants} size="sm" />
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {isManual && (
               <span style={{ fontSize: 9, fontFamily: 'var(--jd-font-mono)', color: 'var(--jd-ink-muted)' }}>
@@ -92,3 +98,4 @@ export default function PlantCard({ plant, onOpenDetail }) {
     </button>
   )
 }
+

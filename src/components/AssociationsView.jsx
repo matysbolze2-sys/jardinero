@@ -1,47 +1,129 @@
 import { useProfile } from '../hooks/useProfile'
-import { ASSOCIATIONS } from '../data/associations'
+import { ASSOCIATIONS, getBestNeighbors } from '../data/associations'
+import { respecteRotation, getFamillePlante, FAMILLES_ROTATION } from '../data/rotation'
 
-function estDansJardin(nomCompagne, gardenPlants) {
-  const norm = nomCompagne.toLowerCase().trim()
-  return gardenPlants.some(p => p.name.toLowerCase().trim() === norm)
+const CAT_LABELS = {
+  protection:   { label: 'Protection',   icon: '🛡️' },
+  nutrition:    { label: 'Nutrition',    icon: '💚' },
+  pollinisation:{ label: 'Pollinisation',icon: '🐝' },
+  structure:    { label: 'Structure',    icon: '🌿' },
 }
 
-function LigneCompagne({ item, dansJardin, type }) {
+const INTENSITE_CONFIG = {
+  forte:   { label: 'FORT',   color: '#a6e36b', bg: 'rgba(166,227,107,0.12)', border: 'rgba(166,227,107,0.3)' },
+  moderee: { label: 'MODÉRÉ', color: '#f0b86c', bg: 'rgba(240,184,108,0.12)', border: 'rgba(240,184,108,0.3)' },
+  faible:  { label: 'FAIBLE', color: 'var(--jd-ink-muted)', bg: 'rgba(255,255,255,0.05)', border: 'var(--jd-border)' },
+}
+
+const INTENSITE_MAUVAISE = {
+  forte:   { label: 'FORT',   color: '#E05A3A', bg: 'rgba(224,90,58,0.12)',   border: 'rgba(224,90,58,0.3)' },
+  moderee: { label: 'MODÉRÉ', color: '#f0b86c', bg: 'rgba(240,184,108,0.12)', border: 'rgba(240,184,108,0.3)' },
+  faible:  { label: 'FAIBLE', color: 'var(--jd-ink-muted)', bg: 'rgba(255,255,255,0.05)', border: 'var(--jd-border)' },
+}
+
+const DISTANCE_LABEL = {
+  contact: '🤝 Contact',
+  proche:  '📍 Proche',
+  loin:    '🌍 À distance',
+}
+
+function IntensiteBadge({ intensite, type = 'bonne' }) {
+  const cfg = (type === 'bonne' ? INTENSITE_CONFIG : INTENSITE_MAUVAISE)[intensite] ?? INTENSITE_CONFIG.faible
+  return (
+    <span
+      style={{
+        fontSize: 9,
+        padding: '2px 5px',
+        borderRadius: 999,
+        background: cfg.bg,
+        color: cfg.color,
+        border: `1px solid ${cfg.border}`,
+        fontWeight: 700,
+        fontFamily: 'var(--jd-font-mono)',
+        flexShrink: 0,
+      }}
+    >
+      {cfg.label}
+    </span>
+  )
+}
+
+function LigneAssociation({ item, dansJardin, type }) {
   const isBonne = type === 'bonne'
   return (
     <div
-      className="flex items-start gap-2.5 py-2.5 border-b last:border-0"
+      className="flex items-start gap-2.5 py-2 border-b last:border-0"
       style={{ borderColor: isBonne ? 'var(--jd-accent-ring)' : 'rgba(224,90,58,0.2)' }}
     >
-      <span className="text-xl leading-none flex-shrink-0 mt-0.5">{item.emoji}</span>
+      <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{item.emoji}</span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
           <span className="text-sm font-semibold" style={{ color: 'var(--jd-ink)' }}>{item.plante}</span>
+          <IntensiteBadge intensite={item.intensite} type={type} />
+          {item.distance && (
+            <span style={{ fontSize: 9, color: 'var(--jd-ink-muted)', fontFamily: 'var(--jd-font-mono)' }}>
+              {DISTANCE_LABEL[item.distance]}
+            </span>
+          )}
           {dansJardin && (
             <span
-              className="text-xs px-1.5 py-0.5 rounded-chip font-semibold flex-shrink-0"
-              style={
-                isBonne
-                  ? { background: 'var(--jd-accent-soft)', color: 'var(--jd-accent)', border: '1px solid var(--jd-accent-ring)' }
-                  : { background: 'rgba(224,90,58,0.1)', color: '#E05A3A', border: '1px solid rgba(224,90,58,0.3)' }
-              }
+              style={{
+                fontSize: 9,
+                padding: '2px 5px',
+                borderRadius: 999,
+                fontWeight: 600,
+                background: isBonne ? 'var(--jd-accent-soft)' : 'rgba(224,90,58,0.1)',
+                color:      isBonne ? 'var(--jd-accent)'      : '#E05A3A',
+                border:     isBonne ? '1px solid var(--jd-accent-ring)' : '1px solid rgba(224,90,58,0.3)',
+              }}
             >
-              {isBonne ? '✓ Dans votre jardin' : '⚠️ Dans votre jardin'}
+              {isBonne ? '✓ Dans ton jardin' : '⚠️ Dans ton jardin'}
             </span>
           )}
         </div>
-        <p className="text-xs mt-0.5 leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>{item.raison}</p>
+        <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>{item.raison}</p>
       </div>
     </div>
   )
 }
 
-function CarteAssociation({ plant, gardenPlants }) {
+function GroupeBonnes({ items, gardenPlants, categorie }) {
+  const cfg = CAT_LABELS[categorie]
+  return (
+    <div className="mb-3">
+      <div className="flex items-center gap-1.5 mb-1">
+        <span style={{ fontSize: 14 }}>{cfg?.icon ?? '✅'}</span>
+        <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--jd-accent)', fontFamily: 'var(--jd-font-mono)' }}>
+          {cfg?.label ?? categorie}
+        </p>
+      </div>
+      {items.map((item, i) => {
+        const dansJardin = gardenPlants.some(p => (p.name ?? '').toLowerCase() === item.plante.toLowerCase())
+        return <LigneAssociation key={i} item={item} dansJardin={dansJardin} type="bonne" />
+      })}
+    </div>
+  )
+}
+
+function CarteAssociation({ plant, gardenPlants, onAddPlant }) {
   const assoc = ASSOCIATIONS[plant.plantId]
   if (!assoc) return null
 
-  const conflits  = assoc.mauvaises.filter(m => estDansJardin(m.plante, gardenPlants))
-  const synergies = assoc.bonnes.filter(b => estDansJardin(b.plante, gardenPlants))
+  const conflits  = assoc.mauvaises.filter(m => gardenPlants.some(p => (p.name ?? '').toLowerCase() === m.plante.toLowerCase()))
+  const synergies = assoc.bonnes.filter(b => gardenPlants.some(p => (p.name ?? '').toLowerCase() === b.plante.toLowerCase()))
+
+  // Grouper les bonnes par catégorie
+  const grouped = {}
+  for (const b of assoc.bonnes) {
+    const cat = b.categorie ?? 'structure'
+    if (!grouped[cat]) grouped[cat] = []
+    grouped[cat].push(b)
+  }
+  const catOrder = ['protection', 'nutrition', 'pollinisation', 'structure']
+  const sortedGroups = catOrder.filter(c => grouped[c]).concat(Object.keys(grouped).filter(c => !catOrder.includes(c)))
+
+  // Suggestions : bonnes voisines pas encore dans le jardin
+  const manquantes = getBestNeighbors(plant.plantId, gardenPlants).slice(0, 3)
 
   return (
     <div
@@ -51,61 +133,174 @@ function CarteAssociation({ plant, gardenPlants }) {
         background: 'var(--jd-surface)',
       }}
     >
+      {/* En-tête carte */}
       <div
         className="flex items-center justify-between px-4 py-3"
         style={{ background: conflits.length > 0 ? 'rgba(224,90,58,0.08)' : 'var(--jd-surface-alt)' }}
       >
         <div className="flex items-center gap-2">
-          <span className="text-2xl leading-none">{plant.emoji}</span>
+          <span style={{ fontSize: 24, lineHeight: 1 }}>{plant.emoji}</span>
           <span className="font-display font-semibold text-base" style={{ color: 'var(--jd-ink)' }}>{plant.name}</span>
         </div>
         <div className="flex gap-1.5">
           {synergies.length > 0 && (
-            <span className="jd-chip">
-              ✓ {synergies.length} synergie{synergies.length > 1 ? 's' : ''}
-            </span>
+            <span className="jd-chip">✓ {synergies.length} synergie{synergies.length > 1 ? 's' : ''}</span>
           )}
           {conflits.length > 0 && (
-            <span className="text-xs px-2 py-1 rounded-chip font-semibold" style={{ background: 'rgba(224,90,58,0.15)', color: '#E05A3A' }}>
+            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: 'rgba(224,90,58,0.15)', color: '#E05A3A', fontWeight: 600 }}>
               ⚠️ {conflits.length} conflit{conflits.length > 1 ? 's' : ''}
             </span>
           )}
         </div>
       </div>
 
-      <div className="px-4 pt-3 pb-1">
-        <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: 'var(--jd-accent)' }}>
-          ✅ Bonnes voisines
-        </p>
-        {assoc.bonnes.map((item, i) => (
-          <LigneCompagne key={i} item={item} dansJardin={estDansJardin(item.plante, gardenPlants)} type="bonne" />
-        ))}
-      </div>
+      {/* Bonnes associations groupées */}
+      {assoc.bonnes.length > 0 && (
+        <div className="px-4 pt-3 pb-1">
+          {sortedGroups.map(cat => (
+            <GroupeBonnes key={cat} items={grouped[cat]} gardenPlants={gardenPlants} categorie={cat} />
+          ))}
+        </div>
+      )}
 
-      <div className="px-4 pt-3 pb-3">
-        <p className="text-xs font-bold uppercase tracking-wide mb-1" style={{ color: '#E05A3A' }}>
-          ❌ Mauvaises voisines
-        </p>
-        {assoc.mauvaises.map((item, i) => (
-          <LigneCompagne key={i} item={item} dansJardin={estDansJardin(item.plante, gardenPlants)} type="mauvaise" />
-        ))}
-      </div>
+      {/* Mauvaises associations */}
+      {assoc.mauvaises.length > 0 && (
+        <div className="px-4 pt-2 pb-3">
+          <div className="flex items-center gap-1.5 mb-1">
+            <span style={{ fontSize: 14 }}>⚠️</span>
+            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#E05A3A', fontFamily: 'var(--jd-font-mono)' }}>
+              À éviter
+            </p>
+          </div>
+          {assoc.mauvaises.map((item, i) => {
+            const dansJardin = gardenPlants.some(p => (p.name ?? '').toLowerCase() === item.plante.toLowerCase())
+            return <LigneAssociation key={i} item={item} dansJardin={dansJardin} type="mauvaise" />
+          })}
+        </div>
+      )}
+
+      {/* Suggestions de plantes manquantes */}
+      {manquantes.length > 0 && onAddPlant && (
+        <div
+          className="px-4 py-3 flex items-start gap-3"
+          style={{ borderTop: '1px solid var(--jd-border)', background: 'var(--jd-bg)' }}
+        >
+          <span style={{ fontSize: 14, flexShrink: 0, marginTop: 2 }}>💡</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
+              Pour optimiser, ajoute :
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              {manquantes.map((n, i) => (
+                <button
+                  key={i}
+                  onClick={onAddPlant}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-pill tap-scale text-xs font-semibold"
+                  style={{ background: 'var(--jd-accent-soft)', color: 'var(--jd-accent)', border: '1px solid var(--jd-accent-ring)' }}
+                >
+                  {n.emoji} {n.plante} →
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-export default function AssociationsView() {
+function SectionRotation({ historique }) {
+  // Dernière récolte par plantId
+  const latestByPlant = {}
+  for (const h of historique) {
+    if (!h.plantId) continue
+    if (!latestByPlant[h.plantId] || h.harvestedAt > latestByPlant[h.plantId].harvestedAt) {
+      latestByPlant[h.plantId] = h
+    }
+  }
+
+  const alerts = Object.values(latestByPlant)
+    .map(h => {
+      const check = respecteRotation(h.plantId, h.harvestedAt)
+      if (check.ok) return null
+      const famille = getFamillePlante(h.plantId)
+      return { ...h, famille, familleInfo: famille ? FAMILLES_ROTATION[famille] : null, moisRestants: check.moisRestants, dateAutorisee: check.dateAutorisee }
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.moisRestants - a.moisRestants)
+
+  function moisDepuis(dateStr) {
+    const months = Math.floor((Date.now() - new Date(dateStr)) / (1000 * 60 * 60 * 24 * 30))
+    if (months < 1) return 'récemment'
+    if (months === 1) return '1 mois'
+    return `${months} mois`
+  }
+
+  return (
+    <div className="mt-6 mb-4">
+      <div className="flex items-center gap-2 mb-3">
+        <span style={{ fontSize: 18 }}>🔄</span>
+        <h3 className="font-display font-bold text-base" style={{ color: 'var(--jd-ink)' }}>Rotation des cultures</h3>
+      </div>
+
+      {alerts.length === 0 ? (
+        <div
+          className="rounded-card p-4 text-center"
+          style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}
+        >
+          <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>
+            Tes récoltes passées s'afficheront ici pour guider tes rotations.
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {alerts.map((a, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 p-3 rounded-card"
+              style={{ background: 'rgba(240,184,108,0.07)', border: '1px solid rgba(240,184,108,0.3)' }}
+            >
+              <span style={{ fontSize: 22, flexShrink: 0 }}>{a.emoji}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                  <span className="text-sm font-semibold" style={{ color: 'var(--jd-ink)' }}>{a.name}</span>
+                  {a.famille && (
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 999, background: 'rgba(240,184,108,0.15)', color: '#f0b86c', fontWeight: 600, fontFamily: 'var(--jd-font-mono)' }}>
+                      {a.famille}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
+                  Récolté il y a {moisDepuis(a.harvestedAt)} · Évite de replanter avant{' '}
+                  <strong style={{ color: '#f0b86c' }}>
+                    {new Date(a.dateAutorisee).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                  </strong>
+                  {' '}({a.moisRestants} mois restants)
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function AssociationsView({ onAddPlant }) {
   const { profile } = useProfile()
   const plants = profile.plants ?? []
+  const historique = profile.historique ?? []
 
   const plantsAvecAssoc = plants.filter(p => p.plantId && ASSOCIATIONS[p.plantId])
 
+  // Conflits globaux dans le jardin
   const conflitsJardin = []
   for (const plant of plantsAvecAssoc) {
     const assoc = ASSOCIATIONS[plant.plantId]
     for (const mauvaise of assoc.mauvaises) {
-      if (estDansJardin(mauvaise.plante, plants)) {
-        conflitsJardin.push({ plante: plant.name, compagne: mauvaise.plante, raison: mauvaise.raison })
+      if (plants.some(p => (p.name ?? '').toLowerCase() === mauvaise.plante.toLowerCase())) {
+        const cfg = INTENSITE_MAUVAISE[mauvaise.intensite] ?? INTENSITE_MAUVAISE.faible
+        conflitsJardin.push({ plante: plant.name, compagne: mauvaise.plante, raison: mauvaise.raison, intensite: mauvaise.intensite, cfg })
       }
     }
   }
@@ -116,7 +311,7 @@ export default function AssociationsView() {
     return (
       <div className="mt-4 text-center py-10 px-4" style={{ color: 'var(--jd-ink-muted)' }}>
         <p className="text-3xl mb-2">🤝</p>
-        <p className="text-sm">Aucune donnée d'association pour vos plantes actuelles.</p>
+        <p className="text-sm">Aucune donnée d'association pour tes plantes actuelles.</p>
       </div>
     )
   }
@@ -124,30 +319,40 @@ export default function AssociationsView() {
   return (
     <div className="mt-2">
       <p className="text-xs mb-4 leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>
-        Le compagnonnage optimise votre jardin — certaines plantes se protègent mutuellement, d'autres se nuisent.
-        Les badges <span style={{ color: 'var(--jd-accent)', fontWeight: 600 }}>✓ Dans votre jardin</span> et{' '}
-        <span style={{ color: '#E05A3A', fontWeight: 600 }}>⚠️ Dans votre jardin</span> signalent les plantes déjà présentes.
+        Certaines plantes se protègent mutuellement, d'autres se nuisent.
+        Les badges <strong style={{ color: 'var(--jd-accent)' }}>✓ Dans ton jardin</strong> et{' '}
+        <strong style={{ color: '#E05A3A' }}>⚠️ Dans ton jardin</strong> signalent les plantes déjà présentes.
       </p>
 
+      {/* Bannière conflits globaux */}
       {conflitsJardin.length > 0 && (
         <div
           className="rounded-card p-4 mb-5"
           style={{ background: 'rgba(224,90,58,0.08)', border: '1px solid rgba(224,90,58,0.4)' }}
         >
           <p className="font-semibold text-sm mb-2" style={{ color: '#E05A3A' }}>
-            ⚠️ {conflitsJardin.length} conflit{conflitsJardin.length > 1 ? 's' : ''} détecté{conflitsJardin.length > 1 ? 's' : ''} dans votre jardin
+            ⚠️ {conflitsJardin.length} conflit{conflitsJardin.length > 1 ? 's' : ''} détecté{conflitsJardin.length > 1 ? 's' : ''} dans ton jardin
           </p>
           {conflitsJardin.map((c, i) => (
-            <p key={i} className="text-xs mb-1 leading-relaxed" style={{ color: '#E05A3A', opacity: 0.85 }}>
-              • <strong>{c.plante}</strong> + <strong>{c.compagne}</strong> — {c.raison}
-            </p>
+            <div key={i} className="flex items-center gap-2 mb-1 last:mb-0">
+              <span style={{ fontSize: 9, padding: '2px 5px', borderRadius: 999, background: c.cfg.bg, color: c.cfg.color, border: `1px solid ${c.cfg.border}`, fontWeight: 700, fontFamily: 'var(--jd-font-mono)' }}>
+                {c.cfg.label}
+              </span>
+              <p className="text-xs" style={{ color: '#E05A3A', opacity: 0.85 }}>
+                <strong>{c.plante}</strong> + <strong>{c.compagne}</strong> — {c.raison}
+              </p>
+            </div>
           ))}
         </div>
       )}
 
+      {/* Cartes par plante */}
       {plantsAvecAssoc.map(plant => (
-        <CarteAssociation key={plant.id} plant={plant} gardenPlants={plants} />
+        <CarteAssociation key={plant.id} plant={plant} gardenPlants={plants} onAddPlant={onAddPlant} />
       ))}
+
+      {/* Section rotation */}
+      <SectionRotation historique={historique} />
 
       {plants.filter(p => !p.plantId || !ASSOCIATIONS[p.plantId]).length > 0 && (
         <p className="text-xs text-center mt-2" style={{ color: 'var(--jd-ink-muted)' }}>

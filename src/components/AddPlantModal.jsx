@@ -1,13 +1,173 @@
 import { useState } from 'react'
 import { CATEGORIES, PLANTS_BY_CATEGORY } from '../data/plantsExtended'
 import { PLANT_DURATIONS, calculatePlantDates, formatDateFRShort } from '../data/plantDurations'
+import { ASSOCIATIONS, getConflictLevel, getBestNeighbors } from '../data/associations'
+import { getRotationConflicts, respecteRotation, getFamillePlante, FAMILLES_ROTATION } from '../data/rotation'
+import { useProfile } from '../hooks/useProfile'
 import EmojiIllo from './EmojiIllo'
 
 function getToday() {
   return new Date().toISOString().split('T')[0]
 }
 
-// Modal d'ajout en 3 étapes : catégorie → plante → date + variété
+function moisDepuis(dateStr) {
+  const months = Math.floor((Date.now() - new Date(dateStr)) / (1000 * 60 * 60 * 24 * 30))
+  if (months < 1) return 'récemment'
+  if (months === 1) return 'il y a 1 mois'
+  return `il y a ${months} mois`
+}
+
+function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
+  const { profile } = useProfile()
+  if (!selectedPlant) return null
+
+  const gardenPlants = profile.plants ?? []
+  const historique   = profile.historique ?? []
+  if (gardenPlants.length === 0 && historique.length === 0) return null
+
+  // Conflits directs avec le jardin
+  const conflitsMauvaises = (ASSOCIATIONS[selectedPlant.id]?.mauvaises ?? []).filter(m =>
+    gardenPlants.some(p => (p.name ?? '').toLowerCase() === m.plante.toLowerCase())
+  )
+
+  // Synergies avec plantes existantes
+  const synergies = (ASSOCIATIONS[selectedPlant.id]?.bonnes ?? []).filter(b =>
+    gardenPlants.some(p => (p.name ?? '').toLowerCase() === b.plante.toLowerCase())
+  )
+
+  // Rotation
+  const rotationConflicts = getRotationConflicts(selectedPlant.id, historique)
+  const mostRecent = rotationConflicts.length > 0
+    ? rotationConflicts.sort((a, b) => new Date(b.harvestedAt) - new Date(a.harvestedAt))[0]
+    : null
+  const rotationCheck = mostRecent ? respecteRotation(selectedPlant.id, mostRecent.harvestedAt) : { ok: true }
+  const famille = getFamillePlante(selectedPlant.id)
+  const familleInfo = famille ? FAMILLES_ROTATION[famille] : null
+
+  // Suggestions de remplacement (même catégorie, sans conflit fort)
+  const showSuggestions = conflitsMauvaises.some(m => m.intensite === 'forte') || !rotationCheck.ok
+  const suggestions = showSuggestions
+    ? plantsOfCat
+        .filter(p => p.id !== selectedPlant.id)
+        .filter(p => !gardenPlants.some(gp => gp.plantId && getConflictLevel(p.id, gp.plantId) === 'forte'))
+        .slice(0, 3)
+    : []
+
+  // Rien à montrer
+  if (conflitsMauvaises.length === 0 && synergies.length === 0 && rotationCheck.ok) return null
+
+  return (
+    <div className="mb-4">
+      <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: 'var(--jd-ink-muted)', fontFamily: 'var(--jd-font-mono)' }}>
+        Compatibilité avec ton jardin
+      </p>
+
+      {/* Cas 1 : Rotation */}
+      {!rotationCheck.ok && (
+        <div
+          className="rounded-card p-3 mb-2"
+          style={{ background: 'rgba(240,184,108,0.08)', border: '1px solid rgba(240,184,108,0.35)' }}
+        >
+          <p className="text-sm font-semibold mb-1" style={{ color: '#f0b86c' }}>
+            🔄 Rotation des cultures
+          </p>
+          <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>
+            Tu as récolté {familleInfo?.emoji ?? ''} <strong style={{ color: 'var(--jd-ink)' }}>{mostRecent.name}</strong>{' '}
+            ({famille}) {moisDepuis(mostRecent.harvestedAt)}.{' '}
+            Attends encore{' '}
+            <strong style={{ color: '#f0b86c' }}>{rotationCheck.moisRestants} mois</strong>{' '}
+            avant de replanter cette famille.
+          </p>
+        </div>
+      )}
+
+      {/* Cas 2 : Conflits */}
+      {conflitsMauvaises.length > 0 && (
+        <div
+          className="rounded-card p-3 mb-2"
+          style={{ background: 'rgba(224,90,58,0.06)', border: '1px solid rgba(224,90,58,0.35)' }}
+        >
+          <p className="text-sm font-semibold mb-1.5" style={{ color: '#E05A3A' }}>
+            ⚠️ Attention aux voisines
+          </p>
+          {conflitsMauvaises.map((m, i) => {
+            const gp = gardenPlants.find(p => (p.name ?? '').toLowerCase() === m.plante.toLowerCase())
+            return (
+              <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{m.emoji}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-semibold" style={{ color: 'var(--jd-ink)' }}>
+                      Tu as {gp?.name ?? m.plante}
+                    </span>
+                    <span
+                      className="text-xs px-1.5 py-0.5 rounded-chip font-bold flex-shrink-0"
+                      style={{
+                        background: m.intensite === 'forte' ? 'rgba(224,90,58,0.15)' : 'rgba(240,184,108,0.15)',
+                        color:      m.intensite === 'forte' ? '#E05A3A' : '#f0b86c',
+                        fontSize: 9,
+                      }}
+                    >
+                      {m.intensite === 'forte' ? 'FORT' : m.intensite === 'moderee' ? 'MODÉRÉ' : 'FAIBLE'}
+                    </span>
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>{m.raison}</p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Cas 3 : Synergies */}
+      {conflitsMauvaises.length === 0 && synergies.length > 0 && (
+        <div
+          className="rounded-card p-3 mb-2"
+          style={{ background: 'rgba(166,227,107,0.06)', border: '1px solid rgba(166,227,107,0.3)' }}
+        >
+          <p className="text-sm font-semibold mb-1.5" style={{ color: 'var(--jd-accent)' }}>
+            ✅ Bonnes nouvelles
+          </p>
+          {synergies.slice(0, 2).map((b, i) => {
+            const gp = gardenPlants.find(p => (p.name ?? '').toLowerCase() === b.plante.toLowerCase())
+            return (
+              <div key={i} className="flex items-start gap-2 mb-1 last:mb-0">
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{b.emoji}</span>
+                <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>
+                  <strong style={{ color: 'var(--jd-ink)' }}>{gp?.name ?? b.plante}</strong>{' '}
+                  {b.raison.charAt(0).toLowerCase() + b.raison.slice(1)}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* Suggestions de remplacement */}
+      {suggestions.length > 0 && (
+        <div className="rounded-card p-3" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
+          <p className="text-xs font-semibold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
+            💡 À la place, tu pourrais planter :
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {suggestions.map(p => (
+              <button
+                key={p.id}
+                onClick={() => onSelectPlant(p)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill tap-scale text-xs font-semibold"
+                style={{ background: 'var(--jd-accent-soft)', color: 'var(--jd-accent)', border: '1px solid var(--jd-accent-ring)' }}
+              >
+                <span>{p.emoji}</span>
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AddPlantModal({ onAdd, onClose }) {
   const [step, setStep]                   = useState(1)
   const [selectedCat, setSelectedCat]     = useState(null)
@@ -160,7 +320,6 @@ export default function AddPlantModal({ onAdd, onClose }) {
                   </button>
                 )
               })}
-              {/* Option "Autre" */}
               <button
                 onClick={handleSelectAutre}
                 className="flex flex-col items-center gap-2 px-3 py-4 rounded-card text-center tap-scale col-span-2"
@@ -236,6 +395,13 @@ export default function AddPlantModal({ onAdd, onClose }) {
                   </div>
                 </div>
               )}
+
+              {/* Section compatibilité */}
+              <CompatibilitySection
+                selectedPlant={selectedPlant}
+                plantsOfCat={plantsOfCat}
+                onSelectPlant={handleSelectPlant}
+              />
 
               {/* Variété optionnelle */}
               <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--jd-ink-muted)' }}>

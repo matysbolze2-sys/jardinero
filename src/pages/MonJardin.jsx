@@ -142,7 +142,7 @@ export default function MonJardin() {
 
       {plants.length > 0 && activeTab === 'arrosage' && <ArrosageCalendar />}
 
-      {plants.length > 0 && activeTab === 'associations' && <AssociationsView />}
+      {plants.length > 0 && activeTab === 'associations' && <AssociationsView onAddPlant={() => setShowAddModal(true)} />}
 
       {activeTab === 'jardin3d' && has3DGarden && (
         <div style={{ margin: '0 -16px', height: 'calc(100vh - 220px)' }}>
