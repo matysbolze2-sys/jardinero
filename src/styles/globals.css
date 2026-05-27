@@ -99,11 +99,30 @@
 
   .tap-scale:active { transform: scale(0.97); transition: transform 0.1s ease; }
 
-  /* Bottom sheet / dialog — max-height avec fallback svh */
-  .modal-sheet-h {
+  /* ── Overlay modal ───────────────────────────────────── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 70;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+
+  /* ── Carte modale (bottom sheet → dialog centré) ──── */
+  .modal-card {
+    width: 100%;
     max-height: 90vh;
     max-height: 90svh;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-radius: 28px 28px 0 0;
+  }
+
+  @media (min-width: 768px) {
+    .modal-overlay { align-items: center; }
+    .modal-card    { max-width: 560px; border-radius: 28px; }
   }
 
   ::-webkit-scrollbar { width: 3px; height: 3px; }

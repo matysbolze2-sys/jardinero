@@ -437,12 +437,12 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
     )}
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[70] flex items-end justify-center md:items-center"
+      className="modal-overlay"
       style={{ background: 'rgba(0,0,0,0.6)' }}
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="modal-sheet-h fade-in w-full rounded-t-[20px] md:rounded-[20px] md:max-w-[600px] flex flex-col"
+        className="modal-card fade-in"
         style={{
           background: 'var(--jd-surface)',
           boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
