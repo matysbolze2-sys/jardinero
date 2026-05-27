@@ -31,6 +31,7 @@ export default function HarvestCelebration({ plant, onClose, onReplant }) {
       plantedAt:   plant.plantedAt,
       harvestedAt: new Date().toISOString().split('T')[0],
       variety:     plant.variety ?? null,
+      plotId:      plant.plotId ?? null,
     })
     const t = setTimeout(() => setPhase('replant'), 2200)
     return () => clearTimeout(t)
