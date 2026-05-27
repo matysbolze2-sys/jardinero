@@ -448,6 +448,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
           borderRadius: '20px 20px 0 0',
           maxHeight: '90svh',
           display: 'flex', flexDirection: 'column',
+          overflow: 'hidden',
           boxShadow: '0 -4px 28px rgba(0,0,0,0.5)',
         }}
       >
@@ -495,7 +496,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
         </div>
 
         {/* Contenu scrollable */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', overscrollBehavior: 'contain' }}>
+        <div ref={contentRef} className="flex-1 overflow-y-auto px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', overscrollBehavior: 'contain', minHeight: 0 }}>
           {activeTab === 'infos'      && <TabInfos plant={plant} onClose={onClose} onHarvest={handleHarvest} />}
           {activeTab === 'journal'    && <TabJournal    plant={plant} />}
           {activeTab === 'diagnostic' && <TabDiagnostic plant={plant} />}

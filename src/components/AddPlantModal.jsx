@@ -236,7 +236,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
     >
       <div
         className="fade-in w-full max-w-[768px] mx-auto rounded-t-[28px] flex flex-col"
-        style={{ background: 'var(--jd-surface)', maxHeight: '90dvh', boxShadow: '0 -4px 28px rgba(0,0,0,0.5)' }}
+        style={{ background: 'var(--jd-surface)', maxHeight: '90svh', boxShadow: '0 -4px 28px rgba(0,0,0,0.5)', overflow: 'hidden' }}
       >
         {/* En-tête */}
         <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
@@ -278,7 +278,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
 
         {/* ── Étape 1 : Catégorie ── */}
         {step === 1 && (
-          <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+          <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', minHeight: 0 }}>
             <div className="flex flex-col gap-2 pb-4">
               {CATEGORIES.map(cat => (
                 <button
@@ -308,7 +308,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
 
         {/* ── Étape 2 : Plante ── */}
         {step === 2 && (
-          <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+          <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', minHeight: 0 }}>
             <div className="grid grid-cols-2 gap-2 pb-4">
               {plantsOfCat.map(plant => {
                 const dur = PLANT_DURATIONS[plant.id]
@@ -344,7 +344,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
         {/* ── Étape 3 : Date + variété ── */}
         {step === 3 && (
           <>
-            <div className="flex-1 overflow-y-auto px-4 pb-2">
+            <div className="flex-1 overflow-y-auto px-4 pb-2" style={{ minHeight: 0 }}>
               {selectedPlant ? (
                 <div
                   className="flex items-center gap-3 p-3 rounded-card mb-4"
