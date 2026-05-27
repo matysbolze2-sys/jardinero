@@ -126,7 +126,7 @@ RÈGLES :
         ...conversationHistory,
         { role: 'user', parts: [{ text: userMessage }] },
       ],
-      system_instruction: {
+      systemInstruction: {
         parts: [{ text: systemPrompt }],
       },
       generationConfig: {
@@ -140,15 +140,22 @@ RÈGLES :
         `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
       )
-      if (!res.ok) throw new Error(`${res.status}`)
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        console.error('[Gemini chat error]', res.status, errBody)
+        throw new Error(`${res.status} — ${errBody?.error?.message ?? 'erreur API'}`)
+      }
       const data = await res.json()
       const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Pas de réponse.'
       setHistory(prev => prev.map((h, i) =>
         i === prev.length - 1 ? { ...h, assistant: text } : h
       ))
-    } catch {
+    } catch (err) {
+      console.error('[Gemini chat]', err)
       setHistory(prev => prev.map((h, i) =>
-        i === prev.length - 1 ? { ...h, assistant: 'Une erreur est survenue. Vérifie ta connexion.' } : h
+        i === prev.length - 1
+          ? { ...h, assistant: `Erreur : ${err.message}` }
+          : h
       ))
     } finally {
       setLoading(false)
