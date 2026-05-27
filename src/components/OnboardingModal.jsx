@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { REGIONS } from '../data/regions'
 import { SOILS } from '../data/soils'
 import { useSoilData } from '../hooks/useSoilData'
@@ -311,6 +311,7 @@ function StepConfirmation({ region, soil, coords, onConfirm, onSkip, onBack }) {
 // ─── Modal principale ─────────────────────────────────────────────────────────
 
 const TOTAL_STEPS = 4
+const STORAGE_KEY = 'jd_onboarding'
 
 export default function OnboardingModal({ onComplete }) {
   const [step, setStep]                         = useState(1)
@@ -319,6 +320,26 @@ export default function OnboardingModal({ onComplete }) {
   const [coords, setCoords]                     = useState(null)
   const [geoLoading, setGeoLoading]             = useState(false)
   const [geoError, setGeoError]                 = useState(null)
+
+  // Restaure la progression depuis sessionStorage (résiste aux changements de fenêtre)
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY))
+      if (saved?.step > 1) {
+        setStep(saved.step)
+        setSelectedRegion(saved.region ?? null)
+        setSelectedSoil(saved.soil ?? null)
+        setCoords(saved.coords ?? null)
+      }
+    } catch {}
+  }, [])
+
+  // Sauvegarde la progression à chaque changement
+  useEffect(() => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+      step, region: selectedRegion, soil: selectedSoil, coords,
+    }))
+  }, [step, selectedRegion, selectedSoil, coords])
 
   const region = REGIONS.find(r => r.id === selectedRegion)
   const soil   = SOILS.find(s => s.id === selectedSoil)
@@ -361,10 +382,12 @@ export default function OnboardingModal({ onComplete }) {
   }
 
   const handleConfirm = () => {
+    sessionStorage.removeItem(STORAGE_KEY)
     onComplete(selectedRegion ?? 'loire', selectedSoil ?? 'inconnu', coords)
   }
 
   const handleSkip = () => {
+    sessionStorage.removeItem(STORAGE_KEY)
     onComplete(selectedRegion ?? 'loire', selectedSoil ?? 'inconnu', coords)
   }
 

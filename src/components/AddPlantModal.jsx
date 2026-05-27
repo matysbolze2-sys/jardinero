@@ -170,6 +170,8 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
 
 export default function AddPlantModal({ onAdd, onClose }) {
   const [step, setStep]                   = useState(1)
+  const [submitting, setSubmitting]       = useState(false)
+  const [addError, setAddError]           = useState(null)
   const [selectedCat, setSelectedCat]     = useState(null)
   const [selectedPlant, setSelectedPlant] = useState(null)
   const [customName, setCustomName]       = useState('')
@@ -201,11 +203,13 @@ export default function AddPlantModal({ onAdd, onClose }) {
     setStep(3)
   }
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const name  = selectedPlant ? selectedPlant.label : customName.trim()
     const emoji = selectedPlant ? selectedPlant.emoji  : (cat?.defaultEmoji ?? '🌿')
     if (!name) return
-    onAdd({
+    setSubmitting(true)
+    setAddError(null)
+    const result = await onAdd({
       id:        crypto.randomUUID(),
       name,
       emoji,
@@ -214,6 +218,11 @@ export default function AddPlantModal({ onAdd, onClose }) {
       status:    'sowed',
       variety:   variety.trim() || null,
     })
+    setSubmitting(false)
+    if (result?.error) {
+      setAddError(result.error)
+      return
+    }
     onClose()
   }
 
@@ -421,17 +430,22 @@ export default function AddPlantModal({ onAdd, onClose }) {
 
             {/* Bouton fixe en bas */}
             <div className="px-4 pt-3 flex-shrink-0" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+              {addError && (
+                <div className="mb-3 px-3 py-2 rounded-xl text-xs" style={{ background: 'rgba(224,90,58,0.1)', border: '1px solid rgba(224,90,58,0.3)', color: '#E05A3A' }}>
+                  Erreur : {addError}
+                </div>
+              )}
               <button
                 onClick={handleAdd}
-                disabled={!canConfirm}
+                disabled={!canConfirm || submitting}
                 className="w-full py-4 rounded-card font-bold text-sm tap-scale transition-all"
                 style={{
-                  background: canConfirm ? 'var(--jd-accent)' : 'var(--jd-accent-soft)',
-                  color:      canConfirm ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
-                  cursor:     canConfirm ? 'pointer' : 'not-allowed',
+                  background: canConfirm && !submitting ? 'var(--jd-accent)' : 'var(--jd-accent-soft)',
+                  color:      canConfirm && !submitting ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
+                  cursor:     canConfirm && !submitting ? 'pointer' : 'not-allowed',
                 }}
               >
-                Ajouter au jardin 🌱
+                {submitting ? 'Ajout en cours…' : 'Ajouter au jardin 🌱'}
               </button>
             </div>
           </>

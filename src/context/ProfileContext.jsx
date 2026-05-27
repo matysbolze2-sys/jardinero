@@ -132,12 +132,13 @@ export function ProfileProvider({ children, user }) {
   // ── Onboarding ──────────────────────────────────────────────────────────────
 
   const completeOnboarding = useCallback(async (region, soil, coords = null) => {
-    await supabase.from('profiles').upsert({
+    const { error } = await supabase.from('profiles').upsert({
       id: user.id,
       region, soil, coords,
       settings: { onboardingDone: true },
       updated_at: new Date().toISOString(),
     })
+    if (error) console.error('Erreur completeOnboarding:', error)
     setProfile(prev => ({
       ...prev, region, soil, coords,
       settings: { ...prev.settings, onboardingDone: true },
@@ -164,7 +165,11 @@ export function ProfileProvider({ children, user }) {
       season_end: dates?.seasonEnd ?? null,
     }).select().single()
 
-    if (!error && data) {
+    if (error) {
+      console.error('Erreur addPlant:', error)
+      return { error: error.message }
+    }
+    if (data) {
       setProfile(prev => ({
         ...prev,
         plants: [...prev.plants, {
@@ -179,9 +184,8 @@ export function ProfileProvider({ children, user }) {
           ...(dates ?? {}),
         }],
       }))
-    } else if (error) {
-      console.error('Erreur addPlant:', error)
     }
+    return { error: null }
   }, [user, profile.region])
 
   const removePlant = useCallback(async (plantId) => {
