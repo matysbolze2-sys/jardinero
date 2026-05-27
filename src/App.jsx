@@ -86,7 +86,7 @@ export default function App() {
 
   // SIGNED_IN → dashboard, ProfileProvider monté seulement ici
   return (
-    <ProfileProvider>
+    <ProfileProvider user={user}>
       <AppContent />
     </ProfileProvider>
   )

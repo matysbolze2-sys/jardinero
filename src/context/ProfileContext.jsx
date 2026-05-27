@@ -1,6 +1,5 @@
 import { createContext, useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { useAuth } from '../hooks/useAuth'
 import { getRegionById } from '../data/regions'
 import { calculatePlantDates } from '../data/plantDurations'
 import { getWeekKey } from '../data/taches'
@@ -16,8 +15,7 @@ const PROFIL_INITIAL = {
   settings: { onboardingDone: false },
 }
 
-export function ProfileProvider({ children }) {
-  const { user }            = useAuth()
+export function ProfileProvider({ children, user }) {
   const [profile, setProfile] = useState(PROFIL_INITIAL)
   const [loading, setLoading] = useState(true)
 
