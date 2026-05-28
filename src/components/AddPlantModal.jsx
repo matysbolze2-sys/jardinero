@@ -232,8 +232,8 @@ export default function AddPlantModal({ onAdd, onClose }) {
     <div
       className="modal-overlay"
       style={{ background: 'rgba(13,20,15,0.85)' }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
+      <div className="modal-spacer" onClick={onClose} />
       <div
         className="modal-card fade-in"
         style={{ background: 'var(--jd-surface)', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}

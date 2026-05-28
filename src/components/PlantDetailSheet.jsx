@@ -440,6 +440,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
       className="modal-overlay"
       style={{ background: 'rgba(0,0,0,0.6)' }}
     >
+      <div className="modal-spacer" />
       <div
         onClick={e => e.stopPropagation()}
         className="modal-card fade-in"
