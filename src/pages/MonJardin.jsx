@@ -6,7 +6,6 @@ import ArrosageCalendar from '../components/ArrosageCalendar'
 import AssociationsView from '../components/AssociationsView'
 import RotationDashboard from '../components/RotationDashboard'
 import GardenEditor from '../components/GardenEditor'
-import JardinVisuel from '../components/JardinVisuel'
 import PlantDetailSheet from '../components/PlantDetailSheet'
 import { STATUT_LABELS } from '../data/plants'
 import { ASSOCIATIONS } from '../data/associations'
@@ -17,23 +16,8 @@ export default function MonJardin() {
   const [activeTab,      setActiveTab]      = useState('plantes')
   const [assocSubTab,    setAssocSubTab]    = useState('voisines')
   const [detailSheet,    setDetailSheet]    = useState(null)
-  const [showJardinVis,  setShowJardinVis]  = useState(false)
 
   const plants = profile.plants ?? []
-
-  // A "configured" 3D garden has at least one plot with at least one assigned plant
-  const has3DGarden = (profile.gardens ?? []).some(g =>
-    (g.plots ?? []).some(p => (p.plants ?? []).length > 0)
-  )
-
-  function handleJardin3DTab() {
-    if (has3DGarden) {
-      setActiveTab('jardin3d')
-    } else {
-      setActiveTab('jardin3d')
-      setShowJardinVis(true)
-    }
-  }
 
   const hasConflits = plants.some(p => {
     if (!p.plantId || !ASSOCIATIONS[p.plantId]) return false
@@ -90,7 +74,7 @@ export default function MonJardin() {
             { id: 'plantes',      label: '🌱 Plantes',   onClick: () => setActiveTab('plantes') },
             { id: 'arrosage',     label: '💧 Arrosage',  onClick: () => setActiveTab('arrosage') },
             { id: 'associations', label: hasConflits ? '⚠️ Voisines' : '🤝 Voisines', onClick: () => setActiveTab('associations') },
-            { id: 'jardin3d',     label: '🌿 Jardin 3D', onClick: handleJardin3DTab },
+            { id: 'jardin3d',     label: '🌿 Jardin 3D', onClick: () => setActiveTab('jardin3d') },
           ].map(tab => (
             <button
               key={tab.id}
@@ -173,41 +157,10 @@ export default function MonJardin() {
         </>
       )}
 
-      {activeTab === 'jardin3d' && has3DGarden && (
+      {activeTab === 'jardin3d' && (
         <div style={{ margin: '0 -16px', height: 'calc(100vh - 220px)' }}>
           <GardenEditor />
         </div>
-      )}
-
-      {activeTab === 'jardin3d' && !has3DGarden && !showJardinVis && (
-        <div
-          className="mt-4 flex flex-col items-center text-center py-10 px-6 rounded-card"
-          style={{ background: 'var(--jd-surface)', border: '1px dashed var(--jd-accent-ring)' }}
-        >
-          <span className="text-4xl mb-3">🗺️</span>
-          <p className="font-semibold text-sm mb-1" style={{ color: 'var(--jd-ink)' }}>
-            Jardin 3D non configuré
-          </p>
-          <p className="text-xs mb-4" style={{ color: 'var(--jd-ink-muted)' }}>
-            Configure tes parcelles pour voir la vue spatiale de ton potager.
-          </p>
-          <button
-            onClick={() => setShowJardinVis(true)}
-            className="text-xs font-semibold tap-scale"
-            style={{ color: 'var(--jd-accent)' }}
-          >
-            Voir la vue grille →
-          </button>
-        </div>
-      )}
-
-      {showJardinVis && (
-        <JardinVisuel
-          onClose={() => { setShowJardinVis(false); setActiveTab('plantes') }}
-          onGoToAssociations={() => { setShowJardinVis(false); setActiveTab('associations') }}
-          ctaBanner={!has3DGarden ? 'Configure ton jardin 3D pour une vue spatiale de tes parcelles →' : undefined}
-          onCtaClick={!has3DGarden ? () => { setShowJardinVis(false); setActiveTab('jardin3d') } : undefined}
-        />
       )}
 
       {showAddModal && (

@@ -44,7 +44,7 @@ function AppContent() {
   if (profileLoading) return <LoadingScreen />
 
   return (
-    <div className="flex flex-col min-h-dvh" style={{ background: 'var(--jd-bg)' }}>
+    <div className="flex flex-col flex-1" style={{ background: 'var(--jd-bg)', minHeight: '100dvh' }}>
       {!profile.settings.onboardingDone && (
         <OnboardingModal onComplete={completeOnboarding} />
       )}

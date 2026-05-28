@@ -8,12 +8,17 @@
 @layer base {
   * { box-sizing: border-box; }
 
+  html {
+    height: 100%;
+  }
+
   body {
     background-color: var(--jd-bg);
     color: var(--jd-ink);
     font-family: var(--jd-font-sans);
     -webkit-font-smoothing: antialiased;
     margin: 0;
+    height: 100%;
     min-height: 100dvh;
     overflow-x: hidden;
   }
@@ -21,6 +26,7 @@
   #root {
     max-width: 768px;
     margin: 0 auto;
+    height: 100%;
     min-height: 100dvh;
     display: flex;
     flex-direction: column;
