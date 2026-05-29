@@ -119,7 +119,7 @@ function SectionParcelles({ gardens, historique }) {
                   </span>
                 </div>
                 {!check.ok && (
-                  <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 999, background: famInfo?.couleurBord ?? '#FED7AA', color: '#92400E', fontWeight: 700 }}>
+                  <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 999, background: famInfo?.couleurBord ?? '#FED7AA', color: 'var(--jd-earth)', fontWeight: 700 }}>
                     ⏳ {check.moisRestants} mois
                   </span>
                 )}
@@ -137,7 +137,7 @@ function SectionParcelles({ gardens, historique }) {
                 </p>
               )}
               {!check.ok && (
-                <p className="text-xs mb-1.5" style={{ color: '#92400E' }}>
+                <p className="text-xs mb-1.5" style={{ color: 'var(--jd-earth)' }}>
                   Recommandé à partir de <strong>{dateLocale(check.dateAutorisee)}</strong>
                 </p>
               )}
@@ -185,7 +185,7 @@ function SectionSansParcelle({ historique }) {
             <div
               key={i}
               className="flex items-start gap-3 p-3 rounded-card"
-              style={{ background: 'rgba(240,184,108,0.07)', border: '1px solid rgba(240,184,108,0.3)' }}
+              style={{ background: 'var(--jd-warning-soft)', border: '1px solid var(--jd-warning-ring)' }}
             >
               <span style={{ fontSize: 20, flexShrink: 0 }}>{h.emoji}</span>
               <div>
@@ -195,7 +195,7 @@ function SectionSansParcelle({ historique }) {
                 </p>
                 <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
                   Récolté {moisDepuis(h.harvestedAt)} · Évite cette famille avant{' '}
-                  <strong style={{ color: '#f0b86c' }}>{dateLocale(h.check.dateAutorisee)}</strong>
+                  <strong style={{ color: 'var(--jd-warning)' }}>{dateLocale(h.check.dateAutorisee)}</strong>
                 </p>
               </div>
             </div>

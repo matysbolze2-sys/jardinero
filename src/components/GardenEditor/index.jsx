@@ -123,7 +123,7 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
                 >✏️</button>
                 <button
                   onClick={() => { if (window.confirm(`Supprimer « ${g.name} » ?`)) onDelete(g.id) }}
-                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, color: '#E05A3A' }}
+                  style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, color: 'var(--jd-harvest)' }}
                   title="Supprimer"
                 >🗑</button>
               </>

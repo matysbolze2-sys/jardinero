@@ -68,14 +68,14 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
           className="rounded-card p-3 mb-2"
           style={{ background: 'rgba(240,184,108,0.08)', border: '1px solid rgba(240,184,108,0.35)' }}
         >
-          <p className="text-sm font-semibold mb-1" style={{ color: '#f0b86c' }}>
+          <p className="text-sm font-semibold mb-1" style={{ color: 'var(--jd-warning)' }}>
             🔄 Rotation des cultures
           </p>
           <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>
             Tu as récolté {familleInfo?.emoji ?? ''} <strong style={{ color: 'var(--jd-ink)' }}>{mostRecent.name}</strong>{' '}
             ({famille}) {moisDepuis(mostRecent.harvestedAt)}.{' '}
             Attends encore{' '}
-            <strong style={{ color: '#f0b86c' }}>{rotationCheck.moisRestants} mois</strong>{' '}
+            <strong style={{ color: 'var(--jd-warning)' }}>{rotationCheck.moisRestants} mois</strong>{' '}
             avant de replanter cette famille.
           </p>
         </div>
@@ -85,9 +85,9 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
       {conflitsMauvaises.length > 0 && (
         <div
           className="rounded-card p-3 mb-2"
-          style={{ background: 'rgba(224,90,58,0.06)', border: '1px solid rgba(224,90,58,0.35)' }}
+          style={{ background: 'var(--jd-harvest-soft)', border: '1px solid rgba(224,90,58,0.35)' }}
         >
-          <p className="text-sm font-semibold mb-1.5" style={{ color: '#E05A3A' }}>
+          <p className="text-sm font-semibold mb-1.5" style={{ color: 'var(--jd-harvest)' }}>
             ⚠️ Attention aux voisines
           </p>
           {conflitsMauvaises.map((m, i) => {
@@ -103,8 +103,8 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
                     <span
                       className="text-xs px-1.5 py-0.5 rounded-chip font-bold flex-shrink-0"
                       style={{
-                        background: m.intensite === 'forte' ? 'rgba(224,90,58,0.15)' : 'rgba(240,184,108,0.15)',
-                        color:      m.intensite === 'forte' ? '#E05A3A' : '#f0b86c',
+                        background: m.intensite === 'forte' ? 'var(--jd-harvest-soft)' : 'var(--jd-warning-soft)',
+                        color:      m.intensite === 'forte' ? 'var(--jd-harvest)' : 'var(--jd-warning)',
                         fontSize: 9,
                       }}
                     >
@@ -433,7 +433,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
             {/* Bouton fixe en bas */}
             <div className="px-4 pt-3" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))', position: 'sticky', bottom: 0, background: 'var(--jd-surface)' }}>
               {addError && (
-                <div className="mb-3 px-3 py-2 rounded-xl text-xs" style={{ background: 'rgba(224,90,58,0.1)', border: '1px solid rgba(224,90,58,0.3)', color: '#E05A3A' }}>
+                <div className="mb-3 px-3 py-2 rounded-xl text-xs" style={{ background: 'var(--jd-harvest-soft)', border: '1px solid var(--jd-harvest-ring)', color: 'var(--jd-harvest)' }}>
                   Erreur : {addError}
                 </div>
               )}

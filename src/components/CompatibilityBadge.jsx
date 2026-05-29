@@ -15,8 +15,8 @@ export default function CompatibilityBadge({ plantId, gardenPlants = [], size = 
   const hasFort   = conflicts.some(c => c.level === 'forte')
   const icon      = hasFort ? '🚫' : '⚠️'
   const label     = hasFort ? 'Conflit' : 'Attention'
-  const color     = hasFort ? '#E05A3A' : '#f0b86c'
-  const bg        = hasFort ? 'rgba(224,90,58,0.1)' : 'rgba(240,184,108,0.1)'
+  const color     = hasFort ? 'var(--jd-harvest)' : 'var(--jd-warning)'
+  const bg        = hasFort ? 'var(--jd-harvest-soft)' : 'var(--jd-warning-soft)'
   const border    = hasFort ? 'rgba(224,90,58,0.25)' : 'rgba(240,184,108,0.25)'
 
   return (

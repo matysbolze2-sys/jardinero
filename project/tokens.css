@@ -1,0 +1,197 @@
+/* ============================================================
+   JARDINERO · Design Tokens
+   Direction : Forêt Profonde v2
+   ============================================================ */
+
+:root {
+  /* ── Surfaces ─────────────────────────────────────────── */
+  --jd-bg:           #16261b;   /* fond global, vert profond aéré */
+  --jd-surface:      #1f3225;   /* card opaque, raised */
+  --jd-surface-alt:  #27412e;   /* surface secondaire, hover */
+  --jd-surface-glass:rgba(255, 255, 255, 0.06); /* sur fond bg */
+  --jd-border:       rgba(255, 255, 255, 0.10);
+
+  /* ── Texte ─────────────────────────────────────────────── */
+  --jd-ink:        #f1f6ed;
+  --jd-ink-muted:  #a3b8a8;
+
+  /* ── Accent (vert lime) ────────────────────────────────── */
+  --jd-accent:      #a6e36b;
+  --jd-accent-dim:  #6c9a3a;
+  --jd-accent-ink:  #0d160f;   /* texte sur fond accent */
+  --jd-accent-soft: rgba(166, 227, 107, 0.10); /* fond chip, surface tintée */
+  --jd-accent-ring: rgba(166, 227, 107, 0.22);
+
+  /* ── Sémantiques ────────────────────────────────────────── */
+  --jd-warning: #f0b86c;
+  --jd-warning-soft: rgba(240, 184, 108, 0.12);
+  --jd-earth:   #a06840;
+
+  /* ── Typographie ────────────────────────────────────────── */
+  --jd-font-display: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif;
+  --jd-font-sans:    'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
+  --jd-font-mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
+
+  /* ── Échelle typo (px) ─────────────────────────────────── */
+  --jd-text-xs:  10px;
+  --jd-text-sm:  12px;
+  --jd-text-md:  14px;
+  --jd-text-lg:  16px;
+  --jd-text-xl:  22px;
+  --jd-text-2xl: 28px;
+  --jd-text-3xl: 38px;
+
+  /* ── Forme ─────────────────────────────────────────────── */
+  --jd-radius-sm:   10px;
+  --jd-radius:      18px;
+  --jd-radius-lg:   24px;
+  --jd-radius-pill: 999px;
+
+  /* ── Espacement (4px base) ─────────────────────────────── */
+  --jd-space-1: 4px;
+  --jd-space-2: 8px;
+  --jd-space-3: 12px;
+  --jd-space-4: 16px;
+  --jd-space-5: 20px;
+  --jd-space-6: 24px;
+  --jd-space-8: 32px;
+
+  /* ── Ombres ────────────────────────────────────────────── */
+  --jd-shadow-card:
+    0 24px 48px -24px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  --jd-shadow-illo:
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45))
+    drop-shadow(0 0 10px rgba(166, 227, 107, 0.55));
+
+  /* ── Glass / blur ──────────────────────────────────────── */
+  --jd-blur: 20px;
+}
+
+/* ============================================================
+   Reset léger
+   ============================================================ */
+
+body {
+  background: var(--jd-bg);
+  color: var(--jd-ink);
+  font-family: var(--jd-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   Utilities — réutilisables partout
+   ============================================================ */
+
+/* Surface verre dépoli sur fond bg */
+.jd-glass {
+  background: var(--jd-surface-glass);
+  backdrop-filter: blur(var(--jd-blur));
+  -webkit-backdrop-filter: blur(var(--jd-blur));
+  border: 1px solid var(--jd-border);
+  border-radius: var(--jd-radius);
+}
+
+/* Card pleine (sans transparence) */
+.jd-card {
+  background: var(--jd-surface);
+  border: 1px solid var(--jd-border);
+  border-radius: var(--jd-radius);
+  box-shadow: var(--jd-shadow-card);
+}
+
+/* Kicker — petit label mono uppercase */
+.jd-kicker {
+  font-family: var(--jd-font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--jd-accent);
+}
+
+/* Titre display */
+.jd-title {
+  font-family: var(--jd-font-display);
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  line-height: 1.05;
+}
+
+/* ============================================================
+   EmojiIllo — illustration emoji avec halo + drop-shadow
+   ============================================================ */
+
+.jd-illo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--illo-size, 56px);
+  height: var(--illo-size, 56px);
+  border-radius: 50%;
+}
+
+.jd-illo[data-ring="true"] {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.04),
+    rgba(0, 0, 0, 0.18)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.jd-illo::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--illo-size, 56px) * -0.18);
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    var(--jd-accent-ring) 0%,
+    var(--jd-accent-soft) 35%,
+    transparent 65%
+  );
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.jd-illo > img {
+  position: relative;
+  z-index: 1;
+  width: calc(var(--illo-size, 56px) * 0.66);
+  height: calc(var(--illo-size, 56px) * 0.66);
+  display: block;
+  transform: translateY(-1px);
+  filter: var(--jd-shadow-illo);
+}
+
+/* ============================================================
+   Chip — pill avec emoji optionnel
+   ============================================================ */
+
+.jd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--jd-accent-soft);
+  border: 1px solid var(--jd-accent-ring);
+  border-radius: var(--jd-radius-pill);
+  font-family: var(--jd-font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--jd-accent);
+}
+
+.jd-chip--active {
+  background: var(--jd-accent);
+  color: var(--jd-accent-ink);
+  border-color: transparent;
+}
+
+.jd-chip > img {
+  width: 16px;
+  height: 16px;
+  filter:
+    drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4))
+    drop-shadow(0 0 6px rgba(166, 227, 107, 0.35));
+}

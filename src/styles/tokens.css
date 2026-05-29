@@ -40,10 +40,23 @@
   --jd-stage-perennial-producing: #e8a040;  /* ambre production */
   --jd-stage-perennial-longcycle: #9da8a8;  /* gris-teal cycle long */
 
-  /* ── Sémantiques ──────────────────────────────────────*/
-  --jd-warning:      #f0b86c;
-  --jd-warning-soft: rgba(240, 184, 108, 0.12);
-  --jd-earth:        #a06840;
+  /* ── Séquoia — tokens sémantiques additionnels ────────
+     Exprimés dans les 3 familles, avec variantes soft/ring */
+  --jd-forest:       #20512E;   /* forêt dense, bg boutons actifs */
+  --jd-harvest:      #DE5F1D;   /* récolte/alerte, orange-rouge action */
+  --jd-harvest-soft: rgba(222, 95, 29, 0.12);
+  --jd-harvest-ring: rgba(222, 95, 29, 0.30);
+  --jd-water:        #3D828A;   /* eau/arrosage, teal irrigation */
+  --jd-water-soft:   rgba(61, 130, 138, 0.12);
+  --jd-water-ring:   rgba(61, 130, 138, 0.30);
+  --jd-warning:      #FCBA6A;   /* avertissement chaud, amber */
+  --jd-warning-soft: rgba(252, 186, 106, 0.12);
+  --jd-warning-ring: rgba(252, 186, 106, 0.30);
+  --jd-earth:        #a06840;   /* terre, bois naturel */
+
+  /* ── Stagger ─────────────────────────────────────────
+     Délai d'entrée entre items successifs en animation   */
+  --jd-stagger:      40ms;
 
   /* ── Texte ─────────────────────────────────────────── */
   --jd-ink:       #f0f6ec;

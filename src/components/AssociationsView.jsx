@@ -10,14 +10,14 @@ const CAT_LABELS = {
 }
 
 const INTENSITE_CONFIG = {
-  forte:   { label: 'FORT',   color: '#a6e36b', bg: 'rgba(166,227,107,0.12)', border: 'rgba(166,227,107,0.3)' },
-  moderee: { label: 'MODÉRÉ', color: '#f0b86c', bg: 'rgba(240,184,108,0.12)', border: 'rgba(240,184,108,0.3)' },
+  forte:   { label: 'FORT',   color: 'var(--jd-accent)', bg: 'rgba(166,227,107,0.12)', border: 'rgba(166,227,107,0.3)' },
+  moderee: { label: 'MODÉRÉ', color: 'var(--jd-warning)', bg: 'var(--jd-warning-soft)', border: 'var(--jd-warning-ring)' },
   faible:  { label: 'FAIBLE', color: 'var(--jd-ink-muted)', bg: 'rgba(255,255,255,0.05)', border: 'var(--jd-border)' },
 }
 
 const INTENSITE_MAUVAISE = {
-  forte:   { label: 'FORT',   color: '#E05A3A', bg: 'rgba(224,90,58,0.12)',   border: 'rgba(224,90,58,0.3)' },
-  moderee: { label: 'MODÉRÉ', color: '#f0b86c', bg: 'rgba(240,184,108,0.12)', border: 'rgba(240,184,108,0.3)' },
+  forte:   { label: 'FORT',   color: 'var(--jd-harvest)', bg: 'var(--jd-harvest-soft)',   border: 'var(--jd-harvest-ring)' },
+  moderee: { label: 'MODÉRÉ', color: 'var(--jd-warning)', bg: 'var(--jd-warning-soft)', border: 'var(--jd-warning-ring)' },
   faible:  { label: 'FAIBLE', color: 'var(--jd-ink-muted)', bg: 'rgba(255,255,255,0.05)', border: 'var(--jd-border)' },
 }
 
@@ -53,7 +53,7 @@ function LigneAssociation({ item, dansJardin, type }) {
   return (
     <div
       className="flex items-start gap-2.5 py-2 border-b last:border-0"
-      style={{ borderColor: isBonne ? 'var(--jd-accent-ring)' : 'rgba(224,90,58,0.2)' }}
+      style={{ borderColor: isBonne ? 'var(--jd-accent-ring)' : 'var(--jd-harvest-ring)' }}
     >
       <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{item.emoji}</span>
       <div className="flex-1 min-w-0">
@@ -72,9 +72,9 @@ function LigneAssociation({ item, dansJardin, type }) {
                 padding: '2px 5px',
                 borderRadius: 999,
                 fontWeight: 600,
-                background: isBonne ? 'var(--jd-accent-soft)' : 'rgba(224,90,58,0.1)',
-                color:      isBonne ? 'var(--jd-accent)'      : '#E05A3A',
-                border:     isBonne ? '1px solid var(--jd-accent-ring)' : '1px solid rgba(224,90,58,0.3)',
+                background: isBonne ? 'var(--jd-accent-soft)' : 'var(--jd-harvest-soft)',
+                color:      isBonne ? 'var(--jd-accent)'      : 'var(--jd-harvest)',
+                border:     isBonne ? '1px solid var(--jd-accent-ring)' : '1px solid var(--jd-harvest-ring)',
               }}
             >
               {isBonne ? '✓ Dans ton jardin' : '⚠️ Dans ton jardin'}
@@ -129,14 +129,14 @@ function CarteAssociation({ plant, gardenPlants, onAddPlant }) {
     <div
       className="rounded-card overflow-hidden mb-4"
       style={{
-        border:     conflits.length > 0 ? '1px solid rgba(224,90,58,0.4)' : '1px solid var(--jd-border)',
+        border:     conflits.length > 0 ? '1px solid var(--jd-harvest-ring)' : '1px solid var(--jd-border)',
         background: 'var(--jd-surface)',
       }}
     >
       {/* En-tête carte */}
       <div
         className="flex items-center justify-between px-4 py-3"
-        style={{ background: conflits.length > 0 ? 'rgba(224,90,58,0.08)' : 'var(--jd-surface-alt)' }}
+        style={{ background: conflits.length > 0 ? 'var(--jd-harvest-soft)' : 'var(--jd-surface-alt)' }}
       >
         <div className="flex items-center gap-2">
           <span style={{ fontSize: 24, lineHeight: 1 }}>{plant.emoji}</span>
@@ -147,7 +147,7 @@ function CarteAssociation({ plant, gardenPlants, onAddPlant }) {
             <span className="jd-chip">✓ {synergies.length} synergie{synergies.length > 1 ? 's' : ''}</span>
           )}
           {conflits.length > 0 && (
-            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: 'rgba(224,90,58,0.15)', color: '#E05A3A', fontWeight: 600 }}>
+            <span style={{ fontSize: 10, padding: '2px 7px', borderRadius: 999, background: 'var(--jd-harvest-soft)', color: 'var(--jd-harvest)', fontWeight: 600 }}>
               ⚠️ {conflits.length} conflit{conflits.length > 1 ? 's' : ''}
             </span>
           )}
@@ -168,7 +168,7 @@ function CarteAssociation({ plant, gardenPlants, onAddPlant }) {
         <div className="px-4 pt-2 pb-3">
           <div className="flex items-center gap-1.5 mb-1">
             <span style={{ fontSize: 14 }}>⚠️</span>
-            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: '#E05A3A', fontFamily: 'var(--jd-font-mono)' }}>
+            <p className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--jd-harvest)', fontFamily: 'var(--jd-font-mono)' }}>
               À éviter
             </p>
           </div>
@@ -258,21 +258,21 @@ function SectionRotation({ historique }) {
             <div
               key={i}
               className="flex items-start gap-3 p-3 rounded-card"
-              style={{ background: 'rgba(240,184,108,0.07)', border: '1px solid rgba(240,184,108,0.3)' }}
+              style={{ background: 'var(--jd-warning-soft)', border: '1px solid var(--jd-warning-ring)' }}
             >
               <span style={{ fontSize: 22, flexShrink: 0 }}>{a.emoji}</span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                   <span className="text-sm font-semibold" style={{ color: 'var(--jd-ink)' }}>{a.name}</span>
                   {a.famille && (
-                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 999, background: 'rgba(240,184,108,0.15)', color: '#f0b86c', fontWeight: 600, fontFamily: 'var(--jd-font-mono)' }}>
+                    <span style={{ fontSize: 9, padding: '2px 6px', borderRadius: 999, background: 'var(--jd-warning-soft)', color: 'var(--jd-warning)', fontWeight: 600, fontFamily: 'var(--jd-font-mono)' }}>
                       {a.famille}
                     </span>
                   )}
                 </div>
                 <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
                   Récolté il y a {moisDepuis(a.harvestedAt)} · Évite de replanter avant{' '}
-                  <strong style={{ color: '#f0b86c' }}>
+                  <strong style={{ color: 'var(--jd-warning)' }}>
                     {new Date(a.dateAutorisee).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                   </strong>
                   {' '}({a.moisRestants} mois restants)
@@ -321,16 +321,16 @@ export default function AssociationsView({ onAddPlant }) {
       <p className="text-xs mb-4 leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>
         Certaines plantes se protègent mutuellement, d'autres se nuisent.
         Les badges <strong style={{ color: 'var(--jd-accent)' }}>✓ Dans ton jardin</strong> et{' '}
-        <strong style={{ color: '#E05A3A' }}>⚠️ Dans ton jardin</strong> signalent les plantes déjà présentes.
+        <strong style={{ color: 'var(--jd-harvest)' }}>⚠️ Dans ton jardin</strong> signalent les plantes déjà présentes.
       </p>
 
       {/* Bannière conflits globaux */}
       {conflitsJardin.length > 0 && (
         <div
           className="rounded-card p-4 mb-5"
-          style={{ background: 'rgba(224,90,58,0.08)', border: '1px solid rgba(224,90,58,0.4)' }}
+          style={{ background: 'var(--jd-harvest-soft)', border: '1px solid var(--jd-harvest-ring)' }}
         >
-          <p className="font-semibold text-sm mb-2" style={{ color: '#E05A3A' }}>
+          <p className="font-semibold text-sm mb-2" style={{ color: 'var(--jd-harvest)' }}>
             ⚠️ {conflitsJardin.length} conflit{conflitsJardin.length > 1 ? 's' : ''} détecté{conflitsJardin.length > 1 ? 's' : ''} dans ton jardin
           </p>
           {conflitsJardin.map((c, i) => (
@@ -338,7 +338,7 @@ export default function AssociationsView({ onAddPlant }) {
               <span style={{ fontSize: 9, padding: '2px 5px', borderRadius: 999, background: c.cfg.bg, color: c.cfg.color, border: `1px solid ${c.cfg.border}`, fontWeight: 700, fontFamily: 'var(--jd-font-mono)' }}>
                 {c.cfg.label}
               </span>
-              <p className="text-xs" style={{ color: '#E05A3A', opacity: 0.85 }}>
+              <p className="text-xs" style={{ color: 'var(--jd-harvest)', opacity: 0.85 }}>
                 <strong>{c.plante}</strong> + <strong>{c.compagne}</strong> — {c.raison}
               </p>
             </div>

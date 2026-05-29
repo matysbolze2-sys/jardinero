@@ -26,15 +26,15 @@ function getPlotFillColor(plotId, historique, selected) {
 
 function getPlotStrokeColor(plotId, historique, selected) {
   const hist = getHistoriqueByPlot(plotId, historique)
-  if (hist.length === 0) return selected ? '#3B6D11' : '#97C459'
+  if (hist.length === 0) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
   const last = hist[0]
-  if (!last.plantId) return selected ? '#3B6D11' : '#97C459'
+  if (!last.plantId) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
   const famille = getFamillePlante(last.plantId)
-  if (!famille) return selected ? '#3B6D11' : '#97C459'
+  if (!famille) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
   const check = respecteRotation(last.plantId, last.harvestedAt)
-  if (check.ok) return selected ? '#3B6D11' : '#97C459'
+  if (check.ok) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
   const fam = FAMILLES_ROTATION[famille]
-  return fam?.couleurBord ?? (selected ? '#3B6D11' : '#97C459')
+  return fam?.couleurBord ?? (selected ? 'var(--jd-forest)' : 'var(--jd-accent)')
 }
 
 function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag, onResize, scale }) {
@@ -120,7 +120,7 @@ function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag,
       {plot.label && (
         <text
           x={px + pw / 2} y={py + 14}
-          textAnchor="middle" fontSize={10} fill="#3B6D11"
+          textAnchor="middle" fontSize={10} fill="var(--jd-forest)"
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
           {plot.label}
@@ -141,14 +141,14 @@ function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag,
         <rect
           x={px + pw - 10} y={py + ph - 10}
           width={10} height={10}
-          fill="#3B6D11" rx={2}
+          fill="var(--jd-forest)" rx={2}
           style={{ cursor: 'se-resize', touchAction: 'none' }}
           onPointerDown={onPointerDownResize}
         />
       )}
       <text
         x={px + pw / 2} y={py + ph / 2 + (plot.label ? 6 : 4)}
-        textAnchor="middle" fontSize={9} fill="#5A7040"
+        textAnchor="middle" fontSize={9} fill="var(--jd-ink-muted)"
         style={{ pointerEvents: 'none', userSelect: 'none' }}
       >
         {plot.width}×{plot.height}m
@@ -176,7 +176,7 @@ function RotationTooltip({ plotId, historique }) {
       style={{
         background: check.ok ? '#EAF3DE' : (famInfo?.couleur ?? '#FFFBEB'),
         border: `1px solid ${famInfo?.couleurBord ?? '#DDE8CC'}`,
-        color: '#3B6D11',
+        color: 'var(--jd-forest)',
       }}
     >
       <p>
@@ -185,7 +185,7 @@ function RotationTooltip({ plotId, historique }) {
         {' — '} récolté {dateStr}
       </p>
       {!check.ok && (
-        <p className="mt-0.5" style={{ color: '#92400E' }}>
+        <p className="mt-0.5" style={{ color: 'var(--jd-earth)' }}>
           ⏳ {famille} déconseillé{famInfo ? '' : 'es'} encore {check.moisRestants} mois
           {check.dateAutorisee && ` (jusqu'à ${new Date(check.dateAutorisee).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })})`}
         </p>
@@ -260,20 +260,20 @@ export default function PlotEditor({ garden, onSave, onBack }) {
   return (
     <div className="flex flex-col gap-0 h-full">
       <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #DDE8CC' }}>
-        <button onClick={onBack} className="text-sm font-medium" style={{ color: '#5A7040' }}>
+        <button onClick={onBack} className="text-sm font-medium" style={{ color: 'var(--jd-ink-muted)' }}>
           ← Dimensions
         </button>
-        <h2 className="font-fraunces text-base" style={{ color: '#1A2010' }}>Parcelles</h2>
+        <h2 className="font-fraunces text-base" style={{ color: 'var(--jd-accent-ink)' }}>Parcelles</h2>
         <button
           onClick={handleSave}
           className="text-sm font-semibold px-3 py-1 rounded-chip"
-          style={{ background: '#3B6D11', color: 'white' }}
+          style={{ background: 'var(--jd-forest)', color: 'white' }}
         >
           Suivant →
         </button>
       </div>
 
-      <p className="text-xs text-center py-2" style={{ color: '#5A7040' }}>
+      <p className="text-xs text-center py-2" style={{ color: 'var(--jd-ink-muted)' }}>
         Double-clic sur le sol pour ajouter une parcelle. Glisse pour déplacer.
       </p>
 
@@ -283,7 +283,7 @@ export default function PlotEditor({ garden, onSave, onBack }) {
           ref={svgRef}
           width={gw} height={gh}
           style={{
-            background: '#F0F7E6', border: '2px solid #97C459',
+            background: '#F0F7E6', border: '2px solid var(--jd-accent)',
             borderRadius: 8, cursor: 'crosshair', touchAction: 'none', display: 'block',
           }}
           onClick={handleSvgClick}
@@ -321,7 +321,7 @@ export default function PlotEditor({ garden, onSave, onBack }) {
               value={selectedPlot.label}
               onChange={e => handleLabelChange(e.target.value)}
               className="flex-1 text-sm px-3 py-1.5 rounded-chip"
-              style={{ border: '1px solid #97C459', outline: 'none' }}
+              style={{ border: '1px solid var(--jd-accent)', outline: 'none' }}
             />
             <button
               onClick={handleDelete}
@@ -331,7 +331,7 @@ export default function PlotEditor({ garden, onSave, onBack }) {
               Supprimer
             </button>
           </div>
-          <p className="text-xs" style={{ color: '#5A7040' }}>
+          <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
             {selectedPlot.width} × {selectedPlot.height} m — {(selectedPlot.width * selectedPlot.height).toFixed(1)} m²
           </p>
           <RotationTooltip plotId={selectedPlot.id} historique={historique} />
@@ -347,7 +347,7 @@ export default function PlotEditor({ garden, onSave, onBack }) {
               setSelected(newPlot.id)
             }}
             className="w-full py-2.5 rounded-card text-sm font-semibold"
-            style={{ background: '#EAF3DE', color: '#3B6D11', border: '1px dashed #97C459' }}
+            style={{ background: '#EAF3DE', color: 'var(--jd-forest)', border: '1px dashed var(--jd-accent)' }}
           >
             + Ajouter une parcelle
           </button>

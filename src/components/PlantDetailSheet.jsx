@@ -235,7 +235,7 @@ function TabInfos({ plant, onClose, onHarvest }) {
       <button
         onClick={handleDelete}
         className="w-full py-3 rounded-xl text-sm font-semibold tap-scale"
-        style={{ background: 'rgba(224,90,58,0.1)', color: '#E05A3A', border: '1px solid rgba(224,90,58,0.3)' }}
+        style={{ background: 'var(--jd-harvest-soft)', color: 'var(--jd-harvest)', border: '1px solid var(--jd-harvest-ring)' }}
       >
         🗑 Supprimer du jardin
       </button>
@@ -278,7 +278,7 @@ function TabJournal({ plant }) {
           style={{ color: 'var(--jd-ink)', minHeight: 80 }}
         />
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs" style={{ color: texte.length > 450 ? '#E05A3A' : 'var(--jd-ink-muted)' }}>
+          <span className="text-xs" style={{ color: texte.length > 450 ? 'var(--jd-harvest)' : 'var(--jd-ink-muted)' }}>
             {texte.length}/500
           </span>
           <button
@@ -312,8 +312,8 @@ function TabJournal({ plant }) {
                   onClick={() => handleDelete(note.id)}
                   className="text-xs px-2 py-0.5 rounded-chip flex-shrink-0"
                   style={{
-                    background: confirming === note.id ? 'rgba(224,90,58,0.15)' : 'var(--jd-surface-alt)',
-                    color:      confirming === note.id ? '#E05A3A' : 'var(--jd-ink-muted)',
+                    background: confirming === note.id ? 'var(--jd-harvest-soft)' : 'var(--jd-surface-alt)',
+                    color:      confirming === note.id ? 'var(--jd-harvest)' : 'var(--jd-ink-muted)',
                     fontWeight: 500,
                   }}
                 >

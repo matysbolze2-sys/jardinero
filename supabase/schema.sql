@@ -150,6 +150,20 @@ CREATE POLICY "Users can manage own plot_plants"
 CREATE POLICY "Users can manage own checklist"
   ON checklist FOR ALL USING (auth.uid() = user_id);
 
+-- ── Grants — OBLIGATOIRE, sinon "permission denied for table" ──────────────────
+
+GRANT USAGE ON SCHEMA public TO authenticated;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON profiles    TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON plants      TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON arrosages   TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON journal     TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON historique  TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON gardens     TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON plots       TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON plot_plants TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON checklist   TO authenticated;
+
 -- Trigger pour créer automatiquement un profil à l'inscription
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$

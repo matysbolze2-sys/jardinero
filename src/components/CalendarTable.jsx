@@ -14,15 +14,15 @@ const CELL_CONFIG = {
   0: { label: '',  bg: 'transparent',           text: '',                   dot: false },
   1: { label: 'S', bg: 'rgba(166,227,107,0.18)', text: 'var(--jd-accent)',  dot: false },
   2: { label: '·', bg: 'rgba(166,227,107,0.06)', text: 'var(--jd-accent-dim)', dot: true },
-  3: { label: 'R', bg: 'rgba(240,184,108,0.15)', text: 'var(--jd-warning)', dot: false },
+  3: { label: 'R', bg: 'var(--jd-warning-soft)', text: 'var(--jd-warning)', dot: false },
 }
 
 // Colors for user progress bars
 const STAGE_COLORS = {
-  sowed:     { bar: 'rgba(151,196,89,0.55)',  text: '#97C459' },
+  sowed:     { bar: 'rgba(151,196,89,0.55)',  text: 'var(--jd-accent)' },
   growing:   { bar: 'rgba(109,184,66,0.65)',  text: '#6db842' },
-  flowering: { bar: 'rgba(250,199,117,0.6)',  text: '#FAC775' },
-  ready:     { bar: 'rgba(224,90,58,0.55)',   text: '#E05A3A' },
+  flowering: { bar: 'rgba(250,199,117,0.6)',  text: 'var(--jd-warning)' },
+  ready:     { bar: 'rgba(224,90,58,0.55)',   text: 'var(--jd-harvest)' },
 }
 
 // Colors for perennial calendar bars
@@ -302,7 +302,7 @@ export default function CalendarTable({
                           style={{
                             fontSize: 9, fontFamily: 'var(--jd-font-mono)',
                             background: 'var(--jd-warning-soft)', color: 'var(--jd-warning)',
-                            border: '1px solid rgba(240,184,108,0.3)',
+                            border: '1px solid var(--jd-warning-ring)',
                             borderRadius: 4, padding: '1px 5px', whiteSpace: 'nowrap',
                           }}
                         >
@@ -341,7 +341,7 @@ export default function CalendarTable({
         {[
           { bg: 'rgba(166,227,107,0.18)', text: 'var(--jd-accent)',     label: 'Semis (tap pour ajouter)' },
           { bg: 'rgba(166,227,107,0.06)', text: 'var(--jd-accent-dim)', label: 'Croissance' },
-          { bg: 'rgba(240,184,108,0.15)', text: 'var(--jd-warning)',    label: 'Récolte' },
+          { bg: 'var(--jd-warning-soft)', text: 'var(--jd-warning)',    label: 'Récolte' },
           { bg: 'rgba(166,227,107,0.55)', text: 'var(--jd-accent)',     label: 'Vivace en production' },
         ].map(item => (
           <div key={item.label} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--jd-ink-muted)' }}>

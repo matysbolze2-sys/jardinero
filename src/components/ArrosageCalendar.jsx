@@ -22,7 +22,7 @@ function JourDot({ jour, isToday, onArroser, pluiePrevue }) {
 
   if (wasWatered)                        { bg = 'var(--jd-accent)';      icon = '✓';   textColor = 'var(--jd-accent-ink)' }
   else if (pluiePrevue && needsWatering) { bg = '#93C5FD';               icon = '🌧️'; textColor = '#0D1520' }
-  else if (isToday && needsWatering)     { bg = '#E05A3A';               icon = '💧'; textColor = 'white'                }
+  else if (isToday && needsWatering)     { bg = 'var(--jd-harvest)';     icon = '💧'; textColor = 'white'                }
   else if (isToday)                      { bg = 'var(--jd-accent-soft)'; icon = '·';   textColor = 'var(--jd-accent)'    }
   else if (needsWatering)                { bg = 'var(--jd-accent-soft)'; icon = '💧'; textColor = 'var(--jd-ink-muted)' }
 
@@ -81,7 +81,7 @@ function LignePlante({ plant, frequence, status, stageMessage, arrosages, onArro
           <div>
             <span className="font-semibold text-sm" style={{ color: 'var(--jd-ink)' }}>{plant.name}</span>
             {stageMessage && (
-              <span className="block" style={{ fontSize: 10, color: '#6B7A5C', marginTop: 1 }}>
+              <span className="block" style={{ fontSize: 10, color: 'var(--jd-ink-muted)', marginTop: 1 }}>
                 {stageMessage}
               </span>
             )}

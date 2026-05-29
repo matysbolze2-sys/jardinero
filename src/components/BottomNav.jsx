@@ -99,7 +99,7 @@ export default function BottomNav({ activePage, onNavigate }) {
                 <span
                   className="absolute -top-1.5 -right-2 rounded-full flex items-center justify-center font-bold"
                   style={{
-                    background:    '#E05A3A',
+                    background:    'var(--jd-harvest)',
                     color:         'white',
                     fontSize:      9,
                     minWidth:      16,

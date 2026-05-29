@@ -103,7 +103,7 @@ function StepRegion({ selected, coords, geoLoading, geoError, onSelect, onBack, 
         </button>
 
         {geoError && (
-          <p className="text-xs mb-3 px-1" style={{ color: '#E05A3A' }}>⚠️ {geoError}</p>
+          <p className="text-xs mb-3 px-1" style={{ color: 'var(--jd-harvest)' }}>⚠️ {geoError}</p>
         )}
 
         <p className="text-xs font-semibold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
@@ -162,7 +162,7 @@ function StepSol({ selected, coords, onSelect, onBack }) {
 
       <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
         {showAutoCard && (
-          <div className="mb-4 rounded-xl overflow-hidden" style={{ border: `1px solid ${isFallback ? 'rgba(240,184,108,0.4)' : 'var(--jd-accent-ring)'}` }}>
+          <div className="mb-4 rounded-xl overflow-hidden" style={{ border: `1px solid ${isFallback ? 'var(--jd-warning-ring)' : 'var(--jd-accent-ring)'}` }}>
             <div className="px-4 py-2 flex items-center gap-2" style={{ background: isFallback ? 'var(--jd-warning-soft)' : 'var(--jd-accent-soft)' }}>
               <p className="text-xs font-bold" style={{ color: isFallback ? 'var(--jd-warning)' : 'var(--jd-accent)' }}>{headerLabel}</p>
             </div>

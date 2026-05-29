@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import EmojiIllo from './EmojiIllo'
 
-const CONFETTI_COLORS = ['#a6e36b', '#6c9a3a', '#f0b86c', '#E05A3A', '#f1f6ed', '#16261b', '#a6e36b']
+const CONFETTI_COLORS = ['var(--jd-accent)', '#6c9a3a', 'var(--jd-warning)', 'var(--jd-harvest)', 'var(--jd-ink)', 'var(--jd-bg)', 'var(--jd-accent)']
 const CONFETTI_COUNT  = 40
 
 function generateConfetti() {

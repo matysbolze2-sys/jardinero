@@ -24,7 +24,7 @@ function JourMeteo({ dateStr, tMax, tMin, pluie, weathercode, isToday }) {
       <span className="text-xs font-bold" style={{ color: '#F0F7E8' }}>{Math.round(tMax)}°</span>
       <span className="text-xs" style={{ color: 'rgba(240,247,232,0.5)' }}>{Math.round(tMin)}°</span>
       {pluie >= 1 && (
-        <span className="text-xs font-medium" style={{ color: '#7BC900' }}>
+        <span className="text-xs font-medium" style={{ color: 'var(--jd-accent)' }}>
           {Math.round(pluie)}mm
         </span>
       )}
@@ -38,7 +38,7 @@ export default function MeteoWidget() {
 
   if (!profile.region) return null
   if (loading) return (
-    <div className="rounded-card p-4 mb-4 flex items-center gap-2" style={{ background: '#1C2914', color: '#7BC900' }}>
+    <div className="rounded-card p-4 mb-4 flex items-center gap-2" style={{ background: 'var(--jd-surface)', color: 'var(--jd-accent)' }}>
       <span>🌤️</span>
       <span className="text-sm font-medium">Chargement météo…</span>
     </div>
@@ -61,7 +61,7 @@ export default function MeteoWidget() {
           }
         >
           <span className="text-xl flex-shrink-0">{alerte.type === 'gel' ? '🧊' : '☀️'}</span>
-          <p className="text-sm font-semibold" style={{ color: alerte.type === 'gel' ? '#93C5FD' : '#FAC775' }}>
+          <p className="text-sm font-semibold" style={{ color: alerte.type === 'gel' ? '#93C5FD' : 'var(--jd-warning)' }}>
             {alerte.type === 'gel'
               ? `Risque de gel ${alerte.dansNJours === 0 ? "aujourd'hui" : alerte.dansNJours === 1 ? 'demain' : `dans ${alerte.dansNJours} jours`} — protégez vos semis !`
               : '4+ jours sans pluie — pensez à arroser'}
@@ -77,7 +77,7 @@ export default function MeteoWidget() {
           border: '0.5px solid rgba(123,201,0,0.15)',
         }}
       >
-        <p className="text-xs font-semibold mb-2" style={{ color: '#8FAF78' }}>
+        <p className="text-xs font-semibold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
           ☁️ Météo 7 jours
         </p>
         <div className="flex gap-1">

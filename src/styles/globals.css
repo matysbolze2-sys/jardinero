@@ -23,6 +23,20 @@
     overflow-x: hidden;
   }
 
+  /* Aura lumineuse — halo vert profond au centre */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(
+      ellipse 70% 55% at 50% 38%,
+      rgba(32, 81, 46, 0.28) 0%,
+      transparent 70%
+    );
+  }
+
   /* Fond ambiant topographique — lignes de niveau concentriques */
   body::before {
     content: '';
@@ -62,6 +76,18 @@
     display: flex;
     flex-direction: column;
     position: relative;
+  }
+
+  /* Grain photographique — texture organique sur toute l'appli */
+  #root::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.028;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23grain)'/%3E%3C/svg%3E");
+    background-size: 192px 192px;
   }
 
   button { cursor: pointer; border: none; background: none; font-family: inherit; }
@@ -190,15 +216,15 @@
   .hide-scrollbar { scrollbar-width: none; }
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 
+  /* Shared-axis : glissement horizontal léger (Material Design pattern).
+   * backwards (pas both) : le transform n'est PAS conservé après l'animation,
+   * évite de créer un bloc conteneur qui casserait position:fixed des modals. */
   .page-enter {
-    /* backwards (et non both) : le transform de la keyframe finale n'est PAS
-       conservé après l'animation. Sinon translateY(0) reste appliqué et crée
-       un bloc conteneur qui casse le position:fixed des modals (décalés/coupés). */
-    animation: pageEnter 0.22s ease-out backwards;
+    animation: sharedAxisEnter var(--jd-dur-base, 240ms) var(--jd-ease-out, cubic-bezier(0.16,1,0.3,1)) backwards;
   }
-  @keyframes pageEnter {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
+  @keyframes sharedAxisEnter {
+    from { opacity: 0; transform: translateX(10px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
 
   .fade-in {
@@ -207,6 +233,36 @@
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Keyframes UI supplémentaires ──────────────────────── */
+
+  /* plantPop — apparition vive d'un élément plante */
+  @keyframes plantPop {
+    0%   { transform: scale(0) rotate(-6deg); opacity: 0; }
+    65%  { transform: scale(1.08) rotate(2deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .plant-pop {
+    animation: plantPop var(--jd-dur-base, 240ms) var(--jd-ease-spring, cubic-bezier(0.34,1.56,0.64,1)) both;
+  }
+
+  /* fadeUp — entrée douce depuis le bas (cards, panels) */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up {
+    animation: fadeUp var(--jd-dur-base, 240ms) var(--jd-ease-out, cubic-bezier(0.16,1,0.3,1)) both;
+  }
+
+  /* labelDrop — label qui tombe depuis le haut (chip, badge) */
+  @keyframes labelDrop {
+    from { opacity: 0; transform: translateY(-10px) scale(0.88); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .label-drop {
+    animation: labelDrop var(--jd-dur-fast, 160ms) var(--jd-ease-spring, cubic-bezier(0.34,1.56,0.64,1)) both;
   }
 
   .card-hover { transition: transform 0.15s ease; }

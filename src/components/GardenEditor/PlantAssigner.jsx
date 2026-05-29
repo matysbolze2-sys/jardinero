@@ -36,17 +36,17 @@ function RotationWarning({ plotId, historique }) {
       className="mx-4 mt-3 rounded-xl px-3 py-2.5"
       style={{ background: '#FFFBEB', border: '1px solid #FED7AA' }}
     >
-      <p className="text-xs font-semibold mb-1" style={{ color: '#92400E' }}>
+      <p className="text-xs font-semibold mb-1" style={{ color: 'var(--jd-earth)' }}>
         🔄 Rotation non respectée
       </p>
-      <p className="text-xs leading-relaxed" style={{ color: '#78350F' }}>
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-earth)' }}>
         Cette parcelle a accueilli des <strong>{famille ?? 'plantes'}</strong> il y a moins de{' '}
         {FAMILLES_ROTATION[famille ?? '']?.rotation ?? '?'} ans.
         Encore <strong>{check.moisRestants} mois</strong> avant de replanter cette famille.
       </p>
       <button
         className="text-xs mt-1.5 font-semibold"
-        style={{ color: '#92400E', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+        style={{ color: 'var(--jd-earth)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
         onClick={() => setDismissed(true)}
       >
         Continuer quand même ▼
@@ -85,15 +85,15 @@ function AssociationWarning({ plotId, allPlots, gardenPlants, plantBeingAssigned
     <div
       className="mx-4 mt-2 rounded-xl px-3 py-2"
       style={{
-        background: hasFort ? 'rgba(224,90,58,0.06)' : 'rgba(240,184,108,0.06)',
+        background: hasFort ? 'var(--jd-harvest-soft)' : 'var(--jd-warning-soft)',
         border: `1px solid ${hasFort ? 'rgba(224,90,58,0.35)' : 'rgba(240,184,108,0.35)'}`,
       }}
     >
-      <p className="text-xs font-semibold mb-1" style={{ color: hasFort ? '#E05A3A' : '#92400E' }}>
+      <p className="text-xs font-semibold mb-1" style={{ color: hasFort ? 'var(--jd-harvest)' : 'var(--jd-earth)' }}>
         {hasFort ? '⚠️ Conflit avec une parcelle adjacente' : '💡 Attention voisinage'}
       </p>
       {conflicts.slice(0, 2).map((c, i) => (
-        <p key={i} className="text-xs" style={{ color: hasFort ? '#E05A3A' : '#78350F', opacity: 0.85 }}>
+        <p key={i} className="text-xs" style={{ color: hasFort ? 'var(--jd-harvest)' : 'var(--jd-earth)', opacity: 0.85 }}>
           {c.plant.emoji} <strong>{c.plant.name}</strong> (à côté) —{' '}
           {c.level === 'forte' ? 'conflit fort' : 'conflit modéré'}
         </p>
@@ -135,10 +135,10 @@ export default function PlantAssigner({ plotId, onClose }) {
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-4 pb-3" style={{ borderBottom: '1px solid #DDE8CC' }}>
-          <h3 className="font-fraunces text-base" style={{ color: '#1A2010' }}>
+          <h3 className="font-fraunces text-base" style={{ color: 'var(--jd-accent-ink)' }}>
             Plantes dans « {plot.label || 'Parcelle'} »
           </h3>
-          <button onClick={onClose} style={{ color: '#5A7040', fontSize: 20 }}>✕</button>
+          <button onClick={onClose} style={{ color: 'var(--jd-ink-muted)', fontSize: 20 }}>✕</button>
         </div>
 
         {/* Alerte rotation */}
@@ -155,7 +155,7 @@ export default function PlantAssigner({ plotId, onClose }) {
         )}
 
         {profile.plants.length === 0 ? (
-          <p className="px-4 py-6 text-sm text-center" style={{ color: '#5A7040' }}>
+          <p className="px-4 py-6 text-sm text-center" style={{ color: 'var(--jd-ink-muted)' }}>
             Aucune plante dans ton jardin pour l'instant.
           </p>
         ) : (
@@ -180,21 +180,21 @@ export default function PlantAssigner({ plotId, onClose }) {
                   className="flex items-center gap-3 px-3 py-2.5 rounded-card text-left transition-all"
                   style={{
                     background: isAssigned ? '#EAF3DE' : hasConflict ? '#FEF2F2' : '#F8FBF3',
-                    border: `1.5px solid ${isAssigned ? '#3B6D11' : hasConflict ? '#FECACA' : '#DDE8CC'}`,
+                    border: `1.5px solid ${isAssigned ? 'var(--jd-forest)' : hasConflict ? '#FECACA' : '#DDE8CC'}`,
                   }}
                 >
                   <span style={{ fontSize: 22 }}>{plant.emoji}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: '#1A2010' }}>{plant.name}</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--jd-accent-ink)' }}>{plant.name}</p>
                     {plant.variety && (
-                      <p className="text-xs" style={{ color: '#5A7040' }}>{plant.variety}</p>
+                      <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>{plant.variety}</p>
                     )}
                     {hasConflict && !isAssigned && (
                       <p className="text-xs" style={{ color: '#DC2626' }}>⚠️ Conflit avec une plante de cette parcelle</p>
                     )}
                   </div>
                   {isAssigned && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-chip" style={{ background: '#3B6D11', color: 'white' }}>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-chip" style={{ background: 'var(--jd-forest)', color: 'white' }}>
                       ✓
                     </span>
                   )}
