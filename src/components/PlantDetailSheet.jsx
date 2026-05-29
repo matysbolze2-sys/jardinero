@@ -1,19 +1,32 @@
 import { useState, useRef, useEffect } from 'react'
 import { useProfile } from '../hooks/useProfile'
-import { STATUT_LABELS } from '../data/plants'
 import { PLANT_DURATIONS } from '../data/plantDurations'
 import { getRegionById } from '../data/regions'
+import { getSoilById } from '../data/soils'
 import {
   getEffectiveStatus,
   getCycleProgress,
   getStageMessage,
   ALL_STATUT_LABELS,
-  PERENNIAL_STATUT_LABELS,
 } from '../utils/plantStatusUtils'
+import { getFrequencePlante } from '../utils/arrosageUtils'
 import { getSymptomsForPlant, getUrgenceConfig } from '../data/diagnostics'
+import EmojiIllo from './EmojiIllo'
 import HarvestCelebration from './HarvestCelebration'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ── Palette de stade — dégradé de saison (cohérent avec CalendarTable) ────────
+const STAGE_COLOR = {
+  sowed:               '#8B9A50',
+  growing:             '#9DC044',
+  flowering:           '#FCBA6A',
+  ready:               '#DE5F1D',
+  perennial_dormant:   '#8095A8',
+  perennial_growing:   '#6DBA78',
+  perennial_producing: '#E8A040',
+  perennial_longcycle: '#9DA8A8',
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function formatDateFR(dateStr) {
   const d = new Date(dateStr + 'T12:00:00')
@@ -23,9 +36,25 @@ function formatDateFR(dateStr) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-// ─── Onglet Infos ─────────────────────────────────────────────────────────────
-
 const SELECT_CHEVRON = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23a3b8a8' d='M6 8L0 0h12z'/%3E%3C/svg%3E")`
+
+// ── Kicker — label de section mono uppercase coloré ───────────────────────────
+function Kicker({ color, label }) {
+  return (
+    <p style={{
+      fontFamily:    'var(--jd-font-mono)',
+      fontSize:      9.5,
+      letterSpacing: '0.18em',
+      textTransform: 'uppercase',
+      color,
+      marginBottom:  8,
+    }}>
+      {label}
+    </p>
+  )
+}
+
+// ── Onglet Infos ──────────────────────────────────────────────────────────────
 
 function TabInfos({ plant, onClose, onHarvest }) {
   const { updatePlantStatusOverride, removePlant, profile } = useProfile()
@@ -35,11 +64,14 @@ function TabInfos({ plant, onClose, onHarvest }) {
   const progress        = getCycleProgress(plant, regionOffset)
   const message         = getStageMessage(plant, regionOffset)
   const statut          = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
+  const stageColor      = STAGE_COLOR[effectiveStatus] ?? '#8B9A50'
   const isManual        = plant.statusOverride != null
 
-  const durations   = PLANT_DURATIONS[plant.plantId]
-  const isPerennial = durations?.type === 'perennial'
+  const durations    = PLANT_DURATIONS[plant.plantId]
+  const isPerennial  = durations?.type === 'perennial'
   const hasFlowering = durations?.hasFlowering ?? false
+  const frequence    = getFrequencePlante(plant, profile.soil, regionOffset)
+  const sol          = getSoilById(profile.soil)
 
   const annualSteps = ['sowed', 'growing', ...(hasFlowering ? ['flowering'] : []), 'ready']
   const stepIndex   = annualSteps.indexOf(effectiveStatus)
@@ -58,89 +90,151 @@ function TabInfos({ plant, onClose, onHarvest }) {
   return (
     <div className="flex flex-col gap-5">
 
-      {/* ── Statut calculé ── */}
-      <div
-        className="rounded-card p-4 flex flex-col gap-3"
-        style={{ background: statut.color + '16', border: `1px solid ${statut.color}40` }}
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+      {/* ── Stade actuel ── */}
+      <div>
+        <Kicker color={stageColor} label="◉ Stade actuel" />
+        <div
+          className="rounded-card p-4 flex flex-col gap-3"
+          style={{ background: stageColor + '16', border: `1px solid ${stageColor}40` }}
+        >
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="text-xs px-2.5 py-0.5 rounded-chip font-bold"
+              style={{ background: stageColor + '30', color: stageColor }}
+            >
+              {statut.label}
+            </span>
+            {isManual && (
               <span
-                className="text-xs px-2.5 py-0.5 rounded-chip font-bold"
-                style={{ background: statut.color + '30', color: statut.color }}
+                className="text-xs px-2 py-0.5 rounded-chip font-semibold"
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--jd-ink-muted)', border: '1px solid var(--jd-border)' }}
               >
-                {statut.label}
+                Modifié manuellement
               </span>
-              {isManual && (
-                <span
-                  className="text-xs px-2 py-0.5 rounded-chip font-semibold"
-                  style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--jd-ink-muted)', border: '1px solid var(--jd-border)' }}
-                >
-                  Modifié manuellement
-                </span>
-              )}
-            </div>
-            <p className="text-sm leading-snug" style={{ color: 'var(--jd-ink)' }}>{message}</p>
+            )}
           </div>
-        </div>
 
-        {/* Barre de progression (annuelles avec données) */}
-        {!isPerennial && progress > 0 && (
-          <div>
-            <div className="flex justify-between mb-1.5">
-              <span className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>Progression du cycle</span>
-              <span
-                className="text-xs font-semibold"
-                style={{ color: statut.color, fontFamily: 'var(--jd-font-mono)' }}
-              >
-                {progress}%
+          <p className="text-sm leading-snug" style={{ color: 'var(--jd-ink)' }}>{message}</p>
+
+          {!isPerennial && progress > 0 && (
+            <div>
+              <div className="flex justify-between mb-1.5">
+                <span className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>Progression du cycle</span>
+                <span className="text-xs font-bold" style={{ color: stageColor, fontFamily: 'var(--jd-font-mono)' }}>
+                  {progress}%
+                </span>
+              </div>
+              <div className="rounded-full overflow-hidden" style={{ height: 5, background: 'rgba(255,255,255,0.08)' }}>
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${progress}%`, background: stageColor }}
+                />
+              </div>
+            </div>
+          )}
+
+          {daysSincePlanted !== null && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>Dans le jardin depuis</span>
+              <span style={{ fontFamily: 'var(--jd-font-mono)', fontSize: 13, fontWeight: 700, color: stageColor }}>
+                J+{daysSincePlanted}
               </span>
             </div>
-            <div className="rounded-full overflow-hidden" style={{ height: 6, background: 'rgba(255,255,255,0.08)' }}>
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${progress}%`, background: statut.color }}
-              />
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {/* ── Reset override ── */}
-      {isManual && (
-        <button
-          onClick={() => updatePlantStatusOverride(plant.id, null)}
-          className="w-full py-2.5 rounded-xl text-sm font-semibold tap-scale"
-          style={{
-            background: 'rgba(166,227,107,0.08)',
-            color: 'var(--jd-accent)',
-            border: '1px solid var(--jd-accent-ring)',
-          }}
+      {/* ── Arrosage ── */}
+      <div>
+        <Kicker color="var(--jd-water)" label="💧 Arrosage" />
+        <div
+          className="rounded-card p-4 flex flex-col gap-2.5"
+          style={{ background: 'var(--jd-water-soft)', border: '1px solid var(--jd-water-ring)' }}
         >
-          ↺ Revenir au calcul automatique
-        </button>
-      )}
+          <div className="flex justify-between items-center">
+            <span className="text-sm" style={{ color: 'var(--jd-ink)' }}>Fréquence recommandée</span>
+            <span style={{ fontFamily: 'var(--jd-font-mono)', fontSize: 13, fontWeight: 700, color: 'var(--jd-water)' }}>
+              {frequence > 0 ? `/${frequence}j` : '—'}
+            </span>
+          </div>
+          {sol && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm" style={{ color: 'var(--jd-ink)' }}>Sol</span>
+              <span className="text-sm font-semibold" style={{ color: 'var(--jd-water)' }}>{sol.label}</span>
+            </div>
+          )}
+          {plant.plantedAt && (
+            <div className="flex justify-between items-center">
+              <span className="text-sm" style={{ color: 'var(--jd-ink)' }}>Planté le</span>
+              <span className="text-xs font-medium" style={{ color: 'var(--jd-ink-muted)' }}>
+                {formatDateFR(plant.plantedAt)}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
 
-      {/* ── Ajustement manuel (annuelles) ── */}
+      {/* ── Cycle de croissance ── */}
       {!isPerennial && (
         <div>
-          <p className="text-xs mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
-            Ajuster le stade manuellement
-          </p>
+          <Kicker color="var(--jd-warning)" label="☀️ Cycle de croissance" />
+          <div className="flex flex-col gap-1.5">
+            {annualSteps.map((key, i) => {
+              const s        = ALL_STATUT_LABELS[key]
+              const sc       = STAGE_COLOR[key] ?? stageColor
+              const isActive = key === effectiveStatus
+              const isPast   = i < stepIndex
+              const isFuture = !isActive && !isPast
+              return (
+                <div
+                  key={key}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{
+                    background: isActive ? sc + '18' : 'transparent',
+                    border:     isActive ? `1px solid ${sc}44` : '1px solid transparent',
+                    opacity:    isFuture ? 0.4 : 1,
+                  }}
+                >
+                  <div
+                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 font-bold"
+                    style={{
+                      fontSize:   9,
+                      background: isActive ? sc : isPast ? 'var(--jd-accent)' : 'var(--jd-surface-alt)',
+                      color:      isActive || isPast ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
+                    }}
+                  >
+                    {isPast ? '✓' : i + 1}
+                  </div>
+                  <p className="text-sm font-semibold flex-1" style={{ color: isActive ? sc : 'var(--jd-ink)' }}>
+                    {s.label}
+                  </p>
+                  {isActive && (
+                    <span className="text-xs font-bold" style={{ color: sc }}>● Actuel</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Ajustement manuel ── */}
+      {!isPerennial && (
+        <div>
+          <p className="text-xs mb-2" style={{ color: 'var(--jd-ink-muted)' }}>Ajuster le stade manuellement</p>
           <select
             value={isManual ? (plant.statusOverride ?? '') : ''}
             onChange={e => updatePlantStatusOverride(plant.id, e.target.value || null)}
             className="w-full rounded-card px-3 py-3 text-sm"
             style={{
-              border: '1px solid var(--jd-border)',
-              background: 'var(--jd-surface-alt)',
-              color: 'var(--jd-ink)',
-              appearance: 'none',
-              backgroundImage: SELECT_CHEVRON,
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              paddingRight: 36,
+              border:              '1px solid var(--jd-border)',
+              background:          'var(--jd-surface-alt)',
+              color:               'var(--jd-ink)',
+              appearance:          'none',
+              backgroundImage:     SELECT_CHEVRON,
+              backgroundRepeat:    'no-repeat',
+              backgroundPosition:  'right 12px center',
+              paddingRight:        36,
             }}
           >
             <option value="">— Automatique —</option>
@@ -151,81 +245,22 @@ function TabInfos({ plant, onClose, onHarvest }) {
         </div>
       )}
 
-      {/* ── Étapes du cycle ── */}
-      {!isPerennial && (
-        <div>
-          <p
-            className="text-xs font-semibold mb-2"
-            style={{ color: 'var(--jd-ink-muted)', letterSpacing: '0.08em' }}
-          >
-            STADES DU CYCLE
-          </p>
-          <div className="flex flex-col gap-1.5">
-            {annualSteps.map((key, i) => {
-              const s        = ALL_STATUT_LABELS[key]
-              const isActive = key === effectiveStatus
-              const isPast   = i < stepIndex
-              const isFuture = !isActive && !isPast
-              return (
-                <div
-                  key={key}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{
-                    background: isActive ? s.color + '18' : 'transparent',
-                    border: isActive ? `1px solid ${s.color}44` : '1px solid transparent',
-                    opacity: isFuture ? 0.4 : 1,
-                  }}
-                >
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 font-bold"
-                    style={{
-                      fontSize: 9,
-                      background: isActive ? s.color : isPast ? 'var(--jd-accent)' : 'var(--jd-surface-alt)',
-                      color: isActive || isPast ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
-                    }}
-                  >
-                    {isPast ? '✓' : i + 1}
-                  </div>
-                  <p
-                    className="text-sm font-semibold flex-1"
-                    style={{ color: isActive ? s.color : 'var(--jd-ink)' }}
-                  >
-                    {s.label}
-                  </p>
-                  {isActive && (
-                    <span className="text-xs font-bold" style={{ color: s.color }}>● Actuel</span>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── Méta ── */}
-      {(daysSincePlanted !== null || plant.variety) && (
-        <div className="flex gap-3">
-          {daysSincePlanted !== null && (
-            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: 'var(--jd-surface-alt)' }}>
-              <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>Dans le jardin</p>
-              <p className="text-lg font-bold" style={{ color: 'var(--jd-accent)' }}>J+{daysSincePlanted}</p>
-            </div>
-          )}
-          {plant.variety && (
-            <div className="flex-1 rounded-xl p-3 text-center" style={{ background: 'var(--jd-surface-alt)' }}>
-              <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>Variété</p>
-              <p className="text-sm font-bold" style={{ color: 'var(--jd-accent)' }}>{plant.variety}</p>
-            </div>
-          )}
-        </div>
+      {isManual && (
+        <button
+          onClick={() => updatePlantStatusOverride(plant.id, null)}
+          className="w-full py-2.5 rounded-xl text-sm font-semibold tap-scale"
+          style={{ background: 'rgba(180,233,122,0.08)', color: 'var(--jd-accent)', border: '1px solid var(--jd-accent-ring)' }}
+        >
+          ↺ Revenir au calcul automatique
+        </button>
       )}
 
       {/* ── Récolter ── */}
       {effectiveStatus === 'ready' && (
         <button
           onClick={onHarvest}
-          className="w-full py-3 rounded-xl text-sm font-bold tap-scale"
-          style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
+          className="w-full py-3.5 rounded-xl text-sm font-bold tap-scale"
+          style={{ background: 'var(--jd-harvest)', color: '#fff' }}
         >
           🧺 Récolter maintenant
         </button>
@@ -243,12 +278,12 @@ function TabInfos({ plant, onClose, onHarvest }) {
   )
 }
 
-// ─── Onglet Journal ───────────────────────────────────────────────────────────
+// ── Onglet Journal ────────────────────────────────────────────────────────────
 
 function TabJournal({ plant }) {
   const { profile, addJournalNote, deleteJournalNote } = useProfile()
   const notes = profile.journal?.[plant.id] ?? []
-  const [texte, setTexte] = useState('')
+  const [texte, setTexte]       = useState('')
   const [confirming, setConfirming] = useState(null)
 
   function handleAdd() {
@@ -287,7 +322,7 @@ function TabJournal({ plant }) {
             className="px-4 py-1.5 rounded-chip text-xs font-semibold"
             style={{
               background: texte.trim() ? 'var(--jd-accent)' : 'var(--jd-accent-soft)',
-              color: texte.trim() ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
+              color:      texte.trim() ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
             }}
           >
             + Ajouter
@@ -329,13 +364,13 @@ function TabJournal({ plant }) {
   )
 }
 
-// ─── Onglet Diagnostic ────────────────────────────────────────────────────────
+// ── Onglet Diagnostic ─────────────────────────────────────────────────────────
 
 function TabDiagnostic({ plant }) {
   const symptoms = getSymptomsForPlant(plant.plantId)
   const [selected, setSelected] = useState('')
-  const diag     = symptoms.find(s => s.symptome === selected) ?? null
-  const urgConf  = diag ? getUrgenceConfig(diag.urgence) : null
+  const diag    = symptoms.find(s => s.symptome === selected) ?? null
+  const urgConf = diag ? getUrgenceConfig(diag.urgence) : null
 
   return (
     <div className="flex flex-col gap-4">
@@ -348,14 +383,14 @@ function TabDiagnostic({ plant }) {
           onChange={e => setSelected(e.target.value)}
           className="w-full rounded-card px-3 py-3 text-sm"
           style={{
-            border: '1px solid var(--jd-border)',
-            background: 'var(--jd-surface-alt)',
-            color: selected ? 'var(--jd-ink)' : 'var(--jd-ink-muted)',
-            appearance: 'none',
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23a3b8a8' d='M6 8L0 0h12z'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
+            border:             '1px solid var(--jd-border)',
+            background:         'var(--jd-surface-alt)',
+            color:              selected ? 'var(--jd-ink)' : 'var(--jd-ink-muted)',
+            appearance:         'none',
+            backgroundImage:    `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23a3b8a8' d='M6 8L0 0h12z'/%3E%3C/svg%3E")`,
+            backgroundRepeat:   'no-repeat',
             backgroundPosition: 'right 12px center',
-            paddingRight: 36,
+            paddingRight:       36,
           }}
         >
           <option value="">— Choisir un symptôme —</option>
@@ -378,7 +413,7 @@ function TabDiagnostic({ plant }) {
         <div className="rounded-card p-4 flex flex-col gap-3" style={{ background: urgConf.bg, border: `1px solid ${urgConf.badge}44` }}>
           <div className="flex items-center justify-between">
             <p className="font-semibold text-sm" style={{ color: 'var(--jd-ink)' }}>{diag.symptome}</p>
-            <span className="text-xs px-2.5 py-1 rounded-chip font-bold flex-shrink-0" style={{ background: urgConf.badge, color: 'white' }}>
+            <span className="text-xs px-2.5 py-1 rounded-chip font-bold flex-shrink-0" style={{ background: urgConf.badge, color: '#fff' }}>
               {urgConf.label}
             </span>
           </div>
@@ -395,7 +430,9 @@ function TabDiagnostic({ plant }) {
         !selected && (
           <div className="text-center py-6">
             <p className="text-3xl mb-2">🔍</p>
-            <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>Sélectionnez un symptôme pour voir le diagnostic</p>
+            <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>
+              Sélectionnez un symptôme pour voir le diagnostic
+            </p>
           </div>
         )
       )}
@@ -403,7 +440,7 @@ function TabDiagnostic({ plant }) {
   )
 }
 
-// ─── Sheet principale ─────────────────────────────────────────────────────────
+// ── Sheet principale ──────────────────────────────────────────────────────────
 
 const TABS = [
   { id: 'infos',      label: '🌱 Infos' },
@@ -412,99 +449,134 @@ const TABS = [
 ]
 
 export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose, onReplant }) {
-  const [activeTab, setActiveTab]   = useState(initialTab)
+  const [activeTab,   setActiveTab]   = useState(initialTab)
   const [showHarvest, setShowHarvest] = useState(false)
-  const contentRef = useRef(null)
+  const cardRef = useRef(null)
 
+  // Scroll en haut à chaque changement d'onglet
   useEffect(() => {
-    contentRef.current?.scrollTo({ top: 0 })
+    cardRef.current?.scrollTo({ top: 0 })
   }, [activeTab])
-  const { profile } = useProfile()
-  const regionOffset = getRegionById(profile.region)?.offset ?? 0
-  const effectiveStatusForHeader = getEffectiveStatus(plant, regionOffset)
-  const statut = ALL_STATUT_LABELS[effectiveStatusForHeader] ?? ALL_STATUT_LABELS.sowed
 
-  const handleHarvest = () => setShowHarvest(true)
+  const { profile } = useProfile()
+  const regionOffset         = getRegionById(profile.region)?.offset ?? 0
+  const effectiveStatus      = getEffectiveStatus(plant, regionOffset)
+  const statut               = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
+  const stageColor           = STAGE_COLOR[effectiveStatus] ?? '#8B9A50'
 
   return (
     <>
-    {showHarvest && (
-      <HarvestCelebration
-        plant={plant}
-        onClose={() => { setShowHarvest(false); onClose() }}
-        onReplant={() => { setShowHarvest(false); onReplant?.(); onClose() }}
-      />
-    )}
-    <div
-      onClick={onClose}
-      className="modal-overlay"
-      style={{ background: 'rgba(0,0,0,0.6)' }}
-    >
-      <div className="modal-spacer" />
-      <div
-        ref={contentRef}
-        onClick={e => e.stopPropagation()}
-        className="modal-card fade-in"
-        style={{
-          background: 'var(--jd-surface)',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-          overscrollBehavior: 'contain',
-        }}
-      >
-        <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--jd-surface)' }}>
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1">
-          <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--jd-accent-ring)' }} />
-        </div>
+      {showHarvest && (
+        <HarvestCelebration
+          plant={plant}
+          onClose={() => { setShowHarvest(false); onClose() }}
+          onReplant={() => { setShowHarvest(false); onReplant?.(); onClose() }}
+        />
+      )}
 
-        {/* Header plante */}
-        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid var(--jd-border)' }}>
-          <div className="flex items-center gap-3">
-            <span style={{ fontSize: 38, lineHeight: 1 }}>{plant.emoji}</span>
-            <div>
-              <p className="font-display font-bold text-base" style={{ color: 'var(--jd-ink)' }}>{plant.name}</p>
-              {plant.variety && <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>{plant.variety}</p>}
-              <span className="text-xs px-2 py-0.5 rounded-chip font-semibold" style={{ background: statut.color + '22', color: statut.color }}>
-                {statut.label}
-              </span>
+      <div
+        onClick={onClose}
+        className="modal-overlay"
+        style={{ background: 'rgba(0,0,0,0.6)' }}
+      >
+        <div className="modal-spacer" />
+
+        {/* Card avec spring d'entrée */}
+        <div
+          ref={cardRef}
+          onClick={e => e.stopPropagation()}
+          className="modal-card sheet-enter"
+          style={{
+            background:         'var(--jd-surface)',
+            boxShadow:          '0 -4px 40px rgba(0,0,0,0.5)',
+            overscrollBehavior: 'contain',
+          }}
+        >
+
+          {/* ── Sticky : handle + fermer + onglets ── */}
+          <div style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--jd-surface)' }}>
+            <div className="flex items-center justify-between px-5 pt-3 pb-1">
+              <div style={{ flex: 1 }} />
+              <div style={{ width: 40, height: 4, borderRadius: 2, background: 'var(--jd-accent-ring)' }} />
+              <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={onClose}
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-base"
+                  style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-accent)' }}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+
+            <div className="flex gap-1 px-4 py-2" style={{ borderBottom: '1px solid var(--jd-border)' }}>
+              {TABS.map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
+                  style={{
+                    background: activeTab === tab.id ? 'var(--jd-surface-alt)' : 'transparent',
+                    color:      activeTab === tab.id ? 'var(--jd-accent)' : 'var(--jd-ink-muted)',
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold"
-            style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-accent)' }}
+
+          {/* ── Hero : EmojiIllo 96 + nom + variété + badge stade ── */}
+          <div
+            className="flex flex-col items-center px-5 pt-7 pb-6"
+            style={{ borderBottom: '1px solid var(--jd-border)' }}
           >
-            ×
-          </button>
-        </div>
+            <EmojiIllo emoji={plant.emoji} size={96} ring />
 
-        {/* Tabs */}
-        <div className="flex gap-1 px-4 py-2" style={{ borderBottom: '1px solid var(--jd-border)' }}>
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
-              style={{
-                background: activeTab === tab.id ? 'var(--jd-surface-alt)' : 'transparent',
-                color:      activeTab === tab.id ? 'var(--jd-accent)' : 'var(--jd-ink-muted)',
-              }}
+            <h2
+              className="jd-title text-center mt-4"
+              style={{ fontSize: 26, color: 'var(--jd-ink)', letterSpacing: '-0.02em' }}
             >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+              {plant.name}
+            </h2>
 
-        </div>{/* fin sticky header */}
+            {plant.variety && (
+              <p style={{
+                fontFamily:    'var(--jd-font-mono)',
+                fontSize:      11,
+                color:         'var(--jd-ink-muted)',
+                marginTop:     4,
+                letterSpacing: '0.06em',
+              }}>
+                {plant.variety}
+              </p>
+            )}
 
-        {/* Contenu */}
-        <div className="px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
-          {activeTab === 'infos'      && <TabInfos plant={plant} onClose={onClose} onHarvest={handleHarvest} />}
-          {activeTab === 'journal'    && <TabJournal    plant={plant} />}
-          {activeTab === 'diagnostic' && <TabDiagnostic plant={plant} />}
+            <span style={{
+              marginTop:    12,
+              background:   stageColor + '28',
+              color:        stageColor,
+              padding:      '5px 14px',
+              borderRadius: 999,
+              fontSize:     12,
+              fontWeight:   700,
+              letterSpacing:'0.04em',
+            }}>
+              {statut.label}
+            </span>
+          </div>
+
+          {/* ── Contenu de l'onglet actif ── */}
+          <div
+            className="px-5 pt-5"
+            style={{ paddingBottom: 'max(28px, env(safe-area-inset-bottom))' }}
+          >
+            {activeTab === 'infos'      && <TabInfos plant={plant} onClose={onClose} onHarvest={() => setShowHarvest(true)} />}
+            {activeTab === 'journal'    && <TabJournal    plant={plant} />}
+            {activeTab === 'diagnostic' && <TabDiagnostic plant={plant} />}
+          </div>
         </div>
       </div>
-    </div>
     </>
   )
 }
