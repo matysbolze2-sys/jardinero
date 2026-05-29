@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { getEffectiveStatus, getCycleProgress, getStageMessage } from '../utils/plantStatusUtils'
 import { ASSOCIATIONS } from '../data/associations'
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent'
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
 
 const CHAT_STORAGE_KEY        = 'jd_chat_usage'
