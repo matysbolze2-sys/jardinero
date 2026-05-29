@@ -14,15 +14,15 @@ const CELL_CONFIG = {
   0: { label: '',  bg: 'transparent',           text: '',                   dot: false },
   1: { label: 'S', bg: 'rgba(166,227,107,0.18)', text: 'var(--jd-accent)',  dot: false },
   2: { label: '·', bg: 'rgba(166,227,107,0.06)', text: 'var(--jd-accent-dim)', dot: true },
-  3: { label: 'R', bg: 'var(--jd-warning-soft)', text: 'var(--jd-warning)', dot: false },
+  3: { label: 'R', bg: 'rgba(222,95,29,0.18)',    text: 'var(--jd-harvest)', dot: false },
 }
 
-// Colors for user progress bars
+// Colors for user progress bars — dégradé de saison (froid→chaud)
 const STAGE_COLORS = {
-  sowed:     { bar: 'rgba(151,196,89,0.55)',  text: 'var(--jd-accent)' },
-  growing:   { bar: 'rgba(109,184,66,0.65)',  text: '#6db842' },
-  flowering: { bar: 'rgba(250,199,117,0.6)',  text: 'var(--jd-warning)' },
-  ready:     { bar: 'rgba(224,90,58,0.55)',   text: 'var(--jd-harvest)' },
+  sowed:     { bar: 'rgba(139,154,80,0.55)',  text: 'var(--jd-accent)' },   // #8B9A50
+  growing:   { bar: 'rgba(157,192,68,0.65)',  text: 'var(--jd-accent)' },   // #9DC044
+  flowering: { bar: 'rgba(252,186,106,0.60)', text: 'var(--jd-warning)' },  // #FCBA6A
+  ready:     { bar: 'rgba(222,95,29,0.55)',   text: 'var(--jd-harvest)' },  // #DE5F1D
 }
 
 // Colors for perennial calendar bars
@@ -341,7 +341,7 @@ export default function CalendarTable({
         {[
           { bg: 'rgba(166,227,107,0.18)', text: 'var(--jd-accent)',     label: 'Semis (tap pour ajouter)' },
           { bg: 'rgba(166,227,107,0.06)', text: 'var(--jd-accent-dim)', label: 'Croissance' },
-          { bg: 'var(--jd-warning-soft)', text: 'var(--jd-warning)',    label: 'Récolte' },
+          { bg: 'rgba(222,95,29,0.18)',    text: 'var(--jd-harvest)',   label: 'Récolte' },
           { bg: 'rgba(166,227,107,0.55)', text: 'var(--jd-accent)',     label: 'Vivace en production' },
         ].map(item => (
           <div key={item.label} className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--jd-ink-muted)' }}>
