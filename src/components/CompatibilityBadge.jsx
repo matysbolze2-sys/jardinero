@@ -12,28 +12,25 @@ export default function CompatibilityBadge({ plantId, gardenPlants = [], size = 
 
   if (conflicts.length === 0) return null
 
-  const hasFort   = conflicts.some(c => c.level === 'forte')
-  const icon      = hasFort ? '🚫' : '⚠️'
-  const label     = hasFort ? 'Conflit' : 'Attention'
-  const color     = hasFort ? 'var(--jd-harvest)' : 'var(--jd-warning)'
-  const bg        = hasFort ? 'var(--jd-harvest-soft)' : 'var(--jd-warning-soft)'
-  const border    = hasFort ? 'rgba(224,90,58,0.25)' : 'rgba(240,184,108,0.25)'
+  const hasFort = conflicts.some(c => c.level === 'forte')
+  const icon    = hasFort ? '🚫' : '⚠️'
+  const label   = hasFort ? 'Conflit' : 'Attention'
+  const color   = hasFort ? 'var(--jd-harvest)' : 'var(--jd-warning)'
+  const bg      = hasFort ? 'var(--jd-harvest-soft)' : 'var(--jd-warning-soft)'
+  const border  = hasFort ? 'var(--jd-harvest-ring)' : 'var(--jd-warning-ring)'
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
       <button
         onClick={e => { e.stopPropagation(); setOpen(v => !v) }}
+        className="jd-chip tap-scale"
         style={{
-          fontSize:    size === 'sm' ? 10 : 11,
-          padding:     size === 'sm' ? '2px 6px' : '3px 8px',
-          borderRadius: 999,
           background:  bg,
           color,
-          border:      `1px solid ${border}`,
-          fontWeight:  600,
-          fontFamily:  'var(--jd-font-body)',
+          borderColor: border,
+          fontSize:    size === 'sm' ? 10 : 12,
+          padding:     size === 'sm' ? '2px 8px' : '4px 10px',
           cursor:      'pointer',
-          lineHeight:  1,
         }}
       >
         {icon} {label}
@@ -41,31 +38,30 @@ export default function CompatibilityBadge({ plantId, gardenPlants = [], size = 
 
       {open && (
         <>
-          {/* Dismiss overlay */}
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 199 }}
             onClick={e => { e.stopPropagation(); setOpen(false) }}
           />
           <div
             onClick={e => e.stopPropagation()}
+            className="jd-card"
             style={{
               position:  'absolute',
-              bottom:    'calc(100% + 4px)',
+              bottom:    'calc(100% + 6px)',
               left:      0,
               zIndex:    200,
-              background:'var(--jd-surface)',
-              border:    '1px solid var(--jd-border)',
-              borderRadius: 10,
-              padding:   '8px 10px',
-              minWidth:  190,
-              fontSize:  11,
-              color:     'var(--jd-ink)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              padding:   '10px 12px',
+              minWidth:  200,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.55)',
               textAlign: 'left',
             }}
           >
             {conflicts.map((c, i) => (
-              <p key={i} style={{ margin: i > 0 ? '4px 0 0' : 0, lineHeight: 1.4 }}>
+              <p
+                key={i}
+                className="text-xs"
+                style={{ margin: i > 0 ? '5px 0 0' : 0, color: 'var(--jd-ink)', lineHeight: 1.5 }}
+              >
                 <strong>{c.plant.name}</strong>
                 <span style={{ color: 'var(--jd-ink-muted)' }}>
                   {' — '}{c.level === 'forte' ? 'Conflit fort' : 'Conflit modéré'}
