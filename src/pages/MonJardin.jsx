@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { triggerRipple } from '../utils/ripple'
 import { useProfile } from '../hooks/useProfile'
 import PlantCard from '../components/PlantCard'
 import AddPlantModal from '../components/AddPlantModal'
@@ -45,9 +46,9 @@ export default function MonJardin() {
           </p>
         </div>
         <button
-          onClick={() => setShowAddModal(true)}
+          onClick={e => { triggerRipple(e); setShowAddModal(true) }}
           className="flex items-center gap-1.5 px-4 py-2 rounded-chip font-semibold text-sm tap-scale"
-          style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
+          style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)', position: 'relative', overflow: 'hidden' }}
         >
           + Ajouter
         </button>

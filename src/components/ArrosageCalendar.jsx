@@ -1,3 +1,4 @@
+import { triggerRipple } from '../utils/ripple'
 import { useProfile } from '../hooks/useProfile'
 import { getSoilById } from '../data/soils'
 import { getRegionById } from '../data/regions'
@@ -189,12 +190,14 @@ function LignePlante({ plant, frequence, status, stageMessage, arrosages, onArro
       {/* CTA arroser */}
       {!pluieAuj && (etat === 'due' || etat === 'overdue') && !arrosAuj && (
         <button
-          onClick={() => onArroser(plant.id)}
+          onClick={e => { triggerRipple(e); onArroser(plant.id) }}
           className="mt-3 w-full py-2.5 rounded-xl text-sm font-semibold transition-all tap-scale"
           style={{
             background: 'var(--jd-water-soft)',
             color:      'var(--jd-water)',
             border:     '1px solid var(--jd-water-ring)',
+            position:   'relative',
+            overflow:   'hidden',
           }}
         >
           💧 Arroser maintenant

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { triggerRipple } from '../utils/ripple'
 import { CATEGORIES, PLANTS_BY_CATEGORY } from '../data/plantsExtended'
 import { PLANT_DURATIONS, calculatePlantDates, formatDateFRShort } from '../data/plantDurations'
 import { ASSOCIATIONS, getConflictLevel, getBestNeighbors } from '../data/associations'
@@ -438,13 +439,15 @@ export default function AddPlantModal({ onAdd, onClose }) {
                 </div>
               )}
               <button
-                onClick={handleAdd}
+                onClick={e => { triggerRipple(e); handleAdd() }}
                 disabled={!canConfirm || submitting}
                 className="w-full py-4 rounded-card font-bold text-sm tap-scale transition-all"
                 style={{
                   background: canConfirm && !submitting ? 'var(--jd-accent)' : 'var(--jd-accent-soft)',
                   color:      canConfirm && !submitting ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
                   cursor:     canConfirm && !submitting ? 'pointer' : 'not-allowed',
+                  position:   'relative',
+                  overflow:   'hidden',
                 }}
               >
                 {submitting ? 'Ajout en cours…' : 'Ajouter au jardin 🌱'}

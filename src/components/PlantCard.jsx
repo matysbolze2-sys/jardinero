@@ -22,7 +22,7 @@ export default function PlantCard({ plant, onOpenDetail }) {
   return (
     <button
       onClick={() => onOpenDetail(plant, 'infos')}
-      className="w-full text-left card-hover"
+      className="w-full text-left card-hover tap-scale"
       style={{
         background:           'var(--jd-surface-glass)',
         backdropFilter:       'blur(var(--jd-blur))',

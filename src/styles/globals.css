@@ -162,6 +162,22 @@
 
   .tap-scale:active { transform: scale(0.97); transition: transform 0.1s ease; }
 
+  /* ── Ripple lime — feedback tactile boutons primaires ────
+   * L'élément déclencheur doit avoir position:relative + overflow:hidden.
+   * Usage JS : import { triggerRipple } from '../utils/ripple'
+   * puis onClick={e => { triggerRipple(e); handler() }}           */
+  .jd-ripple {
+    position:       absolute;
+    border-radius:  50%;
+    background:     rgba(180, 233, 122, 0.38);
+    transform:      scale(0);
+    animation:      jdRipple 0.45s var(--jd-ease-out, cubic-bezier(0.16,1,0.3,1)) forwards;
+    pointer-events: none;
+  }
+  @keyframes jdRipple {
+    to { transform: scale(3); opacity: 0; }
+  }
+
   /* ── Overlay modal ───────────────────────────────────── */
   /*
    * Utilise flex-direction:column + un spacer flex:1 pour positionner
