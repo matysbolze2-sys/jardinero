@@ -23,6 +23,37 @@
     overflow-x: hidden;
   }
 
+  /* Fond ambiant topographique — lignes de niveau concentriques */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      repeating-radial-gradient(
+        ellipse at 28% 22%,
+        transparent 0,
+        transparent 52px,
+        rgba(180, 233, 122, 0.022) 53px,
+        transparent 54px
+      ),
+      repeating-radial-gradient(
+        ellipse at 74% 76%,
+        transparent 0,
+        transparent 38px,
+        rgba(109, 212, 160, 0.015) 39px,
+        transparent 40px
+      ),
+      repeating-radial-gradient(
+        ellipse at 55% 50%,
+        transparent 0,
+        transparent 68px,
+        rgba(140, 220, 140, 0.012) 69px,
+        transparent 70px
+      );
+  }
+
   #root {
     max-width: 768px;
     margin: 0 auto;
@@ -246,5 +277,48 @@
   @keyframes spin-star {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
+  }
+
+  /* ── Animations de pousse — SVG + HTML ──────────────────
+   * transform-box:fill-box est indispensable pour que
+   * transform-origin fonctionne sur des éléments SVG.        */
+  .jd-plant {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+  }
+
+  /* Apparition avec rebond printanier */
+  .jd-plant.is-growing {
+    animation:
+      jdPlantGrow var(--jd-dur-scene, 600ms) var(--jd-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both;
+  }
+
+  @keyframes jdPlantGrow {
+    0%   { transform: scale(0);    opacity: 0; }
+    55%  { opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+
+  /* Balancement continu — stades growing / flowering */
+  .jd-plant.is-swaying {
+    animation:
+      jdPlantSway 3.2s var(--jd-ease-in, cubic-bezier(0.4, 0, 1, 1)) infinite;
+  }
+
+  @keyframes jdPlantSway {
+    0%, 100% { transform: rotate(-3deg); }
+    50%       { transform: rotate( 3deg); }
+  }
+
+  /* Pulsation douce — stade ready (récolte imminente) */
+  .jd-plant.is-ready {
+    animation:
+      jdPlantGrow var(--jd-dur-scene, 600ms) var(--jd-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)) both,
+      jdPlantPulse 2.4s var(--jd-ease-out, cubic-bezier(0.16, 1, 0.3, 1)) infinite var(--jd-dur-scene, 600ms);
+  }
+
+  @keyframes jdPlantPulse {
+    0%, 100% { filter: brightness(1); }
+    50%       { filter: brightness(1.25) drop-shadow(0 0 4px currentColor); }
   }
 }

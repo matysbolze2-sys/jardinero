@@ -1,38 +1,60 @@
 /* ============================================================
    JARDINERO · Design Tokens
-   Direction : Forêt Profonde v2
+   Direction : Séquoia — 3 familles chromatiques
    ============================================================ */
 
 :root {
-  /* ── Surfaces ─────────────────────────────────────────── */
-  --jd-bg:           #16261b;   /* fond global, vert profond aéré */
-  --jd-surface:      #1f3225;   /* card opaque, raised */
-  --jd-surface-alt:  #27412e;   /* surface secondaire, hover */
-  --jd-surface-glass:rgba(255, 255, 255, 0.06); /* sur fond bg */
-  --jd-border:       rgba(255, 255, 255, 0.10);
 
-  /* ── Texte ─────────────────────────────────────────────── */
-  --jd-ink:        #f1f6ed;
-  --jd-ink-muted:  #a3b8a8;
+  /* ── Famille 1 : Sol & Écorce ─────────────────────────
+     Fonds, surfaces, bois sombre                          */
+  --jd-bg:             #0f1e14;   /* nuit forêt, séquoia profond */
+  --jd-surface:        #172a1c;   /* card opaque, bois */
+  --jd-surface-alt:    #1e3623;   /* hover, raised */
+  --jd-surface-glass:  rgba(255, 255, 255, 0.055);
+  --jd-border:         rgba(255, 255, 255, 0.09);
 
-  /* ── Accent (vert lime) ────────────────────────────────── */
-  --jd-accent:      #a6e36b;
-  --jd-accent-dim:  #6c9a3a;
-  --jd-accent-ink:  #0d160f;   /* texte sur fond accent */
-  --jd-accent-soft: rgba(166, 227, 107, 0.10); /* fond chip, surface tintée */
-  --jd-accent-ring: rgba(166, 227, 107, 0.22);
+  /* ── Famille 2 : Feuillage ────────────────────────────
+     Accent lime principal + émeraude secondaire           */
+  --jd-accent:         #b4e97a;   /* lime vif, feuille au soleil */
+  --jd-accent-2:       #6dd4a0;   /* émeraude, sous-bois */
+  --jd-accent-dim:     #5c8c32;   /* lime sombre, bois mouillé */
+  --jd-accent-ink:     #0c1a0f;   /* texte sur fond accent */
+  --jd-accent-soft:    rgba(180, 233, 122, 0.10);
+  --jd-accent-ring:    rgba(180, 233, 122, 0.22);
 
-  /* ── Sémantiques ────────────────────────────────────────── */
-  --jd-warning: #f0b86c;
+  /* ── Famille 3 : Ciel & Saison ───────────────────────
+     Transitions chromatiques saisonnières                 */
+  --jd-season-spring:  #8ed4b0;   /* teal-vert printemps */
+  --jd-season-summer:  #f0c84a;   /* or chaud été */
+  --jd-season-autumn:  #e8945a;   /* orange brûlé automne */
+  --jd-season-winter:  #8bb0c4;   /* bleu-gris hiver */
+
+  /* ── Stades de croissance — dégradé de saison ─────────
+     Progressent du froid (semis) vers le chaud (récolte) */
+  --jd-stage-sowed:               #7ac4b8;  /* teal hivernal, départ */
+  --jd-stage-growing:             #70d480;  /* vert printanier */
+  --jd-stage-flowering:           #f0c84a;  /* or pré-estival */
+  --jd-stage-ready:               #f09040;  /* ambre, pleine maturité */
+  --jd-stage-perennial-dormant:   #8095a8;  /* bleu-gris repos hivernal */
+  --jd-stage-perennial-growing:   #6dba78;  /* vert redémarrage */
+  --jd-stage-perennial-producing: #e8a040;  /* ambre production */
+  --jd-stage-perennial-longcycle: #9da8a8;  /* gris-teal cycle long */
+
+  /* ── Sémantiques ──────────────────────────────────────*/
+  --jd-warning:      #f0b86c;
   --jd-warning-soft: rgba(240, 184, 108, 0.12);
-  --jd-earth:   #a06840;
+  --jd-earth:        #a06840;
 
-  /* ── Typographie ────────────────────────────────────────── */
+  /* ── Texte ─────────────────────────────────────────── */
+  --jd-ink:       #f0f6ec;
+  --jd-ink-muted: #9ab8a4;
+
+  /* ── Typographie ──────────────────────────────────────*/
   --jd-font-display: 'Plus Jakarta Sans', 'Manrope', system-ui, sans-serif;
   --jd-font-sans:    'Manrope', 'Plus Jakarta Sans', system-ui, sans-serif;
   --jd-font-mono:    'JetBrains Mono', 'IBM Plex Mono', monospace;
 
-  /* ── Échelle typo (px) ─────────────────────────────────── */
+  /* ── Échelle typo (px) ────────────────────────────── */
   --jd-text-xs:  10px;
   --jd-text-sm:  12px;
   --jd-text-md:  14px;
@@ -41,13 +63,13 @@
   --jd-text-2xl: 28px;
   --jd-text-3xl: 38px;
 
-  /* ── Forme ─────────────────────────────────────────────── */
+  /* ── Forme ─────────────────────────────────────────── */
   --jd-radius-sm:   10px;
   --jd-radius:      18px;
   --jd-radius-lg:   24px;
   --jd-radius-pill: 999px;
 
-  /* ── Espacement (4px base) ─────────────────────────────── */
+  /* ── Espacement (4px base) ─────────────────────────── */
   --jd-space-1: 4px;
   --jd-space-2: 8px;
   --jd-space-3: 12px;
@@ -56,15 +78,26 @@
   --jd-space-6: 24px;
   --jd-space-8: 32px;
 
-  /* ── Ombres ────────────────────────────────────────────── */
+  /* ── Motion tokens ────────────────────────────────────
+     Durées et courbes d'accélération réutilisables       */
+  --jd-dur-instant:  80ms;
+  --jd-dur-fast:     160ms;
+  --jd-dur-base:     240ms;
+  --jd-dur-slow:     400ms;
+  --jd-dur-scene:    600ms;
+  --jd-ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+  --jd-ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);
+  --jd-ease-in:      cubic-bezier(0.4, 0, 1, 1);
+
+  /* ── Ombres ────────────────────────────────────────── */
   --jd-shadow-card:
-    0 24px 48px -24px rgba(0, 0, 0, 0.55),
+    0 24px 48px -24px rgba(0, 0, 0, 0.60),
     0 1px 0 rgba(255, 255, 255, 0.04) inset;
   --jd-shadow-illo:
     drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45))
-    drop-shadow(0 0 10px rgba(166, 227, 107, 0.55));
+    drop-shadow(0 0 10px rgba(180, 233, 122, 0.55));
 
-  /* ── Glass / blur ──────────────────────────────────────── */
+  /* ── Glass / blur ─────────────────────────────────── */
   --jd-blur: 20px;
 }
 
@@ -83,7 +116,6 @@ body {
    Utilities — réutilisables partout
    ============================================================ */
 
-/* Surface verre dépoli sur fond bg */
 .jd-glass {
   background: var(--jd-surface-glass);
   backdrop-filter: blur(var(--jd-blur));
@@ -92,7 +124,6 @@ body {
   border-radius: var(--jd-radius);
 }
 
-/* Card pleine (sans transparence) */
 .jd-card {
   background: var(--jd-surface);
   border: 1px solid var(--jd-border);
@@ -100,7 +131,6 @@ body {
   box-shadow: var(--jd-shadow-card);
 }
 
-/* Kicker — petit label mono uppercase */
 .jd-kicker {
   font-family: var(--jd-font-mono);
   font-size: 9.5px;
@@ -109,7 +139,6 @@ body {
   color: var(--jd-accent);
 }
 
-/* Titre display */
 .jd-title {
   font-family: var(--jd-font-display);
   font-weight: 800;
@@ -193,5 +222,5 @@ body {
   height: 16px;
   filter:
     drop-shadow(0 2px 3px rgba(0, 0, 0, 0.4))
-    drop-shadow(0 0 6px rgba(166, 227, 107, 0.35));
+    drop-shadow(0 0 6px rgba(180, 233, 122, 0.35));
 }

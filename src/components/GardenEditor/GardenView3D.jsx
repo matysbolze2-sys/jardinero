@@ -4,18 +4,19 @@ import EmojiIllo from '../EmojiIllo'
 import { openmoji } from '../../utils/openmoji'
 import { ALL_STATUT_LABELS } from '../../utils/plantStatusUtils'
 
-// Stage-aware visual config for ISO/top dots
+// Stage-aware visual config — couleurs dégradé de saison (palette Séquoia)
+// anim: 'grow' | 'sway' | 'ready' | null
 const STATUS_CONFIG = {
-  sowed:               { color: '#8B9A50', r: 0.8 },
-  growing:             { color: '#97C459', r: 1.0 },
-  flowering:           { color: '#F9C84A', r: 1.0 },
-  ready:               { color: '#F9A825', r: 1.2 },
-  perennial_dormant:   { color: '#8B7355', r: 0.7 },
-  perennial_growing:   { color: '#7DB87A', r: 0.9 },
-  perennial_producing: { color: '#F9A825', r: 1.1 },
-  perennial_longcycle: { color: '#A0A0A0', r: 0.5 },
+  sowed:               { color: '#7ac4b8', r: 0.8,  anim: 'grow'  },
+  growing:             { color: '#70d480', r: 1.0,  anim: 'sway'  },
+  flowering:           { color: '#f0c84a', r: 1.05, anim: 'sway'  },
+  ready:               { color: '#f09040', r: 1.25, anim: 'ready' },
+  perennial_dormant:   { color: '#8095a8', r: 0.7,  anim: null    },
+  perennial_growing:   { color: '#6dba78', r: 0.9,  anim: 'sway'  },
+  perennial_producing: { color: '#e8a040', r: 1.1,  anim: 'ready' },
+  perennial_longcycle: { color: '#9da8a8', r: 0.5,  anim: null    },
 }
-const DEFAULT_CFG = { color: '#97C459', r: 1.0 }
+const DEFAULT_CFG = { color: '#70d480', r: 1.0, anim: 'grow' }
 
 const PX  = 30
 const A30 = Math.PI / 6
@@ -374,10 +375,16 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
                 const px2 = p.x + (i % 4 + 0.5) * (p.w / 4)
                 const py2 = p.y + (Math.floor(i / 4) + 0.5) * (p.h / 2)
                 const pt  = iso(px2, py2, 0.23, CX, CY)
-                const { color, r } = dot.cfg
+                const { color, r, anim } = dot.cfg
+                const cls = [
+                  'jd-plant',
+                  anim === 'grow'  && 'is-growing',
+                  anim === 'sway'  && 'is-growing is-swaying',
+                  anim === 'ready' && 'is-growing is-ready',
+                ].filter(Boolean).join(' ')
                 return (
-                  <g key={i}>
-                    <circle cx={pt.x} cy={pt.y} r={4 * r}   fill={color} opacity="0.25" filter="url(#jd3d-glow)" />
+                  <g key={i} className={cls} style={{ animationDelay: `${i * 55}ms` }}>
+                    <circle cx={pt.x} cy={pt.y} r={4 * r}   fill={color} opacity="0.28" filter="url(#jd3d-glow)" />
                     <circle cx={pt.x} cy={pt.y} r={1.6 * r} fill={color} />
                     <line x1={pt.x} y1={pt.y - 2} x2={pt.x} y2={pt.y - 2 - (4 * r)}
                       stroke={color} strokeWidth="1" strokeLinecap="round" />
@@ -455,10 +462,16 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
                 return dots.map((dot, i) => {
                   const px2 = x + (i % 4 + 0.5) * (w / 4)
                   const py2 = y + (Math.floor(i / 4) + 0.5) * (h / 2)
-                  const { color, r } = dot.cfg
+                  const { color, r, anim } = dot.cfg
+                  const cls = [
+                    'jd-plant',
+                    anim === 'grow'  && 'is-growing',
+                    anim === 'sway'  && 'is-growing is-swaying',
+                    anim === 'ready' && 'is-growing is-ready',
+                  ].filter(Boolean).join(' ')
                   return (
-                    <g key={i}>
-                      <circle cx={px2} cy={py2} r={3.5 * r} fill={color} opacity="0.25" filter="url(#jd3d-glow-t)" />
+                    <g key={i} className={cls} style={{ animationDelay: `${i * 55}ms` }}>
+                      <circle cx={px2} cy={py2} r={3.5 * r} fill={color} opacity="0.28" filter="url(#jd3d-glow-t)" />
                       <circle cx={px2} cy={py2} r={1.5 * r} fill={color} />
                     </g>
                   )
