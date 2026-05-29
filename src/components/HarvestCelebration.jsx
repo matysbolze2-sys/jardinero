@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useProfile } from '../hooks/useProfile'
 import EmojiIllo from './EmojiIllo'
 
-const CONFETTI_COLORS = ['var(--jd-accent)', '#6c9a3a', 'var(--jd-warning)', 'var(--jd-harvest)', 'var(--jd-ink)', 'var(--jd-bg)', 'var(--jd-accent)']
+const CONFETTI_COLORS = ['#a6e36b', '#9DC044', '#DE5F1D', '#FCBA6A', '#f1f6ed']
 const CONFETTI_COUNT  = 40
 
 function generateConfetti() {
@@ -67,7 +67,7 @@ export default function HarvestCelebration({ plant, onClose, onReplant }) {
 
       {phase === 'celebrate' && (
         <div className="flex flex-col items-center text-center px-8 fade-in">
-          <div style={{ animation: 'bounce-ready 0.6s ease infinite' }}>
+          <div className="plant-pop">
             <EmojiIllo emoji={plant.emoji} size={80} />
           </div>
           <p className="font-display font-extrabold text-5xl mt-4" style={{ color: 'var(--jd-accent)' }}>
