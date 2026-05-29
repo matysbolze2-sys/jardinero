@@ -160,7 +160,10 @@
   .hide-scrollbar::-webkit-scrollbar { display: none; }
 
   .page-enter {
-    animation: pageEnter 0.22s ease-out both;
+    /* backwards (et non both) : le transform de la keyframe finale n'est PAS
+       conservé après l'animation. Sinon translateY(0) reste appliqué et crée
+       un bloc conteneur qui casse le position:fixed des modals (décalés/coupés). */
+    animation: pageEnter 0.22s ease-out backwards;
   }
   @keyframes pageEnter {
     from { opacity: 0; transform: translateY(8px); }
