@@ -238,8 +238,9 @@ export default function AddPlantModal({ onAdd, onClose }) {
         className="modal-card fade-in"
         style={{ background: 'var(--jd-surface)', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}
       >
+        <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--jd-surface)' }}>
         {/* En-tête */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 pt-5 pb-3">
           <div className="flex items-center gap-2">
             {step > 1 && (
               <button
@@ -266,7 +267,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
         </div>
 
         {/* Barre de progression */}
-        <div className="flex gap-1.5 px-5 mb-3 flex-shrink-0">
+        <div className="flex gap-1.5 px-5 mb-3">
           {[1, 2, 3].map(s => (
             <div
               key={s}
@@ -275,10 +276,11 @@ export default function AddPlantModal({ onAdd, onClose }) {
             />
           ))}
         </div>
+        </div>{/* fin sticky header */}
 
         {/* ── Étape 1 : Catégorie ── */}
         {step === 1 && (
-          <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', minHeight: 0 }}>
+          <div className="px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
             <div className="flex flex-col gap-2 pb-4">
               {CATEGORIES.map(cat => (
                 <button
@@ -308,7 +310,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
 
         {/* ── Étape 2 : Plante ── */}
         {step === 2 && (
-          <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', minHeight: 0 }}>
+          <div className="px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
             <div className="grid grid-cols-2 gap-2 pb-4">
               {plantsOfCat.map(plant => {
                 const dur = PLANT_DURATIONS[plant.id]
@@ -344,7 +346,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
         {/* ── Étape 3 : Date + variété ── */}
         {step === 3 && (
           <>
-            <div className="flex-1 overflow-y-auto px-4 pb-2" style={{ minHeight: 0 }}>
+            <div className="px-4 pb-2">
               {selectedPlant ? (
                 <div
                   className="flex items-center gap-3 p-3 rounded-card mb-4"
@@ -429,7 +431,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
             </div>
 
             {/* Bouton fixe en bas */}
-            <div className="px-4 pt-3 flex-shrink-0" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+            <div className="px-4 pt-3" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))', position: 'sticky', bottom: 0, background: 'var(--jd-surface)' }}>
               {addError && (
                 <div className="mb-3 px-3 py-2 rounded-xl text-xs" style={{ background: 'rgba(224,90,58,0.1)', border: '1px solid rgba(224,90,58,0.3)', color: '#E05A3A' }}>
                   Erreur : {addError}

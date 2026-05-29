@@ -442,20 +442,23 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
     >
       <div className="modal-spacer" />
       <div
+        ref={contentRef}
         onClick={e => e.stopPropagation()}
         className="modal-card fade-in"
         style={{
           background: 'var(--jd-surface)',
           boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+          overscrollBehavior: 'contain',
         }}
       >
+        <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--jd-surface)' }}>
         {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+        <div className="flex justify-center pt-3 pb-1">
           <div style={{ width: 36, height: 4, borderRadius: 2, background: 'var(--jd-accent-ring)' }} />
         </div>
 
         {/* Header plante */}
-        <div className="flex items-center justify-between px-5 py-3 flex-shrink-0" style={{ borderBottom: '1px solid var(--jd-border)' }}>
+        <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: '1px solid var(--jd-border)' }}>
           <div className="flex items-center gap-3">
             <span style={{ fontSize: 38, lineHeight: 1 }}>{plant.emoji}</span>
             <div>
@@ -476,7 +479,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 px-4 py-2 flex-shrink-0" style={{ borderBottom: '1px solid var(--jd-border)' }}>
+        <div className="flex gap-1 px-4 py-2" style={{ borderBottom: '1px solid var(--jd-border)' }}>
           {TABS.map(tab => (
             <button
               key={tab.id}
@@ -492,8 +495,10 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
           ))}
         </div>
 
-        {/* Contenu scrollable */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))', overscrollBehavior: 'contain', minHeight: 0 }}>
+        </div>{/* fin sticky header */}
+
+        {/* Contenu */}
+        <div className="px-5 pt-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
           {activeTab === 'infos'      && <TabInfos plant={plant} onClose={onClose} onHarvest={handleHarvest} />}
           {activeTab === 'journal'    && <TabJournal    plant={plant} />}
           {activeTab === 'diagnostic' && <TabDiagnostic plant={plant} />}
