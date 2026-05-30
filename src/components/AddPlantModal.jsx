@@ -26,17 +26,14 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
   const historique   = profile.historique ?? []
   if (gardenPlants.length === 0 && historique.length === 0) return null
 
-  // Conflits directs avec le jardin
   const conflitsMauvaises = (ASSOCIATIONS[selectedPlant.id]?.mauvaises ?? []).filter(m =>
     gardenPlants.some(p => (p.name ?? '').toLowerCase() === m.plante.toLowerCase())
   )
 
-  // Synergies avec plantes existantes
   const synergies = (ASSOCIATIONS[selectedPlant.id]?.bonnes ?? []).filter(b =>
     gardenPlants.some(p => (p.name ?? '').toLowerCase() === b.plante.toLowerCase())
   )
 
-  // Rotation
   const rotationConflicts = getRotationConflicts(selectedPlant.id, historique)
   const mostRecent = rotationConflicts.length > 0
     ? rotationConflicts.sort((a, b) => new Date(b.harvestedAt) - new Date(a.harvestedAt))[0]
@@ -45,7 +42,6 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
   const famille = getFamillePlante(selectedPlant.id)
   const familleInfo = famille ? FAMILLES_ROTATION[famille] : null
 
-  // Suggestions de remplacement (même catégorie, sans conflit fort)
   const showSuggestions = conflitsMauvaises.some(m => m.intensite === 'forte') || !rotationCheck.ok
   const suggestions = showSuggestions
     ? plantsOfCat
@@ -54,7 +50,6 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
         .slice(0, 3)
     : []
 
-  // Rien à montrer
   if (conflitsMauvaises.length === 0 && synergies.length === 0 && rotationCheck.ok) return null
 
   return (
@@ -63,7 +58,6 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
         Compatibilité avec ton jardin
       </p>
 
-      {/* Cas 1 : Rotation */}
       {!rotationCheck.ok && (
         <div
           className="rounded-card p-3 mb-2"
@@ -82,7 +76,6 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
         </div>
       )}
 
-      {/* Cas 2 : Conflits */}
       {conflitsMauvaises.length > 0 && (
         <div
           className="rounded-card p-3 mb-2"
@@ -120,7 +113,6 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
         </div>
       )}
 
-      {/* Cas 3 : Synergies */}
       {conflitsMauvaises.length === 0 && synergies.length > 0 && (
         <div
           className="rounded-card p-3 mb-2"
@@ -144,7 +136,6 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
         </div>
       )}
 
-      {/* Suggestions de remplacement */}
       {suggestions.length > 0 && (
         <div className="rounded-card p-3" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
           <p className="text-xs font-semibold mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
@@ -170,17 +161,22 @@ function CompatibilitySection({ selectedPlant, plantsOfCat, onSelectPlant }) {
 }
 
 export default function AddPlantModal({ onAdd, onClose }) {
-  const [step, setStep]                   = useState(1)
-  const [submitting, setSubmitting]       = useState(false)
-  const [addError, setAddError]           = useState(null)
-  const [selectedCat, setSelectedCat]     = useState(null)
+  const [step,          setStep]          = useState(1)
+  const [submitting,    setSubmitting]    = useState(false)
+  const [addError,      setAddError]      = useState(null)
+  const [selectedCat,   setSelectedCat]   = useState(null)
   const [selectedPlant, setSelectedPlant] = useState(null)
-  const [customName, setCustomName]       = useState('')
-  const [variety, setVariety]             = useState('')
-  const [plantedAt, setPlantedAt]         = useState(getToday())
+  const [customName,    setCustomName]    = useState('')
+  const [variety,       setVariety]       = useState('')
+  const [plantedAt,     setPlantedAt]     = useState(getToday())
+  const [search,        setSearch]        = useState('')
 
   const cat         = CATEGORIES.find(c => c.id === selectedCat)
   const plantsOfCat = selectedCat ? PLANTS_BY_CATEGORY[selectedCat] ?? [] : []
+
+  const filteredPlants = search.trim()
+    ? plantsOfCat.filter(p => p.label.toLowerCase().includes(search.toLowerCase()))
+    : plantsOfCat
 
   const estimatedDates = selectedPlant
     ? calculatePlantDates(selectedPlant.id, plantedAt)
@@ -190,6 +186,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
     setSelectedCat(catId)
     setSelectedPlant(null)
     setCustomName('')
+    setSearch('')
     setStep(2)
   }
 
@@ -236,48 +233,51 @@ export default function AddPlantModal({ onAdd, onClose }) {
     >
       <div className="modal-spacer" onClick={onClose} />
       <div
-        className="modal-card fade-in"
+        className="modal-card sheet-enter"
         style={{ background: 'var(--jd-surface)', boxShadow: '0 8px 40px rgba(0,0,0,0.6)' }}
       >
+        {/* En-tête sticky */}
         <div style={{ position: 'sticky', top: 0, zIndex: 1, background: 'var(--jd-surface)' }}>
-        {/* En-tête */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <div className="flex items-center gap-2">
-            {step > 1 && (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="text-sm font-semibold tap-scale"
-                style={{ color: 'var(--jd-ink-muted)' }}
-              >
-                ←
-              </button>
-            )}
-            <h2 className="font-display font-bold text-xl" style={{ color: 'var(--jd-accent)' }}>
-              {step === 1 && 'Quelle catégorie ?'}
-              {step === 2 && `${cat?.emoji} ${cat?.label}`}
-              {step === 3 && (selectedPlant ? selectedPlant.label : 'Plante personnalisée')}
-            </h2>
+          <div className="flex items-center justify-between px-5 pt-5 pb-3">
+            <div className="flex items-center gap-2">
+              {step > 1 && (
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="text-sm font-semibold tap-scale"
+                  style={{ color: 'var(--jd-ink-muted)' }}
+                >
+                  ←
+                </button>
+              )}
+              <h2 className="jd-title" style={{ fontSize: 20, color: 'var(--jd-accent)' }}>
+                {step === 1 && 'Quelle catégorie ?'}
+                {step === 2 && `${cat?.emoji ?? ''} ${cat?.label ?? ''}`}
+                {step === 3 && (selectedPlant ? selectedPlant.label : 'Plante personnalisée')}
+              </h2>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full flex items-center justify-center font-bold tap-scale"
+              style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-accent)', fontSize: 18 }}
+            >
+              ✕
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center font-bold tap-scale"
-            style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-accent)', fontSize: 18 }}
-          >
-            ✕
-          </button>
-        </div>
 
-        {/* Barre de progression */}
-        <div className="flex gap-1.5 px-5 mb-3">
-          {[1, 2, 3].map(s => (
-            <div
-              key={s}
-              className="flex-1 h-1 rounded-full transition-all duration-300"
-              style={{ background: s <= step ? 'var(--jd-accent)' : 'var(--jd-accent-soft)' }}
-            />
-          ))}
+          {/* Barre de progression */}
+          <div className="flex gap-1.5 px-5 mb-3">
+            {[1, 2, 3].map(s => (
+              <div
+                key={s}
+                className="flex-1 h-1 rounded-full"
+                style={{
+                  background: s <= step ? 'var(--jd-accent)' : 'var(--jd-accent-soft)',
+                  transition: `background 0.3s var(--jd-ease-out)`,
+                }}
+              />
+            ))}
+          </div>
         </div>
-        </div>{/* fin sticky header */}
 
         {/* ── Étape 1 : Catégorie ── */}
         {step === 1 && (
@@ -290,12 +290,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
                   className="flex items-center gap-4 px-4 py-4 rounded-card text-left tap-scale"
                   style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}
                 >
-                  <span
-                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
-                    style={{ background: 'var(--jd-accent-soft)' }}
-                  >
-                    {cat.emoji}
-                  </span>
+                  <EmojiIllo emoji={cat.emoji} size={48} ring={false} />
                   <div className="flex-1">
                     <p className="font-semibold text-sm" style={{ color: 'var(--jd-ink)' }}>{cat.label}</p>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--jd-ink-muted)' }}>
@@ -312,34 +307,66 @@ export default function AddPlantModal({ onAdd, onClose }) {
         {/* ── Étape 2 : Plante ── */}
         {step === 2 && (
           <div className="px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+            {/* Champ de recherche */}
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Rechercher une plante…"
+              className="w-full px-4 py-3 rounded-card text-sm outline-none mb-3"
+              style={{
+                background:  'var(--jd-surface)',
+                border:      '1px solid var(--jd-border)',
+                color:       'var(--jd-ink)',
+              }}
+              onFocus={e  => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
+              onBlur={e   => (e.target.style.borderColor = 'var(--jd-border)')}
+            />
+
+            {/* Grille des plantes */}
             <div className="grid grid-cols-2 gap-2 pb-4">
-              {plantsOfCat.map(plant => {
-                const dur = PLANT_DURATIONS[plant.id]
+              {filteredPlants.map(plant => {
+                const dur        = PLANT_DURATIONS[plant.id]
+                const isSelected = selectedPlant?.id === plant.id
                 return (
                   <button
                     key={plant.id}
                     onClick={() => handleSelectPlant(plant)}
                     className="flex flex-col items-center gap-2 px-3 py-4 rounded-card text-center tap-scale transition-all"
-                    style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}
+                    style={{
+                      background: isSelected ? 'var(--jd-accent-soft)' : 'var(--jd-surface-alt)',
+                      border:     `1px solid ${isSelected ? 'var(--jd-accent-ring)' : 'var(--jd-border)'}`,
+                    }}
                   >
-                    <span style={{ fontSize: 36, lineHeight: 1 }}>{plant.emoji}</span>
-                    <span className="text-sm font-semibold" style={{ color: 'var(--jd-ink)' }}>{plant.label}</span>
+                    <EmojiIllo emoji={plant.emoji} size={56} ring />
+                    <span className="text-sm font-semibold" style={{ color: isSelected ? 'var(--jd-accent)' : 'var(--jd-ink)' }}>
+                      {plant.label}
+                    </span>
                     {dur && (
-                      <span className="jd-chip">
-                        ~{dur.daysToHarvest} jours
-                      </span>
+                      <span className="jd-chip">~{dur.daysToHarvest} jours</span>
                     )}
                   </button>
                 )
               })}
-              <button
-                onClick={handleSelectAutre}
-                className="flex flex-col items-center gap-2 px-3 py-4 rounded-card text-center tap-scale col-span-2"
-                style={{ background: 'var(--jd-bg)', border: '2px dashed var(--jd-border)' }}
-              >
-                <span style={{ fontSize: 28 }}>✏️</span>
-                <span className="text-sm font-medium" style={{ color: 'var(--jd-ink-muted)' }}>Autre (nom libre)</span>
-              </button>
+
+              {/* Aucun résultat */}
+              {filteredPlants.length === 0 && (
+                <div className="col-span-2 py-8 text-center">
+                  <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>Aucune plante trouvée</p>
+                </div>
+              )}
+
+              {/* Nom libre */}
+              {!search.trim() && (
+                <button
+                  onClick={handleSelectAutre}
+                  className="flex flex-col items-center gap-2 px-3 py-4 rounded-card text-center tap-scale col-span-2"
+                  style={{ background: 'var(--jd-bg)', border: '2px dashed var(--jd-border)' }}
+                >
+                  <EmojiIllo emoji="✏️" size={40} ring={false} />
+                  <span className="text-sm font-medium" style={{ color: 'var(--jd-ink-muted)' }}>Autre (nom libre)</span>
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -353,7 +380,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
                   className="flex items-center gap-3 p-3 rounded-card mb-4"
                   style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-accent-ring)' }}
                 >
-                  <EmojiIllo emoji={selectedPlant.emoji} size={52} />
+                  <EmojiIllo emoji={selectedPlant.emoji} size={52} ring />
                   <span className="font-semibold" style={{ color: 'var(--jd-accent)' }}>{selectedPlant.label}</span>
                 </div>
               ) : (
@@ -369,8 +396,8 @@ export default function AddPlantModal({ onAdd, onClose }) {
                     placeholder="ex: Basilic pourpre, Cactus…"
                     className="w-full px-4 py-3 rounded-card text-sm outline-none"
                     style={{ border: '1px solid var(--jd-border)', background: 'var(--jd-surface-alt)', color: 'var(--jd-ink)' }}
-                    onFocus={e => (e.target.style.borderColor = 'var(--jd-accent)')}
-                    onBlur={e => (e.target.style.borderColor = 'var(--jd-border)')}
+                    onFocus={e => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
+                    onBlur={e  => (e.target.style.borderColor = 'var(--jd-border)')}
                   />
                 </div>
               )}
@@ -386,14 +413,14 @@ export default function AddPlantModal({ onAdd, onClose }) {
                 max={getToday()}
                 className="w-full px-4 py-3 rounded-card text-sm outline-none mb-4"
                 style={{ border: '1px solid var(--jd-border)', background: 'var(--jd-surface-alt)', color: 'var(--jd-ink)' }}
-                onFocus={e => (e.target.style.borderColor = 'var(--jd-accent)')}
-                onBlur={e => (e.target.style.borderColor = 'var(--jd-border)')}
+                onFocus={e => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
+                onBlur={e  => (e.target.style.borderColor = 'var(--jd-border)')}
               />
 
               {/* Dates estimées */}
               {estimatedDates?.estimatedHarvestStart && (
-                <div className="rounded-xl p-3 mb-4 flex gap-3" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
-                  <span style={{ fontSize: 24, flexShrink: 0 }}>📅</span>
+                <div className="rounded-xl p-3 mb-4 flex gap-3 items-start" style={{ background: 'var(--jd-surface-alt)', border: '1px solid var(--jd-border)' }}>
+                  <EmojiIllo emoji="📅" size={32} ring={false} />
                   <div>
                     <p className="text-xs font-bold mb-0.5" style={{ color: 'var(--jd-accent)' }}>Récolte estimée</p>
                     <p className="text-sm" style={{ color: 'var(--jd-ink)' }}>
@@ -426,13 +453,16 @@ export default function AddPlantModal({ onAdd, onClose }) {
                 placeholder="ex: Cherry Roma, Ratte…"
                 className="w-full px-4 py-3 rounded-card text-sm outline-none"
                 style={{ border: '1px solid var(--jd-border)', background: 'var(--jd-surface-alt)', color: 'var(--jd-ink)' }}
-                onFocus={e => (e.target.style.borderColor = 'var(--jd-accent)')}
-                onBlur={e => (e.target.style.borderColor = 'var(--jd-border)')}
+                onFocus={e => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
+                onBlur={e  => (e.target.style.borderColor = 'var(--jd-border)')}
               />
             </div>
 
             {/* Bouton fixe en bas */}
-            <div className="px-4 pt-3" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))', position: 'sticky', bottom: 0, background: 'var(--jd-surface)' }}>
+            <div
+              className="px-4 pt-3"
+              style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom))', position: 'sticky', bottom: 0, background: 'var(--jd-surface)' }}
+            >
               {addError && (
                 <div className="mb-3 px-3 py-2 rounded-xl text-xs" style={{ background: 'var(--jd-harvest-soft)', border: '1px solid var(--jd-harvest-ring)', color: 'var(--jd-harvest)' }}>
                   Erreur : {addError}
