@@ -40,6 +40,14 @@
   --jd-stage-perennial-producing: #e8a040;  /* ambre production */
   --jd-stage-perennial-longcycle: #9da8a8;  /* gris-teal cycle long */
 
+  /* Badge stade PlantCard — couleurs présentées sur fond sombre */
+  --jd-badge-sowed:        #8b9a50;           /* vert sauge, semis discret */
+  --jd-badge-sowed-soft:   rgba(139,154,80,0.14);
+  --jd-badge-sowed-ring:   rgba(139,154,80,0.30);
+  --jd-badge-growing:      #9dc044;           /* lime vif, pousse active */
+  --jd-badge-growing-soft: rgba(157,192,68,0.14);
+  --jd-badge-growing-ring: rgba(157,192,68,0.30);
+
   /* ── Séquoia — tokens sémantiques additionnels ────────
      Exprimés dans les 3 familles, avec variantes soft/ring */
   --jd-forest:       #20512E;   /* forêt dense, bg boutons actifs */

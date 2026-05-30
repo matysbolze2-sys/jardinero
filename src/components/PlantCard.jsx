@@ -4,16 +4,29 @@ import { useProfile } from '../hooks/useProfile'
 import { getRegionById } from '../data/regions'
 import { getEffectiveStatus, getCycleProgress, ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
 
+// Badge colors per growth stage — mapped to design tokens
+const BADGE = {
+  sowed:               { color: 'var(--jd-badge-sowed)',              soft: 'var(--jd-badge-sowed-soft)',              ring: 'var(--jd-badge-sowed-ring)' },
+  growing:             { color: 'var(--jd-badge-growing)',            soft: 'var(--jd-badge-growing-soft)',            ring: 'var(--jd-badge-growing-ring)' },
+  flowering:           { color: 'var(--jd-warning)',                  soft: 'var(--jd-warning-soft)',                  ring: 'var(--jd-warning-ring)' },
+  ready:               { color: 'var(--jd-harvest)',                  soft: 'var(--jd-harvest-soft)',                  ring: 'var(--jd-harvest-ring)' },
+  perennial_dormant:   { color: 'var(--jd-stage-perennial-dormant)',   soft: 'rgba(128,149,168,0.14)', ring: 'rgba(128,149,168,0.30)' },
+  perennial_growing:   { color: 'var(--jd-stage-perennial-growing)',   soft: 'rgba(109,186,120,0.14)', ring: 'rgba(109,186,120,0.30)' },
+  perennial_producing: { color: 'var(--jd-stage-perennial-producing)', soft: 'rgba(232,160,64,0.14)',  ring: 'rgba(232,160,64,0.30)' },
+  perennial_longcycle: { color: 'var(--jd-stage-perennial-longcycle)', soft: 'rgba(157,168,168,0.14)', ring: 'rgba(157,168,168,0.30)' },
+}
+
 export default function PlantCard({ plant, onOpenDetail }) {
   const { profile } = useProfile()
   const regionOffset = getRegionById(profile.region)?.offset ?? 0
 
-  const effectiveStatus  = getEffectiveStatus(plant, regionOffset)
-  const progress         = getCycleProgress(plant, regionOffset)
-  const statut           = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
-  const isManual         = plant.statusOverride != null
+  const effectiveStatus = getEffectiveStatus(plant, regionOffset)
+  const progress        = getCycleProgress(plant, regionOffset)
+  const statut          = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
+  const badge           = BADGE[effectiveStatus] ?? BADGE.sowed
+  const isManual        = plant.statusOverride != null
 
-  const otherPlants      = (profile.plants ?? []).filter(p => p.id !== plant.id)
+  const otherPlants = (profile.plants ?? []).filter(p => p.id !== plant.id)
 
   const daysSincePlanted = plant.plantedAt
     ? Math.floor((Date.now() - new Date(plant.plantedAt + 'T12:00:00')) / 86400000)
@@ -22,25 +35,16 @@ export default function PlantCard({ plant, onOpenDetail }) {
   return (
     <button
       onClick={() => onOpenDetail(plant, 'infos')}
-      className="w-full text-left card-hover tap-scale"
-      style={{
-        background:           'var(--jd-surface-glass)',
-        backdropFilter:       'blur(var(--jd-blur))',
-        WebkitBackdropFilter: 'blur(var(--jd-blur))',
-        border:               '1px solid var(--jd-border)',
-        borderRadius:         'var(--jd-radius)',
-        padding:              12,
-        display:              'flex',
-        gap:                  14,
-        alignItems:           'center',
-      }}
+      className="w-full text-left glass-card card-hover tap-scale flex items-center"
+      style={{ padding: 12, gap: 14 }}
     >
       <EmojiIllo emoji={plant.emoji} size={56} ring />
 
       <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Nom + jours */}
         <div className="flex items-baseline justify-between">
           <p
-            className="font-bold text-sm leading-snug"
+            className="font-bold leading-snug"
             style={{ color: 'var(--jd-ink)', letterSpacing: '-0.01em', fontSize: 15 }}
           >
             {plant.name}
@@ -53,32 +57,32 @@ export default function PlantCard({ plant, onOpenDetail }) {
         </div>
 
         {plant.variety && (
-          <p className="text-xs mt-0.5" style={{ color: 'var(--jd-ink-muted)', fontSize: 10.5 }}>{plant.variety}</p>
+          <p className="mt-0.5" style={{ color: 'var(--jd-ink-muted)', fontSize: 10.5 }}>{plant.variety}</p>
         )}
 
-        {/* Progress bar */}
+        {/* Barre de progression dans la couleur du stade */}
         <div className="rounded-full mt-2 overflow-hidden" style={{ height: 4, background: 'rgba(255,255,255,0.08)' }}>
           {progress > 0 ? (
             <div
               className="h-full rounded-full"
-              style={{ width: `${progress}%`, background: statut.color }}
+              style={{ width: `${progress}%`, background: badge.color }}
             />
           ) : (
-            // Perennial or no data: solid color band showing current state
-            <div className="h-full rounded-full" style={{ width: '100%', background: statut.color + '66' }} />
+            <div className="h-full rounded-full" style={{ width: '100%', background: badge.soft }} />
           )}
         </div>
 
+        {/* Badge stade + compatibilité */}
         <div className="flex items-center justify-between mt-1.5">
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span
               className="jd-chip"
               style={{
-                background: statut.color + '22',
-                color:      statut.color,
-                border:     `1px solid ${statut.color}44`,
-                fontSize: 10,
-                padding: '3px 8px',
+                background: badge.soft,
+                color:      badge.color,
+                border:     `1px solid ${badge.ring}`,
+                fontSize:   10,
+                padding:    '3px 8px',
               }}
             >
               {statut.label}
@@ -98,4 +102,3 @@ export default function PlantCard({ plant, onOpenDetail }) {
     </button>
   )
 }
-

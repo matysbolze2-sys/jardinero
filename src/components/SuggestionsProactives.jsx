@@ -1,14 +1,17 @@
+import EmojiIllo from './EmojiIllo'
+
 export default function SuggestionsProactives({ suggestions, loading, onSuggestionClick }) {
   if (loading) return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--jd-space-2)' }}>
+    <div className="flex flex-col" style={{ gap: 'var(--jd-space-2)' }}>
       {[1, 2, 3].map(i => (
         <div
           key={i}
           style={{
-            height: 48,
-            background: 'var(--jd-surface)',
+            height:       56,
+            background:   'var(--jd-accent-soft)',
+            border:       '1px solid var(--jd-accent-ring)',
             borderRadius: 'var(--jd-radius-sm)',
-            opacity: 0.4,
+            opacity:      0.25,
           }}
         />
       ))}
@@ -19,30 +22,39 @@ export default function SuggestionsProactives({ suggestions, loading, onSuggesti
 
   return (
     <div>
-      <div className="jd-kicker" style={{ marginBottom: 'var(--jd-space-2)' }}>
-        💡 Suggestions du jour
+      {/* Kicker mono + icône */}
+      <div className="flex items-center gap-2 mb-2">
+        <EmojiIllo emoji="💡" size={24} ring={false} />
+        <span className="jd-kicker">Suggestions du jour</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--jd-space-2)' }}>
+
+      <div className="flex flex-col" style={{ gap: 'var(--jd-space-2)' }}>
         {suggestions.map((s, i) => (
           <button
             key={i}
             onClick={() => onSuggestionClick(s)}
-            className="tap-scale"
+            className="tap-scale fade-in flex items-start gap-3 text-left w-full"
             style={{
-              background:   'var(--jd-surface)',
-              border:       '1px solid var(--jd-border)',
-              borderRadius: 'var(--jd-radius-sm)',
-              padding:      '12px 16px',
-              textAlign:    'left',
-              cursor:       'pointer',
-              fontSize:     'var(--jd-text-sm)',
-              color:        'var(--jd-ink)',
-              lineHeight:   1.4,
-              width:        '100%',
-              fontFamily:   'var(--jd-font-sans)',
+              background:    'var(--jd-accent-soft)',
+              border:        '1px solid var(--jd-accent-ring)',
+              borderRadius:  'var(--jd-radius-sm)',
+              padding:       '12px 14px',
+              cursor:        'pointer',
+              animationDelay: `${i * 80}ms`,
             }}
           >
-            {s}
+            <EmojiIllo emoji="🌿" size={28} ring={false} />
+            <span
+              style={{
+                fontSize:   'var(--jd-text-sm)',
+                color:      'var(--jd-ink)',
+                lineHeight: 1.45,
+                fontFamily: 'var(--jd-font-sans)',
+                paddingTop: 2,
+              }}
+            >
+              {s}
+            </span>
           </button>
         ))}
       </div>
