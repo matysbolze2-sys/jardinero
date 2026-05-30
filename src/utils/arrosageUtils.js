@@ -1,6 +1,7 @@
 import { PLANTS } from '../data/plants'
 import { PLANTS_BY_CATEGORY } from '../data/plantsExtended'
 import { getEffectiveStatus } from './plantStatusUtils'
+import { PALETTE } from '../styles/palette'
 
 // ─── Multiplicateurs sol ───────────────────────────────────────────────────────
 // Ajustent la fréquence de base selon la capacité de rétention du sol.
@@ -130,9 +131,10 @@ export function getEtatArrosage(plantId, plantedAt, arrosages, frequence) {
   return 'overdue'
 }
 
+// Thème sombre Forêt — fonds semi-transparents, famille teal/eau
 export const ETAT_CONFIG = {
-  ok:      { color: '#3B6D11', bg: '#EAF3DE', label: 'Hydraté',   icon: '💧' },
-  soon:    { color: '#C27C12', bg: '#FFF8EC', label: 'Bientôt',   icon: '⏳' },
-  due:     { color: '#E05A3A', bg: '#FFF0ED', label: 'À arroser', icon: '🚿' },
-  overdue: { color: '#B91C1C', bg: '#FEE2E2', label: 'En retard', icon: '⚠️' },
+  ok:      { color: PALETTE.water,     bg: 'rgba(61,130,138,0.16)',  label: 'Hydraté',   icon: '💧' },
+  soon:    { color: PALETTE.accentDim, bg: 'rgba(166,227,107,0.10)', label: 'Bientôt',   icon: '⏳' },
+  due:     { color: PALETTE.warning,   bg: 'rgba(252,186,106,0.14)', label: 'À arroser', icon: '🚿' },
+  overdue: { color: PALETTE.harvest,   bg: 'rgba(222,95,29,0.14)',   label: 'En retard', icon: '⚠️' },
 }

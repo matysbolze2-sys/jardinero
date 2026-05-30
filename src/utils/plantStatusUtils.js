@@ -1,20 +1,21 @@
 import { PLANT_DURATIONS } from '../data/plantDurations'
+import { PALETTE } from '../styles/palette'
 
 // ── Labels ───────────────────────────────────────────────────────────────────
 
 export const PERENNIAL_STATUT_LABELS = {
-  perennial_dormant:   { label: 'En repos hivernal', color: '#6B9BA3' },
-  perennial_growing:   { label: 'En végétation',     color: '#6db842' },
-  perennial_producing: { label: 'En production',     color: '#a6e36b' },
-  perennial_longcycle: { label: 'Première récolte',  color: '#f0b86c' },
+  perennial_dormant:   { label: 'En repos hivernal', color: PALETTE.water },
+  perennial_growing:   { label: 'En végétation',     color: PALETTE.stageGrowing },
+  perennial_producing: { label: 'En production',     color: PALETTE.accent },
+  perennial_longcycle: { label: 'Première récolte',  color: PALETTE.warning },
 }
 
 // Includes both annual and perennial statuses, with a brighter growing color for dark backgrounds
 export const ALL_STATUT_LABELS = {
-  sowed:     { label: 'Semé',       color: '#97C459' },
-  growing:   { label: 'En pousse',  color: '#6db842' },
-  flowering: { label: 'En fleurs',  color: '#FAC775' },
-  ready:     { label: 'À récolter', color: '#E05A3A' },
+  sowed:     { label: 'Semé',       color: PALETTE.stageGrowing },
+  growing:   { label: 'En pousse',  color: PALETTE.stageGrowing },
+  flowering: { label: 'En fleurs',  color: PALETTE.stageFlowering },
+  ready:     { label: 'À récolter', color: PALETTE.stageReady },
   ...PERENNIAL_STATUT_LABELS,
 }
 
