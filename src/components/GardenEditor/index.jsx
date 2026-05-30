@@ -73,8 +73,8 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
               border: '1.5px solid var(--jd-accent-ring)', outline: 'none',
             }}
           />
-          <button onClick={confirmAdd} style={{ fontSize: 12, fontWeight: 700, padding: '7px 14px', borderRadius: 999, background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}>OK</button>
-          <button onClick={() => setAdding(false)} style={{ fontSize: 12, padding: '7px 10px', borderRadius: 999, background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)', border: '1px solid var(--jd-border)' }}>✕</button>
+          <button onClick={confirmAdd} className="tap-scale" style={{ fontSize: 12, fontWeight: 700, padding: '7px 14px', borderRadius: 999, background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}>OK</button>
+          <button onClick={() => setAdding(false)} className="tap-scale" style={{ fontSize: 12, padding: '7px 10px', borderRadius: 999, background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)', border: '1px solid var(--jd-border)' }}>✕</button>
         </div>
       )}
 
@@ -103,12 +103,12 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
                   onKeyDown={e => { if (e.key === 'Enter') confirmRename(g.id); if (e.key === 'Escape') setEditId(null) }}
                   style={{ flex: 1, padding: '6px 10px', borderRadius: 8, fontSize: 13, background: 'var(--jd-surface)', color: 'var(--jd-ink)', border: '1.5px solid var(--jd-accent)', outline: 'none' }}
                 />
-                <button onClick={() => confirmRename(g.id)} style={{ fontSize: 12, fontWeight: 700, color: 'var(--jd-accent)' }}>✓</button>
-                <button onClick={() => setEditId(null)} style={{ fontSize: 12, color: 'var(--jd-ink-muted)' }}>✕</button>
+                <button onClick={() => confirmRename(g.id)} className="tap-scale" style={{ fontSize: 12, fontWeight: 700, color: 'var(--jd-accent)' }}>✓</button>
+                <button onClick={() => setEditId(null)} className="tap-scale" style={{ fontSize: 12, color: 'var(--jd-ink-muted)' }}>✕</button>
               </>
             ) : (
               <>
-                <button onClick={() => onSelect(g.id)} style={{ flex: 1, textAlign: 'left' }}>
+                <button onClick={() => onSelect(g.id)} className="tap-scale" style={{ flex: 1, textAlign: 'left' }}>
                   <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--jd-ink)' }}>🌿 {g.name}</p>
                   <p style={{ fontSize: 11, marginTop: 2, color: 'var(--jd-ink-muted)' }}>
                     {g.width && g.height
@@ -118,11 +118,13 @@ function GardenPicker({ gardens, activeId, onSelect, onAdd, onDelete, onRename }
                 </button>
                 <button
                   onClick={() => { setEditId(g.id); setEditName(g.name) }}
+                  className="tap-scale"
                   style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, color: 'var(--jd-ink-muted)' }}
                   title="Renommer"
                 >✏️</button>
                 <button
                   onClick={() => { if (window.confirm(`Supprimer « ${g.name} » ?`)) onDelete(g.id) }}
+                  className="tap-scale"
                   style={{ fontSize: 12, padding: '4px 8px', borderRadius: 6, color: 'var(--jd-harvest)' }}
                   title="Supprimer"
                 >🗑</button>
@@ -167,6 +169,7 @@ function ActiveGardenEditor({ garden, plants }) {
             <button
               key={tab.id}
               onClick={() => setMode(tab.id)}
+              className="tap-scale"
               style={{
                 flex: 1, padding: '10px 0',
                 fontSize: 11, fontWeight: 600,
@@ -254,6 +257,7 @@ export default function GardenEditor() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--jd-border)' }}>
           <button
             onClick={() => setView('list')}
+            className="tap-scale"
             style={{ fontSize: 13, fontWeight: 500, color: 'var(--jd-ink-muted)' }}
           >
             ← Tous les jardins

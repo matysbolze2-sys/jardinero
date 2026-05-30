@@ -61,6 +61,9 @@
   --jd-warning-soft: rgba(252, 186, 106, 0.12);
   --jd-warning-ring: rgba(252, 186, 106, 0.30);
   --jd-earth:        #a06840;   /* terre, bois naturel */
+  --jd-frost:        #93c5fd;   /* risque gel, bleu ciel hivernal */
+  --jd-frost-soft:   rgba(147, 197, 253, 0.08);
+  --jd-frost-ring:   rgba(147, 197, 253, 0.30);
 
   /* ── Stagger ─────────────────────────────────────────
      Délai d'entrée entre items successifs en animation   */

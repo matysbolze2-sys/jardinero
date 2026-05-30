@@ -42,7 +42,7 @@ function ErrorBanner({ message }) {
       borderRadius: 'var(--jd-radius-sm)',
       padding: '10px 14px',
       fontSize: 13,
-      color: '#E05A3A',
+      color: 'var(--jd-harvest)',
       marginBottom: 16,
       fontFamily: 'var(--jd-font-sans)',
     }}>
@@ -193,7 +193,7 @@ export default function LoginPage() {
           className="w-full flex items-center justify-center gap-3 py-4 rounded-card font-semibold tap-scale"
           style={{
             background: 'white',
-            color: '#1A1A1A',
+            color: 'var(--jd-accent-ink)',
             fontSize: 16,
             boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
           }}
@@ -223,6 +223,7 @@ export default function LoginPage() {
               <button
                 key={tab.id}
                 onClick={() => switchMode(tab.id)}
+                className="tap-scale"
                 style={{
                   flex: 1,
                   padding: '8px 0',
@@ -232,6 +233,7 @@ export default function LoginPage() {
                   fontSize: 13,
                   fontWeight: 600,
                   fontFamily: 'var(--jd-font-sans)',
+                  cursor: 'pointer',
                   background: mode === tab.id ? 'var(--jd-surface)' : 'transparent',
                   color: mode === tab.id ? 'var(--jd-accent)' : 'var(--jd-ink-muted)',
                   boxShadow: mode === tab.id ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
@@ -296,6 +298,7 @@ export default function LoginPage() {
               <button
                 onClick={handleForgotPassword}
                 disabled={loading}
+                className="tap-scale"
                 style={{
                   background: 'none',
                   border: 'none',

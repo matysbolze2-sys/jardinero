@@ -411,3 +411,16 @@
     50%       { filter: brightness(1.25) drop-shadow(0 0 4px currentColor); }
   }
 }
+
+/* ── Accessibilité : respect du mouvement réduit ─────────────────────────────
+   Désactive toutes les animations quand l'utilisateur a demandé moins
+   de mouvement. Les tokens CSS restent définis — c'est le navigateur
+   qui bypasse les animations via ce media query. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration:       0.01ms !important;
+    animation-iteration-count: 1     !important;
+    transition-duration:      0.01ms !important;
+    scroll-behavior:          auto   !important;
+  }
+}

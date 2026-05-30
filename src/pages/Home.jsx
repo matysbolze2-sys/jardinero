@@ -47,12 +47,12 @@ function PlantChip({ emoji, label, onClick }) {
 // ── AlertCard ──────────────────────────────────────────────────────────────────
 
 const ALERT_STYLES = {
-  water_urgent:    { bg: 'rgba(224,90,58,0.1)',   border: 'rgba(224,90,58,0.3)',   color: '#E05A3A',   icon: '🚿' },
+  water_urgent:    { bg: 'var(--jd-harvest-soft)', border: 'var(--jd-harvest-ring)', color: 'var(--jd-harvest)', icon: '🚿' },
   ready_harvest:   { bg: 'var(--jd-warning-soft)', border: 'rgba(240,184,108,0.3)', color: 'var(--jd-warning)', icon: '🧺' },
   stage_change:    { bg: 'rgba(166,227,107,0.1)',  border: 'rgba(166,227,107,0.3)', color: 'var(--jd-accent)', icon: '✨' },
   germinating:     { bg: 'rgba(166,227,107,0.06)', border: 'rgba(166,227,107,0.18)', color: 'var(--jd-accent)', icon: '🌱' },
   perennial_start: { bg: 'rgba(166,227,107,0.08)', border: 'rgba(166,227,107,0.22)', color: 'var(--jd-accent)', icon: '🌿' },
-  frost_risk:      { bg: 'rgba(147,197,253,0.08)', border: 'rgba(147,197,253,0.3)', color: '#93C5FD',   icon: '🧊' },
+  frost_risk:      { bg: 'var(--jd-frost-soft)',   border: 'var(--jd-frost-ring)',   color: 'var(--jd-frost)',   icon: '🧊' },
 }
 
 function AlertCard({ alert, onNavigate }) {
@@ -383,6 +383,11 @@ export default function Home({ onNavigate }) {
           Se déconnecter
         </button>
       </div>
+
+      {/* Crédit illustrations */}
+      <p className="mt-3 text-center" style={{ fontSize: 9.5, color: 'var(--jd-ink-muted)', opacity: 0.45, fontFamily: 'var(--jd-font-mono)' }}>
+        Illustrations : © <a href="https://openmoji.org" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>OpenMoji</a> – CC BY-SA 4.0
+      </p>
 
     </div>
   )

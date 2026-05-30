@@ -80,7 +80,7 @@ export default function MonJardin() {
             <button
               key={tab.id}
               onClick={tab.onClick}
-              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all"
+              className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all tap-scale"
               style={{
                 background: activeTab === tab.id ? 'var(--jd-surface-alt)' : 'transparent',
                 color:      activeTab === tab.id ? 'var(--jd-accent)'      : 'var(--jd-ink-muted)',
@@ -140,7 +140,7 @@ export default function MonJardin() {
               <button
                 key={sub.id}
                 onClick={() => setAssocSubTab(sub.id)}
-                className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                className="flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all tap-scale"
                 style={{
                   background: assocSubTab === sub.id ? 'var(--jd-surface-alt)' : 'transparent',
                   color:      assocSubTab === sub.id ? 'var(--jd-accent)'      : 'var(--jd-ink-muted)',

@@ -14,16 +14,16 @@ import { getSymptomsForPlant, getUrgenceConfig } from '../data/diagnostics'
 import EmojiIllo from './EmojiIllo'
 import HarvestCelebration from './HarvestCelebration'
 
-// ── Palette de stade — dégradé de saison (cohérent avec CalendarTable) ────────
-const STAGE_COLOR = {
-  sowed:               '#8B9A50',
-  growing:             '#9DC044',
-  flowering:           '#FCBA6A',
-  ready:               '#DE5F1D',
-  perennial_dormant:   '#8095A8',
-  perennial_growing:   '#6DBA78',
-  perennial_producing: '#E8A040',
-  perennial_longcycle: '#9DA8A8',
+// ── Palette de stade — tokens CSS + base rgba pour alpha compositing ─────────
+const STAGE = {
+  sowed:               { color: 'var(--jd-badge-sowed)',              rgba: 'rgba(139,154,80,' },
+  growing:             { color: 'var(--jd-badge-growing)',            rgba: 'rgba(157,192,68,' },
+  flowering:           { color: 'var(--jd-warning)',                  rgba: 'rgba(252,186,106,' },
+  ready:               { color: 'var(--jd-harvest)',                  rgba: 'rgba(222,95,29,' },
+  perennial_dormant:   { color: 'var(--jd-stage-perennial-dormant)',  rgba: 'rgba(128,149,168,' },
+  perennial_growing:   { color: 'var(--jd-stage-perennial-growing)',  rgba: 'rgba(109,186,120,' },
+  perennial_producing: { color: 'var(--jd-stage-perennial-producing)',rgba: 'rgba(232,160,64,' },
+  perennial_longcycle: { color: 'var(--jd-stage-perennial-longcycle)',rgba: 'rgba(157,168,168,' },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -64,7 +64,9 @@ function TabInfos({ plant, onClose, onHarvest }) {
   const progress        = getCycleProgress(plant, regionOffset)
   const message         = getStageMessage(plant, regionOffset)
   const statut          = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
-  const stageColor      = STAGE_COLOR[effectiveStatus] ?? '#8B9A50'
+  const stage           = STAGE[effectiveStatus] ?? STAGE.sowed
+  const stageColor      = stage.color
+  const stageRgba       = stage.rgba
   const isManual        = plant.statusOverride != null
 
   const durations    = PLANT_DURATIONS[plant.plantId]
@@ -95,12 +97,12 @@ function TabInfos({ plant, onClose, onHarvest }) {
         <Kicker color={stageColor} label="◉ Stade actuel" />
         <div
           className="rounded-card p-4 flex flex-col gap-3"
-          style={{ background: stageColor + '16', border: `1px solid ${stageColor}40` }}
+          style={{ background: stageRgba + '0.09)', border: `1px solid ${stageRgba}0.25)` }}
         >
           <div className="flex items-center gap-2 flex-wrap">
             <span
               className="text-xs px-2.5 py-0.5 rounded-chip font-bold"
-              style={{ background: stageColor + '30', color: stageColor }}
+              style={{ background: stageRgba + '0.19)', color: stageColor }}
             >
               {statut.label}
             </span>
@@ -181,7 +183,9 @@ function TabInfos({ plant, onClose, onHarvest }) {
           <div className="flex flex-col gap-1.5">
             {annualSteps.map((key, i) => {
               const s        = ALL_STATUT_LABELS[key]
-              const sc       = STAGE_COLOR[key] ?? stageColor
+              const stg      = STAGE[key] ?? STAGE.sowed
+              const sc       = stg.color
+              const scRgba   = stg.rgba
               const isActive = key === effectiveStatus
               const isPast   = i < stepIndex
               const isFuture = !isActive && !isPast
@@ -190,8 +194,8 @@ function TabInfos({ plant, onClose, onHarvest }) {
                   key={key}
                   className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
                   style={{
-                    background: isActive ? sc + '18' : 'transparent',
-                    border:     isActive ? `1px solid ${sc}44` : '1px solid transparent',
+                    background: isActive ? scRgba + '0.09)' : 'transparent',
+                    border:     isActive ? `1px solid ${scRgba}0.27)` : '1px solid transparent',
                     opacity:    isFuture ? 0.4 : 1,
                   }}
                 >
@@ -260,7 +264,7 @@ function TabInfos({ plant, onClose, onHarvest }) {
         <button
           onClick={onHarvest}
           className="w-full py-3.5 rounded-xl text-sm font-bold tap-scale"
-          style={{ background: 'var(--jd-harvest)', color: '#fff' }}
+          style={{ background: 'var(--jd-harvest)', color: 'var(--jd-ink)' }}
         >
           🧺 Récolter maintenant
         </button>
@@ -319,7 +323,7 @@ function TabJournal({ plant }) {
           <button
             onClick={handleAdd}
             disabled={!texte.trim()}
-            className="px-4 py-1.5 rounded-chip text-xs font-semibold"
+            className="px-4 py-1.5 rounded-chip text-xs font-semibold tap-scale"
             style={{
               background: texte.trim() ? 'var(--jd-accent)' : 'var(--jd-accent-soft)',
               color:      texte.trim() ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
@@ -345,7 +349,7 @@ function TabJournal({ plant }) {
                 </p>
                 <button
                   onClick={() => handleDelete(note.id)}
-                  className="text-xs px-2 py-0.5 rounded-chip flex-shrink-0"
+                  className="text-xs px-2 py-0.5 rounded-chip flex-shrink-0 tap-scale"
                   style={{
                     background: confirming === note.id ? 'var(--jd-harvest-soft)' : 'var(--jd-surface-alt)',
                     color:      confirming === note.id ? 'var(--jd-harvest)' : 'var(--jd-ink-muted)',
@@ -413,7 +417,7 @@ function TabDiagnostic({ plant }) {
         <div className="rounded-card p-4 flex flex-col gap-3" style={{ background: urgConf.bg, border: `1px solid ${urgConf.badge}44` }}>
           <div className="flex items-center justify-between">
             <p className="font-semibold text-sm" style={{ color: 'var(--jd-ink)' }}>{diag.symptome}</p>
-            <span className="text-xs px-2.5 py-1 rounded-chip font-bold flex-shrink-0" style={{ background: urgConf.badge, color: '#fff' }}>
+            <span className="text-xs px-2.5 py-1 rounded-chip font-bold flex-shrink-0" style={{ background: urgConf.badge, color: 'var(--jd-ink)' }}>
               {urgConf.label}
             </span>
           </div>
@@ -462,7 +466,8 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
   const regionOffset         = getRegionById(profile.region)?.offset ?? 0
   const effectiveStatus      = getEffectiveStatus(plant, regionOffset)
   const statut               = ALL_STATUT_LABELS[effectiveStatus] ?? ALL_STATUT_LABELS.sowed
-  const stageColor           = STAGE_COLOR[effectiveStatus] ?? '#8B9A50'
+  const stageColor           = (STAGE[effectiveStatus] ?? STAGE.sowed).color
+  const stageRgba            = (STAGE[effectiveStatus] ?? STAGE.sowed).rgba
 
   return (
     <>
@@ -501,7 +506,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
               <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-base"
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-base tap-scale"
                   style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-accent)' }}
                 >
                   ×
@@ -514,7 +519,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all"
+                  className="flex-1 py-2 rounded-xl text-xs font-semibold transition-all tap-scale"
                   style={{
                     background: activeTab === tab.id ? 'var(--jd-surface-alt)' : 'transparent',
                     color:      activeTab === tab.id ? 'var(--jd-accent)' : 'var(--jd-ink-muted)',
@@ -554,7 +559,7 @@ export default function PlantDetailSheet({ plant, initialTab = 'infos', onClose,
 
             <span style={{
               marginTop:    12,
-              background:   stageColor + '28',
+              background:   stageRgba + '0.16)',
               color:        stageColor,
               padding:      '5px 14px',
               borderRadius: 999,
