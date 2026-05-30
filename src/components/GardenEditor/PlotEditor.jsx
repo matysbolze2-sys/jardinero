@@ -3,46 +3,51 @@ import { snapToGrid, checkCollision, clampPlot, hasCollision } from './gardenUti
 import { useProfile } from '../../hooks/useProfile'
 import { getHistoriqueByPlot, getFamillePlante, FAMILLES_ROTATION, respecteRotation } from '../../data/rotation'
 
-const SCALE   = 60
+const SCALE    = 60
 const MIN_SIZE = 0.5
-const SNAP    = 0.5
+const SNAP     = 0.5
 
 function makePlot(x, y) {
   return { id: crypto.randomUUID(), x, y, width: 1, height: 1, plants: [], label: '' }
 }
 
-function getPlotFillColor(plotId, historique, selected) {
+function getPlotFill(plotId, historique, selected) {
+  if (selected) return 'rgba(180,233,122,0.18)'
   const hist = getHistoriqueByPlot(plotId, historique)
-  if (hist.length === 0) return selected ? '#C8E89A' : '#DFF0C0'
+  if (hist.length === 0) return 'url(#plot-soil)'
   const last = hist[0]
-  if (!last.plantId) return selected ? '#C8E89A' : '#DFF0C0'
+  if (!last.plantId) return 'url(#plot-soil)'
   const famille = getFamillePlante(last.plantId)
-  if (!famille) return selected ? '#C8E89A' : '#DFF0C0'
+  if (!famille) return 'url(#plot-soil)'
   const check = respecteRotation(last.plantId, last.harvestedAt)
-  if (check.ok) return selected ? '#C8E89A' : '#DFF0C0'
-  const fam = FAMILLES_ROTATION[famille]
-  return selected ? (fam?.couleurBord ?? '#C8E89A') : (fam?.couleur ?? '#DFF0C0')
+  if (check.ok) return 'url(#plot-soil)'
+  return FAMILLES_ROTATION[famille]?.couleur ?? 'url(#plot-soil)'
 }
 
-function getPlotStrokeColor(plotId, historique, selected) {
+function getPlotStroke(plotId, historique, selected) {
   const hist = getHistoriqueByPlot(plotId, historique)
-  if (hist.length === 0) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
-  const last = hist[0]
-  if (!last.plantId) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
-  const famille = getFamillePlante(last.plantId)
-  if (!famille) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
-  const check = respecteRotation(last.plantId, last.harvestedAt)
-  if (check.ok) return selected ? 'var(--jd-forest)' : 'var(--jd-accent)'
-  const fam = FAMILLES_ROTATION[famille]
-  return fam?.couleurBord ?? (selected ? 'var(--jd-forest)' : 'var(--jd-accent)')
+  if (hist.length > 0) {
+    const last = hist[0]
+    if (last.plantId) {
+      const famille = getFamillePlante(last.plantId)
+      if (famille) {
+        const check = respecteRotation(last.plantId, last.harvestedAt)
+        if (!check.ok) {
+          return FAMILLES_ROTATION[famille]?.couleurBord
+            ?? (selected ? 'var(--jd-accent)' : 'var(--jd-accent-ring)')
+        }
+      }
+    }
+  }
+  return selected ? 'var(--jd-accent)' : 'var(--jd-accent-ring)'
 }
 
-function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag, onResize, scale }) {
+function PlotRect({ plot, selected, onSelect, onDrag, onResize, scale }) {
   const { profile } = useProfile()
   const dragStart   = useRef(null)
   const resizeStart = useRef(null)
 
-  const historique = profile.historique ?? []
+  const historique     = profile.historique ?? []
   const px = plot.x      * scale
   const py = plot.y      * scale
   const pw = plot.width  * scale
@@ -52,8 +57,8 @@ function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag,
     .map(id => profile.plants.find(p => p.id === id))
     .filter(Boolean)
 
-  const fill   = getPlotFillColor(plot.id, historique, selected)
-  const stroke = getPlotStrokeColor(plot.id, historique, selected)
+  const fill   = getPlotFill(plot.id, historique, selected)
+  const stroke = getPlotStroke(plot.id, historique, selected)
 
   function onPointerDownPlot(e) {
     e.stopPropagation()
@@ -113,19 +118,23 @@ function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag,
         rx={4}
         fill={fill}
         stroke={stroke}
-        strokeWidth={selected ? 2 : 1}
+        strokeWidth={selected ? 2 : 1.5}
         style={{ cursor: 'grab', touchAction: 'none' }}
         onPointerDown={onPointerDownPlot}
       />
+
+      {/* Label */}
       {plot.label && (
         <text
           x={px + pw / 2} y={py + 14}
-          textAnchor="middle" fontSize={10} fill="var(--jd-forest)"
-          style={{ pointerEvents: 'none', userSelect: 'none' }}
+          textAnchor="middle" fontSize={10} fill="var(--jd-accent)"
+          style={{ pointerEvents: 'none', userSelect: 'none', fontWeight: 600 }}
         >
           {plot.label}
         </text>
       )}
+
+      {/* Plantes assignées */}
       {assignedPlants.slice(0, 4).map((p, i) => (
         <text
           key={p.id}
@@ -137,15 +146,8 @@ function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag,
           {p.emoji}
         </text>
       ))}
-      {selected && (
-        <rect
-          x={px + pw - 10} y={py + ph - 10}
-          width={10} height={10}
-          fill="var(--jd-forest)" rx={2}
-          style={{ cursor: 'se-resize', touchAction: 'none' }}
-          onPointerDown={onPointerDownResize}
-        />
-      )}
+
+      {/* Dimensions */}
       <text
         x={px + pw / 2} y={py + ph / 2 + (plot.label ? 6 : 4)}
         textAnchor="middle" fontSize={9} fill="var(--jd-ink-muted)"
@@ -153,6 +155,18 @@ function PlotRect({ plot, selected, gardenWidth, gardenHeight, onSelect, onDrag,
       >
         {plot.width}×{plot.height}m
       </text>
+
+      {/* Poignée de redimensionnement — pastille var(--jd-accent) */}
+      {selected && (
+        <circle
+          cx={px + pw - 6}
+          cy={py + ph - 6}
+          r={6}
+          fill="var(--jd-accent)"
+          style={{ cursor: 'se-resize', touchAction: 'none' }}
+          onPointerDown={onPointerDownResize}
+        />
+      )}
     </g>
   )
 }
@@ -174,9 +188,9 @@ function RotationTooltip({ plotId, historique }) {
     <div
       className="mt-1 rounded-lg px-3 py-2 text-xs"
       style={{
-        background: check.ok ? '#EAF3DE' : (famInfo?.couleur ?? '#FFFBEB'),
-        border: `1px solid ${famInfo?.couleurBord ?? '#DDE8CC'}`,
-        color: 'var(--jd-forest)',
+        background: check.ok ? 'var(--jd-accent-soft)' : (famInfo?.couleur ?? 'var(--jd-warning-soft)'),
+        border:     `1px solid ${check.ok ? 'var(--jd-accent-ring)' : (famInfo?.couleurBord ?? 'var(--jd-warning-ring)')}`,
+        color:      check.ok ? 'var(--jd-accent)' : 'var(--jd-warning)',
       }}
     >
       <p>
@@ -185,23 +199,25 @@ function RotationTooltip({ plotId, historique }) {
         {' — '} récolté {dateStr}
       </p>
       {!check.ok && (
-        <p className="mt-0.5" style={{ color: 'var(--jd-earth)' }}>
+        <p className="mt-0.5" style={{ color: 'var(--jd-warning)' }}>
           ⏳ {famille} déconseillé{famInfo ? '' : 'es'} encore {check.moisRestants} mois
           {check.dateAutorisee && ` (jusqu'à ${new Date(check.dateAutorisee).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })})`}
         </p>
       )}
-      {check.ok && <p className="mt-0.5 opacity-70">✓ Rotation respectée — libre à planter</p>}
+      {check.ok && (
+        <p className="mt-0.5" style={{ opacity: 0.7 }}>✓ Rotation respectée — libre à planter</p>
+      )}
     </div>
   )
 }
 
 export default function PlotEditor({ garden, onSave, onBack }) {
-  const { profile }        = useProfile()
-  const [plots, setPlots]  = useState(garden?.plots ?? [])
-  const [selected, setSelected] = useState(null)
+  const { profile }              = useProfile()
+  const [plots,    setPlots]     = useState(garden?.plots ?? [])
+  const [selected, setSelected]  = useState(null)
   const svgRef = useRef(null)
 
-  const historique  = profile.historique ?? []
+  const historique   = profile.historique ?? []
   const gw = garden.width  * SCALE
   const gh = garden.height * SCALE
 
@@ -214,8 +230,8 @@ export default function PlotEditor({ garden, onSave, onBack }) {
   function handleAddPlot(e) {
     if (e.target !== svgRef.current) return
     const rect = svgRef.current.getBoundingClientRect()
-    const x = snapToGrid((e.clientX - rect.left) / SCALE, SNAP)
-    const y = snapToGrid((e.clientY - rect.top)  / SCALE, SNAP)
+    const x    = snapToGrid((e.clientX - rect.left) / SCALE, SNAP)
+    const y    = snapToGrid((e.clientY - rect.top)  / SCALE, SNAP)
     const newPlot = makePlot(
       Math.max(0, Math.min(x, garden.width  - 1)),
       Math.max(0, Math.min(y, garden.height - 1)),
@@ -259,15 +275,24 @@ export default function PlotEditor({ garden, onSave, onBack }) {
 
   return (
     <div className="flex flex-col gap-0 h-full">
-      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #DDE8CC' }}>
-        <button onClick={onBack} className="text-sm font-medium" style={{ color: 'var(--jd-ink-muted)' }}>
+
+      {/* Barre de navigation */}
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: '1px solid var(--jd-border)' }}
+      >
+        <button
+          onClick={onBack}
+          className="text-sm font-medium tap-scale"
+          style={{ color: 'var(--jd-ink-muted)' }}
+        >
           ← Dimensions
         </button>
-        <h2 className="font-fraunces text-base" style={{ color: 'var(--jd-accent-ink)' }}>Parcelles</h2>
+        <h2 className="jd-title" style={{ fontSize: 15, color: 'var(--jd-ink)' }}>Parcelles</h2>
         <button
           onClick={handleSave}
-          className="text-sm font-semibold px-3 py-1 rounded-chip"
-          style={{ background: 'var(--jd-forest)', color: 'white' }}
+          className="text-sm font-semibold px-3 py-1 rounded-chip tap-scale"
+          style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
         >
           Suivant →
         </button>
@@ -277,24 +302,38 @@ export default function PlotEditor({ garden, onSave, onBack }) {
         Double-clic sur le sol pour ajouter une parcelle. Glisse pour déplacer.
       </p>
 
-      {/* SVG canvas */}
+      {/* Canvas SVG */}
       <div className="overflow-auto flex-1 flex items-start justify-center p-4">
         <svg
           ref={svgRef}
           width={gw} height={gh}
           style={{
-            background: '#F0F7E6', border: '2px solid var(--jd-accent)',
-            borderRadius: 8, cursor: 'crosshair', touchAction: 'none', display: 'block',
+            background:   'var(--jd-bg)',
+            border:       '1.5px solid var(--jd-accent-ring)',
+            borderRadius: 8,
+            cursor:       'crosshair',
+            touchAction:  'none',
+            display:      'block',
           }}
           onClick={handleSvgClick}
           onDoubleClick={handleAddPlot}
         >
-          {Array.from({ length: Math.floor(garden.width / SNAP) + 1 }, (_, i) => (
-            <line key={`v${i}`} x1={i*SNAP*SCALE} y1={0} x2={i*SNAP*SCALE} y2={gh} stroke="#C8E89A" strokeWidth={0.5} />
+          <defs>
+            {/* Sol sombre radial — inspiré de jd3d-soil dans GardenView3D */}
+            <radialGradient id="plot-soil" cx="50%" cy="50%" r="70%" gradientUnits="objectBoundingBox">
+              <stop offset="0%"   stopColor="#253d2a" />
+              <stop offset="100%" stopColor="#172a1c" />
+            </radialGradient>
+          </defs>
+
+          {/* Grille */}
+          {Array.from({ length: Math.floor(garden.width  / SNAP) + 1 }, (_, i) => (
+            <line key={`v${i}`} x1={i*SNAP*SCALE} y1={0} x2={i*SNAP*SCALE} y2={gh} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
           ))}
           {Array.from({ length: Math.floor(garden.height / SNAP) + 1 }, (_, i) => (
-            <line key={`h${i}`} x1={0} y1={i*SNAP*SCALE} x2={gw} y2={i*SNAP*SCALE} stroke="#C8E89A" strokeWidth={0.5} />
+            <line key={`h${i}`} x1={0} y1={i*SNAP*SCALE} x2={gw} y2={i*SNAP*SCALE} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5} />
           ))}
+
           {plots.map(plot => (
             <PlotRect
               key={plot.id}
@@ -311,22 +350,31 @@ export default function PlotEditor({ garden, onSave, onBack }) {
         </svg>
       </div>
 
-      {/* Selected plot toolbar */}
+      {/* Toolbar parcelle sélectionnée */}
       {selectedPlot && (
-        <div className="px-4 py-3 flex flex-col gap-2" style={{ background: '#F8FBF3', borderTop: '1px solid #DDE8CC' }}>
+        <div
+          className="px-4 py-3 flex flex-col gap-2"
+          style={{ background: 'var(--jd-surface-alt)', borderTop: '1px solid var(--jd-border)' }}
+        >
           <div className="flex items-center gap-2">
             <input
               type="text"
               placeholder="Nom de la parcelle…"
               value={selectedPlot.label}
               onChange={e => handleLabelChange(e.target.value)}
-              className="flex-1 text-sm px-3 py-1.5 rounded-chip"
-              style={{ border: '1px solid var(--jd-accent)', outline: 'none' }}
+              className="flex-1 text-sm px-3 py-1.5 rounded-chip outline-none"
+              style={{
+                border:     '1px solid var(--jd-border)',
+                background: 'var(--jd-surface)',
+                color:      'var(--jd-ink)',
+              }}
+              onFocus={e => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
+              onBlur={e  => (e.target.style.borderColor = 'var(--jd-border)')}
             />
             <button
               onClick={handleDelete}
-              className="text-sm px-3 py-1.5 rounded-chip font-medium"
-              style={{ background: '#FEE2E2', color: '#DC2626' }}
+              className="text-sm px-3 py-1.5 rounded-chip font-medium tap-scale"
+              style={{ background: 'var(--jd-harvest-soft)', color: 'var(--jd-harvest)', border: '1px solid var(--jd-harvest-ring)' }}
             >
               Supprimer
             </button>
@@ -338,16 +386,21 @@ export default function PlotEditor({ garden, onSave, onBack }) {
         </div>
       )}
 
+      {/* Pas de parcelle sélectionnée — bouton ajout */}
       {!selectedPlot && (
-        <div className="px-4 py-3" style={{ borderTop: '1px solid #DDE8CC' }}>
+        <div className="px-4 py-3" style={{ borderTop: '1px solid var(--jd-border)' }}>
           <button
             onClick={() => {
               const newPlot = makePlot(0, 0)
               setPlots(prev => [...prev, newPlot])
               setSelected(newPlot.id)
             }}
-            className="w-full py-2.5 rounded-card text-sm font-semibold"
-            style={{ background: '#EAF3DE', color: 'var(--jd-forest)', border: '1px dashed var(--jd-accent)' }}
+            className="w-full py-2.5 rounded-card text-sm font-semibold tap-scale"
+            style={{
+              background: 'var(--jd-surface-alt)',
+              color:      'var(--jd-accent)',
+              border:     '1px dashed var(--jd-accent-ring)',
+            }}
           >
             + Ajouter une parcelle
           </button>

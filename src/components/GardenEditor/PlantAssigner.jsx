@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useProfile } from '../../hooks/useProfile'
 import { getConflictLevel, ASSOCIATIONS } from '../../data/associations'
 import { getHistoriqueByPlot, getFamillePlante, FAMILLES_ROTATION, respecteRotation } from '../../data/rotation'
+import EmojiIllo from '../EmojiIllo'
 
 function getAdjacentPlots(targetPlot, allPlots, maxDistance = 1.0) {
   return allPlots.filter(other => {
@@ -34,19 +35,22 @@ function RotationWarning({ plotId, historique }) {
   return (
     <div
       className="mx-4 mt-3 rounded-xl px-3 py-2.5"
-      style={{ background: '#FFFBEB', border: '1px solid #FED7AA' }}
+      style={{
+        background: 'var(--jd-warning-soft)',
+        border:     '1px solid var(--jd-warning-ring)',
+      }}
     >
-      <p className="text-xs font-semibold mb-1" style={{ color: 'var(--jd-earth)' }}>
+      <p className="text-xs font-semibold mb-1" style={{ color: 'var(--jd-warning)' }}>
         🔄 Rotation non respectée
       </p>
-      <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-earth)' }}>
-        Cette parcelle a accueilli des <strong>{famille ?? 'plantes'}</strong> il y a moins de{' '}
+      <p className="text-xs leading-relaxed" style={{ color: 'var(--jd-ink-muted)' }}>
+        Cette parcelle a accueilli des <strong style={{ color: 'var(--jd-ink)' }}>{famille ?? 'plantes'}</strong> il y a moins de{' '}
         {FAMILLES_ROTATION[famille ?? '']?.rotation ?? '?'} ans.
-        Encore <strong>{check.moisRestants} mois</strong> avant de replanter cette famille.
+        Encore <strong style={{ color: 'var(--jd-warning)' }}>{check.moisRestants} mois</strong> avant de replanter cette famille.
       </p>
       <button
-        className="text-xs mt-1.5 font-semibold"
-        style={{ color: 'var(--jd-earth)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
+        className="text-xs mt-1.5 font-semibold tap-scale"
+        style={{ color: 'var(--jd-warning)', textDecoration: 'underline', background: 'none', border: 'none', cursor: 'pointer' }}
         onClick={() => setDismissed(true)}
       >
         Continuer quand même ▼
@@ -58,18 +62,16 @@ function RotationWarning({ plotId, historique }) {
 function AssociationWarning({ plotId, allPlots, gardenPlants, plantBeingAssigned }) {
   if (!plantBeingAssigned?.plantId) return null
 
-  const plot          = allPlots.find(p => p.id === plotId)
+  const plot = allPlots.find(p => p.id === plotId)
   if (!plot) return null
   const adjacentPlots = getAdjacentPlots(plot, allPlots)
 
-  // Plantes dans les parcelles adjacentes
   const adjacentPlants = adjacentPlots.flatMap(ap =>
     (ap.plants ?? [])
       .map(pid => gardenPlants.find(gp => gp.id === pid))
       .filter(Boolean)
   )
 
-  // Conflits avec la plante en cours d'assignation
   const conflicts = adjacentPlants
     .filter(ap => ap.plantId)
     .map(ap => ({
@@ -86,14 +88,14 @@ function AssociationWarning({ plotId, allPlots, gardenPlants, plantBeingAssigned
       className="mx-4 mt-2 rounded-xl px-3 py-2"
       style={{
         background: hasFort ? 'var(--jd-harvest-soft)' : 'var(--jd-warning-soft)',
-        border: `1px solid ${hasFort ? 'rgba(224,90,58,0.35)' : 'rgba(240,184,108,0.35)'}`,
+        border:     `1px solid ${hasFort ? 'var(--jd-harvest-ring)' : 'var(--jd-warning-ring)'}`,
       }}
     >
-      <p className="text-xs font-semibold mb-1" style={{ color: hasFort ? 'var(--jd-harvest)' : 'var(--jd-earth)' }}>
+      <p className="text-xs font-semibold mb-1" style={{ color: hasFort ? 'var(--jd-harvest)' : 'var(--jd-warning)' }}>
         {hasFort ? '⚠️ Conflit avec une parcelle adjacente' : '💡 Attention voisinage'}
       </p>
       {conflicts.slice(0, 2).map((c, i) => (
-        <p key={i} className="text-xs" style={{ color: hasFort ? 'var(--jd-harvest)' : 'var(--jd-earth)', opacity: 0.85 }}>
+        <p key={i} className="text-xs" style={{ color: hasFort ? 'var(--jd-harvest)' : 'var(--jd-warning)', opacity: 0.85 }}>
           {c.plant.emoji} <strong>{c.plant.name}</strong> (à côté) —{' '}
           {c.level === 'forte' ? 'conflit fort' : 'conflit modéré'}
         </p>
@@ -126,25 +128,35 @@ export default function PlantAssigner({ plotId, onClose }) {
   return (
     <div
       className="fixed inset-0 z-[75] flex items-end"
-      style={{ background: 'rgba(0,0,0,0.35)' }}
+      style={{ background: 'rgba(13,20,15,0.85)' }}
       onClick={onClose}
     >
       <div
-        className="w-full rounded-t-2xl pb-8 pt-4"
-        style={{ background: 'white', maxHeight: '65vh', overflowY: 'auto' }}
+        className="w-full rounded-t-[28px] pb-8 pt-4 sheet-enter"
+        style={{ background: 'var(--jd-surface)', maxHeight: '72dvh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 pb-3" style={{ borderBottom: '1px solid #DDE8CC' }}>
-          <h3 className="font-fraunces text-base" style={{ color: 'var(--jd-accent-ink)' }}>
+        {/* En-tête */}
+        <div
+          className="flex items-center justify-between px-4 pb-3"
+          style={{ borderBottom: '1px solid var(--jd-border)' }}
+        >
+          <h3 className="jd-title" style={{ fontSize: 16, color: 'var(--jd-ink)' }}>
             Plantes dans « {plot.label || 'Parcelle'} »
           </h3>
-          <button onClick={onClose} style={{ color: 'var(--jd-ink-muted)', fontSize: 20 }}>✕</button>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center tap-scale"
+            style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)', fontSize: 18 }}
+          >
+            ✕
+          </button>
         </div>
 
         {/* Alerte rotation */}
         <RotationWarning plotId={plotId} historique={historique} />
 
-        {/* Alerte association parcelles adjacentes */}
+        {/* Alerte association adjacente */}
         {hoveredPlant && (
           <AssociationWarning
             plotId={plotId}
@@ -163,7 +175,6 @@ export default function PlantAssigner({ plotId, onClose }) {
             {profile.plants.map(plant => {
               const isAssigned = assigned.has(plant.id)
 
-              // Check direct conflict with existing plants in plot
               const plotPlants = (plot.plants ?? [])
                 .map(pid => profile.plants.find(p => p.id === pid))
                 .filter(Boolean)
@@ -177,24 +188,35 @@ export default function PlantAssigner({ plotId, onClose }) {
                   onClick={() => toggle(plant)}
                   onPointerEnter={() => setHoveredPlant(plant)}
                   onPointerLeave={() => setHoveredPlant(null)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-card text-left transition-all"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-card text-left tap-scale transition-all"
                   style={{
-                    background: isAssigned ? '#EAF3DE' : hasConflict ? '#FEF2F2' : '#F8FBF3',
-                    border: `1.5px solid ${isAssigned ? 'var(--jd-forest)' : hasConflict ? '#FECACA' : '#DDE8CC'}`,
+                    background: isAssigned   ? 'var(--jd-accent-soft)'  :
+                                hasConflict  ? 'var(--jd-harvest-soft)' :
+                                              'var(--jd-surface-alt)',
+                    border: `1px solid ${
+                      isAssigned   ? 'var(--jd-accent-ring)'  :
+                      hasConflict  ? 'var(--jd-harvest-ring)' :
+                                    'var(--jd-border)'
+                    }`,
                   }}
                 >
-                  <span style={{ fontSize: 22 }}>{plant.emoji}</span>
+                  <EmojiIllo emoji={plant.emoji} size={36} ring={false} />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium" style={{ color: 'var(--jd-accent-ink)' }}>{plant.name}</p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--jd-ink)' }}>{plant.name}</p>
                     {plant.variety && (
                       <p className="text-xs" style={{ color: 'var(--jd-ink-muted)' }}>{plant.variety}</p>
                     )}
                     {hasConflict && !isAssigned && (
-                      <p className="text-xs" style={{ color: '#DC2626' }}>⚠️ Conflit avec une plante de cette parcelle</p>
+                      <p className="text-xs" style={{ color: 'var(--jd-harvest)' }}>
+                        ⚠️ Conflit avec une plante de cette parcelle
+                      </p>
                     )}
                   </div>
                   {isAssigned && (
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-chip" style={{ background: 'var(--jd-forest)', color: 'white' }}>
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-chip"
+                      style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)' }}
+                    >
                       ✓
                     </span>
                   )}
