@@ -82,6 +82,10 @@ export function ProfileProvider({ children, user }) {
           width: p.width, height: p.height,
           label: p.label,
           plants: (p.plot_plants ?? []).map(pp => pp.plant_id),
+          // quantity peut ne pas exister sur les bases déjà déployées → défaut 1
+          plantQuantities: Object.fromEntries(
+            (p.plot_plants ?? []).map(pp => [pp.plant_id, pp.quantity ?? 1])
+          ),
         })),
       }))
 
@@ -223,13 +227,9 @@ export function ProfileProvider({ children, user }) {
 
   const marquerArrose = useCallback(async (plantId) => {
     const today = getToday()
-    if ((profile.arrosages?.[plantId] ?? []).includes(today)) return
+    if ((profile.arrosages?.[plantId] ?? []).includes(today)) return { error: null }
 
-    await supabase.from('arrosages').insert({
-      user_id: user.id,
-      plant_id: plantId,
-      watered_at: today,
-    })
+    // Optimiste : l'état (et donc statut + humidité) se met à jour immédiatement
     setProfile(prev => ({
       ...prev,
       arrosages: {
@@ -237,27 +237,75 @@ export function ProfileProvider({ children, user }) {
         [plantId]: [...(prev.arrosages?.[plantId] ?? []), today],
       },
     }))
+
+    const { error } = await supabase.from('arrosages').insert({
+      user_id: user.id,
+      plant_id: plantId,
+      watered_at: today,
+    })
+
+    if (error) {
+      // Rollback si l'écriture échoue
+      console.error('Erreur marquerArrose:', error)
+      setProfile(prev => ({
+        ...prev,
+        arrosages: {
+          ...prev.arrosages,
+          [plantId]: (prev.arrosages?.[plantId] ?? []).filter(d => d !== today),
+        },
+      }))
+      return { error: error.message }
+    }
+    return { error: null }
   }, [user, profile.arrosages])
 
   // ── Journal ─────────────────────────────────────────────────────────────────
 
   const addJournalNote = useCallback(async (plantId, texte) => {
+    // Optimiste : la note apparaît immédiatement (id temporaire), forme
+    // fonctionnelle pour ne perdre aucune note ajoutée en rafale.
+    const tempId = `tmp-${crypto.randomUUID()}`
+    const note   = { id: tempId, date: getToday(), texte: texte.slice(0, 500) }
+
+    setProfile(prev => ({
+      ...prev,
+      journal: {
+        ...prev.journal,
+        [plantId]: [note, ...(prev.journal?.[plantId] ?? [])],
+      },
+    }))
+
     const { data, error } = await supabase.from('journal').insert({
       user_id: user.id,
       plant_id: plantId,
-      date: getToday(),
-      texte: texte.slice(0, 500),
+      date: note.date,
+      texte: note.texte,
     }).select().single()
 
-    if (!error && data) {
+    if (error || !data) {
+      // Rollback : retire la note optimiste
+      console.error('Erreur addJournalNote:', error)
       setProfile(prev => ({
         ...prev,
         journal: {
           ...prev.journal,
-          [plantId]: [{ id: data.id, date: data.date, texte: data.texte }, ...(prev.journal?.[plantId] ?? [])],
+          [plantId]: (prev.journal?.[plantId] ?? []).filter(n => n.id !== tempId),
         },
       }))
+      return { error: error?.message ?? 'Échec de l\'enregistrement' }
     }
+
+    // Réconcilie l'id temporaire avec l'id réel renvoyé par la base
+    setProfile(prev => ({
+      ...prev,
+      journal: {
+        ...prev.journal,
+        [plantId]: (prev.journal?.[plantId] ?? []).map(n =>
+          n.id === tempId ? { id: data.id, date: data.date, texte: data.texte } : n
+        ),
+      },
+    }))
+    return { error: null }
   }, [user])
 
   const deleteJournalNote = useCallback(async (plantId, noteId) => {
@@ -437,7 +485,11 @@ export function ProfileProvider({ children, user }) {
         ...g,
         plots: g.plots.map(p =>
           p.id === plotId && !p.plants.includes(plantId)
-            ? { ...p, plants: [...p.plants, plantId] }
+            ? {
+                ...p,
+                plants: [...p.plants, plantId],
+                plantQuantities: { ...(p.plantQuantities ?? {}), [plantId]: 1 },
+              }
             : p
         ),
       })),
@@ -450,13 +502,38 @@ export function ProfileProvider({ children, user }) {
       ...prev,
       gardens: prev.gardens.map(g => ({
         ...g,
+        plots: g.plots.map(p => {
+          if (p.id !== plotId) return p
+          const plantQuantities = { ...(p.plantQuantities ?? {}) }
+          delete plantQuantities[plantId]
+          return { ...p, plants: p.plants.filter(id => id !== plantId), plantQuantities }
+        }),
+      })),
+    }))
+  }, [user])
+
+  // Met à jour la quantité d'une plante dans une parcelle.
+  // État immédiat (immuable) + persistance best-effort : la colonne
+  // plot_plants.quantity peut ne pas exister sur les bases déjà déployées,
+  // auquel cas l'erreur est ignorée et la quantité reste correcte en session.
+  const updatePlotQuantity = useCallback(async (plotId, plantId, qty) => {
+    const safe = Math.max(1, Math.round(qty))
+    setProfile(prev => ({
+      ...prev,
+      gardens: prev.gardens.map(g => ({
+        ...g,
         plots: g.plots.map(p =>
           p.id === plotId
-            ? { ...p, plants: p.plants.filter(id => id !== plantId) }
+            ? { ...p, plantQuantities: { ...(p.plantQuantities ?? {}), [plantId]: safe } }
             : p
         ),
       })),
     }))
+    try {
+      await supabase.from('plot_plants')
+        .update({ quantity: safe })
+        .eq('plot_id', plotId).eq('plant_id', plantId)
+    } catch { /* colonne quantity optionnelle */ }
   }, [user])
 
   // ── updateProfile générique ─────────────────────────────────────────────────
@@ -493,6 +570,7 @@ export function ProfileProvider({ children, user }) {
       saveGarden,
       assignPlantToPlot,
       removePlantFromPlot,
+      updatePlotQuantity,
     }}>
       {children}
     </ProfileContext.Provider>

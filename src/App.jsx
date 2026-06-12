@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './lib/supabase'
 import { ProfileProvider } from './context/ProfileContext'
 import { useProfile } from './hooks/useProfile'
+import { ToastProvider } from './components/Toast'
 import BottomNav from './components/BottomNav'
 import OnboardingModal from './components/OnboardingModal'
 import LoginPage from './pages/LoginPage'
@@ -94,7 +95,9 @@ export default function App() {
   // SIGNED_IN → dashboard, ProfileProvider monté seulement ici
   return (
     <ProfileProvider user={user}>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </ProfileProvider>
   )
 }

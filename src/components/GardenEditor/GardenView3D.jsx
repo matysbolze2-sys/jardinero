@@ -1,8 +1,15 @@
 import { useState } from 'react'
 import { useProfile } from '../../hooks/useProfile'
+import { useToast } from '../Toast'
 import EmojiIllo from '../EmojiIllo'
 import { openmoji } from '../../utils/openmoji'
 import { ALL_STATUT_LABELS } from '../../utils/plantStatusUtils'
+
+// Capacité d'une parcelle : densité indicative de plants par m².
+const PLANTS_PER_M2 = 6
+function plotCapacity(w, h) {
+  return Math.max(1, Math.round((w ?? 1) * (h ?? 1) * PLANTS_PER_M2))
+}
 
 // Stage-aware visual config — couleurs dégradé de saison (palette Séquoia)
 // anim: 'grow' | 'sway' | 'ready' | null
@@ -73,16 +80,19 @@ function SceneDefs() {
 }
 
 // ── Quantity counter chip ────────────────────────────────────────────────────
-function QtyControl({ value, onMinus, onPlus }) {
+function QtyControl({ value, onMinus, onPlus, minusDisabled, plusDisabled }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 0 }} className="tap-scale">
       <button
         onClick={onMinus}
+        disabled={minusDisabled}
         style={{
           width: 28, height: 28, borderRadius: '8px 0 0 8px',
           background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)',
           border: '1px solid var(--jd-border)', fontSize: 16, lineHeight: 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          opacity: minusDisabled ? 0.4 : 1,
+          cursor: minusDisabled ? 'not-allowed' : 'pointer',
         }}
       >−</button>
       <div style={{
@@ -103,6 +113,8 @@ function QtyControl({ value, onMinus, onPlus }) {
           border: '1px solid var(--jd-accent)', fontSize: 16, lineHeight: 1,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontWeight: 700,
+          opacity: plusDisabled ? 0.4 : 1,
+          cursor: plusDisabled ? 'not-allowed' : 'pointer',
         }}
       >+</button>
     </div>
@@ -169,9 +181,12 @@ function PlantPicker({ plotId, assignedIds, allPlants, onAdd, onClose }) {
 }
 
 // ── Selected parcel management panel ────────────────────────────────────────
-function ParcelPanel({ parcel, allPlants, onAdjust, onAdd, onDeselect }) {
+function ParcelPanel({ parcel, allPlants, onAdjust, onAdd, onRemove, onDeselect }) {
   const [showPicker, setShowPicker] = useState(false)
   const assignedIds = new Set(parcel.assigned.map(p => p.id))
+
+  const capacity = plotCapacity(parcel.w, parcel.h)
+  const full     = parcel.count >= capacity
 
   return (
     <>
@@ -193,9 +208,24 @@ function ParcelPanel({ parcel, allPlants, onAdjust, onAdd, onDeselect }) {
           <div>
             <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--jd-ink)' }}>{parcel.label}</span>
             <span style={{ marginLeft: 8, fontFamily: 'var(--jd-font-mono)', fontSize: 10, color: 'var(--jd-ink-muted)' }}>{parcel.size}</span>
+            <span style={{ marginLeft: 8, fontFamily: 'var(--jd-font-mono)', fontSize: 10, color: full ? 'var(--jd-warning)' : 'var(--jd-ink-muted)' }}>
+              {parcel.count}/{capacity}
+            </span>
           </div>
-          <button onClick={onDeselect} style={{ fontSize: 14, color: 'var(--jd-ink-muted)', padding: '2px 6px' }}>✕</button>
+          <button onClick={onDeselect} className="tap-scale" style={{ fontSize: 14, color: 'var(--jd-ink-muted)', padding: '2px 6px' }}>✕</button>
         </div>
+
+        {/* Bandeau capacité atteinte */}
+        {full && (
+          <div style={{
+            padding: '7px 14px',
+            background: 'var(--jd-warning-soft)',
+            borderBottom: '1px solid var(--jd-border)',
+            fontSize: 11, fontWeight: 600, color: 'var(--jd-warning)',
+          }}>
+            ⚠ Parcelle pleine ({capacity} max pour {parcel.w}×{parcel.h} m)
+          </div>
+        )}
 
         {/* Assigned plants with qty controls */}
         {parcel.assigned.map((plant, i) => (
@@ -215,21 +245,37 @@ function ParcelPanel({ parcel, allPlants, onAdjust, onAdd, onDeselect }) {
             <span style={{ flex: 1, fontSize: 13, color: 'var(--jd-ink)' }}>{plant.name}</span>
             <QtyControl
               value={plant.qty}
+              minusDisabled={plant.qty <= 1}
+              plusDisabled={full}
               onMinus={() => onAdjust(parcel.id, plant.id, -1)}
               onPlus={()  => onAdjust(parcel.id, plant.id, +1)}
             />
+            <button
+              onClick={() => onRemove(parcel.id, plant.id)}
+              className="tap-scale"
+              title="Retirer de la parcelle"
+              style={{
+                width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                background: 'var(--jd-surface-alt)', color: 'var(--jd-harvest)',
+                border: '1px solid var(--jd-border)', fontSize: 13, lineHeight: 1,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >✕</button>
           </div>
         ))}
 
         {/* Add plant button */}
         <button
           onClick={() => setShowPicker(true)}
+          disabled={full}
           className="w-full tap-scale"
           style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '10px 14px',
             borderTop: parcel.assigned.length > 0 ? '1px solid var(--jd-border)' : 'none',
             color: 'var(--jd-accent)', fontSize: 13, fontWeight: 600,
+            opacity: full ? 0.4 : 1,
+            cursor: full ? 'not-allowed' : 'pointer',
           }}
         >
           <span style={{ fontSize: 18, lineHeight: 1 }}>+</span> Ajouter une plante
@@ -251,7 +297,8 @@ function ParcelPanel({ parcel, allPlants, onAdjust, onAdd, onDeselect }) {
 
 // ── Main component ───────────────────────────────────────────────────────────
 export default function GardenView3D({ garden, plants: allPlants = [] }) {
-  const { saveGarden } = useProfile()
+  const { assignPlantToPlot, removePlantFromPlot, updatePlotQuantity } = useProfile()
+  const { toast } = useToast()
   const [view,   setView]   = useState('iso')
   const [selId,  setSelId]  = useState(null)
 
@@ -286,26 +333,40 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
   const g2 = iso(gW,    gH,  0, CX, CY), g3 = iso(-0.3, gH, 0, CX, CY)
   const groundPts = `${g0.x},${g0.y} ${g1.x},${g1.y} ${g2.x},${g2.y} ${g3.x},${g3.y}`
 
-  // Data operations
+  // Data operations — mises à jour ciblées et immédiates via le contexte
+  // (plus de saveGarden destructif qui réinsérait tous les plots et corrompait
+  // les dimensions du jardin).
   function adjustQty(plotId, plantId, delta) {
-    const plot = garden.plots.find(p => p.id === plotId)
-    if (!plot) return
-    const quantities = { ...(plot.plantQuantities ?? {}) }
-    const next = Math.max(0, (quantities[plantId] ?? 1) + delta)
-    const newIds = next === 0
-      ? plot.plants.filter(id => id !== plantId)
-      : [...new Set([...plot.plants, plantId])]
-    if (next === 0) delete quantities[plantId]; else quantities[plantId] = next
-    saveGarden({ plots: garden.plots.map(p => p.id === plotId ? { ...p, plants: newIds, plantQuantities: quantities } : p) })
-    // Deselect if plant was removed and none left
-    if (next === 0 && newIds.length === 0) { /* keep panel open */ }
+    const parcel = parcels.find(p => p.id === plotId)
+    if (!parcel) return
+    const current = parcel.assigned.find(a => a.id === plantId)?.qty ?? 1
+
+    if (delta > 0) {
+      const cap = plotCapacity(parcel.w, parcel.h)
+      if (parcel.count >= cap) {
+        toast(`Parcelle pleine (${cap} max pour ${parcel.w}×${parcel.h} m)`, 'warning')
+        return
+      }
+      updatePlotQuantity(plotId, plantId, current + 1)
+    } else {
+      if (current <= 1) return // ne descend pas sous 1 ; retrait via le bouton ✕
+      updatePlotQuantity(plotId, plantId, current - 1)
+    }
   }
 
   function addToPlot(plotId, plantId) {
-    const plot = garden.plots.find(p => p.id === plotId)
-    if (!plot || plot.plants.includes(plantId)) return
-    const quantities = { ...(plot.plantQuantities ?? {}), [plantId]: 1 }
-    saveGarden({ plots: garden.plots.map(p => p.id === plotId ? { ...p, plants: [...p.plants, plantId], plantQuantities: quantities } : p) })
+    const parcel = parcels.find(p => p.id === plotId)
+    if (!parcel || parcel.assigned.some(a => a.id === plantId)) return
+    const cap = plotCapacity(parcel.w, parcel.h)
+    if (parcel.count >= cap) {
+      toast(`Parcelle pleine (${cap} max pour ${parcel.w}×${parcel.h} m)`, 'warning')
+      return
+    }
+    assignPlantToPlot(plotId, plantId)
+  }
+
+  function removeFromPlot(plotId, plantId) {
+    removePlantFromPlot(plotId, plantId)
   }
 
   // ── ISO Scene ──────────────────────────────────────────────────────────────
@@ -544,6 +605,7 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
           allPlants={allPlants}
           onAdjust={adjustQty}
           onAdd={addToPlot}
+          onRemove={removeFromPlot}
           onDeselect={() => setSelId(null)}
         />
       ) : null}

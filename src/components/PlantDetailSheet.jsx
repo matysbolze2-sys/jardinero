@@ -13,6 +13,7 @@ import { getFrequencePlante } from '../utils/arrosageUtils'
 import { getSymptomsForPlant, getUrgenceConfig } from '../data/diagnostics'
 import EmojiIllo from './EmojiIllo'
 import HarvestCelebration from './HarvestCelebration'
+import { useToast } from './Toast'
 
 // ── Palette de stade — tokens CSS + base rgba pour alpha compositing ─────────
 const STAGE = {
@@ -286,15 +287,18 @@ function TabInfos({ plant, onClose, onHarvest }) {
 
 function TabJournal({ plant }) {
   const { profile, addJournalNote, deleteJournalNote } = useProfile()
+  const { toast } = useToast()
   const notes = profile.journal?.[plant.id] ?? []
   const [texte, setTexte]       = useState('')
   const [confirming, setConfirming] = useState(null)
 
-  function handleAdd() {
+  async function handleAdd() {
     const trimmed = texte.trim()
     if (!trimmed) return
-    addJournalNote(plant.id, trimmed)
-    setTexte('')
+    setTexte('') // vide le champ immédiatement ; la note apparaît en optimiste
+    const res = await addJournalNote(plant.id, trimmed)
+    if (!res?.error) toast('Note enregistrée')
+    else { setTexte(trimmed); toast('⚠ Échec de l\'enregistrement', 'warning') }
   }
 
   function handleDelete(noteId) {

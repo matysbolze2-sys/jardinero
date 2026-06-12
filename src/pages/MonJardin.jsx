@@ -8,8 +8,10 @@ import AssociationsView from '../components/AssociationsView'
 import RotationDashboard from '../components/RotationDashboard'
 import GardenEditor from '../components/GardenEditor'
 import PlantDetailSheet from '../components/PlantDetailSheet'
-import { STATUT_LABELS } from '../data/plants'
 import { ASSOCIATIONS } from '../data/associations'
+import { getRegionById } from '../data/regions'
+import { PLANT_DURATIONS } from '../data/plantDurations'
+import { getCycleProgress } from '../utils/plantStatusUtils'
 
 export default function MonJardin() {
   const { profile, addPlant } = useProfile()
@@ -18,7 +20,8 @@ export default function MonJardin() {
   const [assocSubTab,    setAssocSubTab]    = useState('voisines')
   const [detailSheet,    setDetailSheet]    = useState(null)
 
-  const plants = profile.plants ?? []
+  const plants       = profile.plants ?? []
+  const regionOffset = getRegionById(profile.region)?.offset ?? 0
 
   const hasConflits = plants.some(p => {
     if (!p.plantId || !ASSOCIATIONS[p.plantId]) return false
@@ -27,12 +30,19 @@ export default function MonJardin() {
     )
   })
 
-  const progressScore = plants.length === 0 ? 0 : Math.round(
-    plants.reduce((sum, p) => {
-      const keys = Object.keys(STATUT_LABELS)
-      return sum + keys.indexOf(p.status)
-    }, 0) / (plants.length * (Object.keys(STATUT_LABELS).length - 1)) * 100
-  )
+  // Progression globale = moyenne des progressions de cycle calculables.
+  // On exclut les vivaces et les plantes sans durée/date (getCycleProgress y
+  // renvoie 0, ce qui fausserait la moyenne). Aucune calculable → null → « — ».
+  const progresses = plants
+    .filter(p => {
+      const d = PLANT_DURATIONS[p.plantId]
+      return d && d.type !== 'perennial' && p.plantedAt
+    })
+    .map(p => getCycleProgress(p, regionOffset))
+
+  const progressScore = progresses.length
+    ? Math.round(progresses.reduce((sum, v) => sum + v, 0) / progresses.length)
+    : null
 
   return (
     <div className="px-4 pt-6 pb-4 relative">
@@ -58,14 +68,21 @@ export default function MonJardin() {
         <div className="mb-4">
           <div className="flex justify-between text-xs mb-1.5" style={{ color: 'var(--jd-ink-muted)' }}>
             <span>Progression globale</span>
-            <span className="font-semibold" style={{ color: 'var(--jd-accent)' }}>{progressScore}%</span>
+            <span className="font-semibold" style={{ color: 'var(--jd-accent)' }}>
+              {progressScore === null ? '—' : `${progressScore}%`}
+            </span>
           </div>
           <div className="h-2 rounded-full" style={{ background: 'var(--jd-accent-soft)' }}>
             <div
               className="h-2 rounded-full transition-all duration-500"
-              style={{ width: `${progressScore}%`, background: 'var(--jd-accent)' }}
+              style={{ width: `${progressScore ?? 0}%`, background: 'var(--jd-accent)' }}
             />
           </div>
+          {progressScore === null && (
+            <p className="text-xs mt-1" style={{ color: 'var(--jd-ink-muted)' }}>
+              Tes plantes vivaces n'ont pas de cycle annuel à suivre.
+            </p>
+          )}
         </div>
       )}
 

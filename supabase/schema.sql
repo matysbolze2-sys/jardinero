@@ -91,8 +91,11 @@ CREATE TABLE plots (
 CREATE TABLE plot_plants (
   plot_id UUID REFERENCES plots(id) ON DELETE CASCADE,
   plant_id UUID REFERENCES plants(id) ON DELETE CASCADE,
+  quantity INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (plot_id, plant_id)
 );
+-- Migration pour les bases déjà déployées (le code dégrade proprement si absente) :
+--   ALTER TABLE plot_plants ADD COLUMN IF NOT EXISTS quantity INTEGER NOT NULL DEFAULT 1;
 
 -- Checklist hebdomadaire
 CREATE TABLE checklist (

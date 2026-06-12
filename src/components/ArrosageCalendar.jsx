@@ -1,5 +1,6 @@
 import { triggerRipple } from '../utils/ripple'
 import { useProfile } from '../hooks/useProfile'
+import { useToast } from './Toast'
 import { getSoilById } from '../data/soils'
 import { getRegionById } from '../data/regions'
 import { useMeteo } from '../hooks/useMeteo'
@@ -245,11 +246,17 @@ function LigneDormante({ plant, delay }) {
 
 export default function ArrosageCalendar() {
   const { profile, marquerArrose } = useProfile()
+  const { toast }    = useToast()
   const plants       = profile.plants ?? []
   const arrosages    = profile.arrosages ?? {}
   const sol          = getSoilById(profile.soil)
   const regionOffset = getRegionById(profile.region)?.offset ?? 0
   const { aPluiePrevue } = useMeteo(profile.region)
+
+  const handleArroser = async (plantId) => {
+    const res = await marquerArrose(plantId)
+    if (!res?.error) toast('💧 Arrosage enregistré')
+  }
 
   if (plants.length === 0) return null
 
@@ -293,7 +300,7 @@ export default function ArrosageCalendar() {
             status={status}
             stageMessage={stageMessage}
             arrosages={arrosages}
-            onArroser={marquerArrose}
+            onArroser={handleArroser}
             aPluiePrevue={aPluiePrevue}
             delay={delay}
           />

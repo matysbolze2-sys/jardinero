@@ -260,6 +260,22 @@
     to   { opacity: 1; transform: translateX(0); }
   }
 
+  /* Toast — pill de feedback en bas d'écran (entrée/sortie translateY + opacity) */
+  .jd-toast {
+    animation: jdToastIn var(--jd-dur-base, 240ms) var(--jd-ease-out, cubic-bezier(0.16,1,0.3,1)) both;
+  }
+  @keyframes jdToastIn {
+    from { opacity: 0; transform: translate(-50%, 12px); }
+    to   { opacity: 1; transform: translate(-50%, 0); }
+  }
+  .jd-toast--leaving {
+    animation: jdToastOut var(--jd-dur-fast, 160ms) var(--jd-ease-in, cubic-bezier(0.4,0,1,1)) forwards;
+  }
+  @keyframes jdToastOut {
+    from { opacity: 1; transform: translate(-50%, 0); }
+    to   { opacity: 0; transform: translate(-50%, 8px); }
+  }
+
   .fade-in {
     animation: fadeIn 0.22s ease-out both;
   }
