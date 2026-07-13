@@ -77,7 +77,7 @@ export default function MeteoWidget() {
             style={{ color: alerte.type === 'gel' ? 'var(--jd-water)' : 'var(--jd-warning)' }}
           >
             {alerte.type === 'gel'
-              ? `Risque de gel ${alerte.dansNJours === 0 ? "aujourd'hui" : alerte.dansNJours === 1 ? 'demain' : `dans ${alerte.dansNJours} jours`} — protégez vos semis !`
+              ? `Risque de gel ${alerte.dansNJours === 0 ? "aujourd'hui" : alerte.dansNJours === 1 ? 'demain' : `dans ${alerte.dansNJours} jours`} — protège tes semis !`
               : '4+ jours sans pluie — pensez à arroser'}
           </p>
         </div>

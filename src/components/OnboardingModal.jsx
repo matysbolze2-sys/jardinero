@@ -57,7 +57,7 @@ function StepWelcome({ onNext }) {
       </h1>
 
       <p className="text-base font-medium mt-2 fade-up" style={{ color: 'var(--jd-ink)', animationDelay: 'calc(var(--jd-stagger) * 2)' }}>
-        Votre potager intelligent
+        Ton potager intelligent
       </p>
       <p className="text-sm mt-1 mb-8 fade-up" style={{ color: 'var(--jd-ink-muted)', animationDelay: 'calc(var(--jd-stagger) * 3)' }}>
         Calendrier · Conseils · Météo

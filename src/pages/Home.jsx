@@ -137,7 +137,7 @@ function ChecklistSemaine({ plants, moisIdx, regionOffset, checkedTaches, weekKe
         id:     t.tache,
         icon:   <span style={{ fontSize: 14 }}>{t.icone}</span>,
         label:  t.tache,
-        sub:    t.plante ? `Pour votre ${t.plante}` : null,
+        sub:    t.plante ? `Pour ${t.plante}` : null,
         subColor: 'var(--jd-accent)',
       }))
     : dynamicActions.map(({ plant, action, reason }) => ({
@@ -216,8 +216,8 @@ function ChecklistSemaine({ plants, moisIdx, regionOffset, checkedTaches, weekKe
 // ── Home ───────────────────────────────────────────────────────────────────────
 
 export default function Home({ onNavigate }) {
-  const { profile, toggleChecklistTask } = useProfile()
-  const { signOut, user } = useAuth()
+  const { profile, toggleChecklistTask, user } = useProfile()
+  const { signOut } = useAuth()
   const region      = getRegionById(profile.region)
   const regionOffset = region?.offset ?? 0
   const moisIdx     = new Date().getMonth()

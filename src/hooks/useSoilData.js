@@ -44,10 +44,8 @@ export function useSoilData(lat, lon) {
   const [error, setError]     = useState(null)
 
   useEffect(() => {
-    console.log('[useSoilData] useEffect — lat:', lat, 'lon:', lon)
 
     if (!lat || !lon) {
-      console.log('[useSoilData] coords invalides, fetch ignoré')
       return
     }
 
@@ -60,27 +58,21 @@ export function useSoilData(lat, lon) {
       try {
         // Tentative 1 : profondeur 0-5cm
         const url1 = buildUrl(lat, lon, '0-5cm')
-        console.log('[useSoilData] fetch 0-5cm →', url1)
         const r1   = await fetch(url1)
         if (!r1.ok) throw new Error(`SoilGrids HTTP ${r1.status}`)
         const json1 = await r1.json()
-        console.log('[useSoilData] réponse 0-5cm :', json1)
 
         let { clay, sand, silt } = parseLayers(json1)
-        console.log('[useSoilData] 0-5cm — clay:', clay, 'sand:', sand, 'silt:', silt)
 
         const allNull = clay == null && sand == null && silt == null
 
         // Tentative 2 : profondeur 5-15cm si tout est null
         if (allNull) {
           const url2  = buildUrl(lat, lon, '5-15cm')
-          console.log('[useSoilData] valeurs null → fetch 5-15cm →', url2)
           const r2    = await fetch(url2)
           if (!r2.ok) throw new Error(`SoilGrids HTTP ${r2.status}`)
           const json2 = await r2.json()
-          console.log('[useSoilData] réponse 5-15cm :', json2)
           ;({ clay, sand, silt } = parseLayers(json2))
-          console.log('[useSoilData] 5-15cm — clay:', clay, 'sand:', sand, 'silt:', silt)
         }
 
         // Fallback géographique si toujours null
@@ -89,11 +81,9 @@ export function useSoilData(lat, lon) {
 
         if (stillNull) {
           const fallbackSoilId = guessSoilFromCoords(lat, lon)
-          console.log('[useSoilData] fallback géo → soilId:', fallbackSoilId)
           setData({ soilId: fallbackSoilId, clay: null, sand: null, silt: null, isFallback: true })
         } else {
           const soilId = classifySoil(clay, sand, silt)
-          console.log('[useSoilData] résultat final — soilId:', soilId, 'clay:', clay, 'sand:', sand, 'silt:', silt)
           setData({ soilId, clay, sand, silt, isFallback: false })
         }
 

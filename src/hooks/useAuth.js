@@ -5,7 +5,7 @@ function mapAuthError(error) {
   const msg = error.message ?? ''
   console.error('[Auth error]', error)
   if (msg.includes('Invalid login credentials'))          return 'Email ou mot de passe incorrect.'
-  if (msg.includes('Email not confirmed'))                return 'Confirmez votre email avant de vous connecter.'
+  if (msg.includes('Email not confirmed'))                return 'Confirme ton email avant de te connecter.'
   if (msg.includes('User already registered'))            return 'Un compte existe déjà avec cet email.'
   if (msg.includes('already registered'))                 return 'Un compte existe déjà avec cet email.'
   if (msg.includes('Password should be at least'))        return 'Le mot de passe doit faire au moins 8 caractères.'
@@ -39,8 +39,10 @@ export function useAuth() {
   }
 
   const resetPassword = async (email) => {
+    // Pas de router : on renvoie vers la racine, App.jsx intercepte
+    // l'événement PASSWORD_RECOVERY et affiche ResetPasswordView.
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: window.location.origin,
     })
     return { error: mapAuthError(error) }
   }

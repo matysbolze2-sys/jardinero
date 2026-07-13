@@ -7,6 +7,7 @@ import BottomNav from './components/BottomNav'
 import OnboardingModal from './components/OnboardingModal'
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
+import ResetPasswordView from './pages/ResetPasswordView'
 import Home from './pages/Home'
 import Conseiller from './pages/Conseiller'
 import Calendrier from './pages/Calendrier'
@@ -21,7 +22,7 @@ function LoadingScreen() {
       <div className="flex flex-col items-center gap-4">
         <p style={{ fontSize: 48 }}>🌱</p>
         <p style={{ color: 'var(--jd-ink-muted)', fontSize: 14 }}>
-          Chargement de votre jardin…
+          Chargement de ton jardin…
         </p>
       </div>
     </div>
@@ -62,8 +63,9 @@ function AppContent() {
 }
 
 export default function App() {
-  const [user,    setUser]    = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user,       setUser]       = useState(null)
+  const [loading,    setLoading]    = useState(true)
+  const [recovering, setRecovering] = useState(false)
 
   useEffect(() => {
     // Nettoie les params d'erreur OAuth (ex: ?error=bad_oauth_state) sans rechargement
@@ -77,6 +79,8 @@ export default function App() {
       (event, session) => {
         setUser(session?.user ?? null)
         setLoading(false)
+        // L'utilisateur arrive via le lien email "mot de passe oublié"
+        if (event === 'PASSWORD_RECOVERY') setRecovering(true)
       }
     )
     return () => subscription.unsubscribe()
@@ -91,6 +95,9 @@ export default function App() {
 
   // SIGNED_OUT ou pas de session → login
   if (!user) return <LoginPage />
+
+  // Arrivée via le lien de récupération → définition du nouveau mot de passe
+  if (recovering) return <ResetPasswordView onDone={() => setRecovering(false)} />
 
   // SIGNED_IN → dashboard, ProfileProvider monté seulement ici
   return (

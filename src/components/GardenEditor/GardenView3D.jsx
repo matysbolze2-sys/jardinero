@@ -144,7 +144,7 @@ function PlantPicker({ plotId, assignedIds, allPlants, onAdd, onClose }) {
 
         {available.length === 0 ? (
           <p style={{ padding: '24px 16px', textAlign: 'center', fontSize: 13, color: 'var(--jd-ink-muted)' }}>
-            Toutes vos plantes sont déjà dans cette parcelle.
+            Toutes tes plantes sont déjà dans cette parcelle.
           </p>
         ) : (
           <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -572,7 +572,7 @@ export default function GardenView3D({ garden, plants: allPlants = [] }) {
         {parcels.length === 0 ? (
           <div style={{ height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <p style={{ color: 'var(--jd-ink-muted)', fontSize: 12, textAlign: 'center', lineHeight: 1.6 }}>
-              Aucune parcelle.<br />Allez dans « Parcelles » pour en ajouter.
+              Aucune parcelle.<br />Va dans « Parcelles » pour en ajouter.
             </p>
           </div>
         ) : view === 'iso' ? renderIso() : renderTop()}

@@ -119,7 +119,7 @@ export default function LoginPage() {
       if (mode === 'signup') {
         const { error: err } = await signUpWithEmail(email.trim(), password)
         if (err) { setError(err); return }
-        setSuccess('Vérifiez vos emails pour confirmer votre compte. 📬')
+        setSuccess('Vérifie tes emails pour confirmer ton compte. 📬')
       } else {
         const { error: err } = await signInWithEmail(email.trim(), password)
         if (err) setError(err)
@@ -162,7 +162,7 @@ export default function LoginPage() {
           Jardinero
         </h1>
         <p style={{ color: 'var(--jd-ink-muted)', fontSize: 16 }}>
-          Votre potager intelligent
+          Ton potager intelligent
         </p>
       </div>
 
@@ -172,7 +172,7 @@ export default function LoginPage() {
         style={{ background: 'var(--jd-surface)', border: '1px solid var(--jd-border)' }}
       >
         {[
-          { icon: '🌦️', label: 'Météo adaptée à votre région' },
+          { icon: '🌦️', label: 'Météo adaptée à ta région' },
           { icon: '📅', label: 'Calendrier des semis personnalisé' },
           { icon: '💧', label: 'Arrosage intelligent' },
           { icon: '🤝', label: 'Associations de plantes' },
@@ -347,7 +347,7 @@ export default function LoginPage() {
         className="mt-6 text-center text-xs px-8"
         style={{ color: 'var(--jd-ink-muted)' }}
       >
-        En vous connectant, vous acceptez que vos données de jardinage
+        En te connectant, tu acceptes que tes données de jardinage
         soient sauvegardées de façon sécurisée.
       </p>
     </div>

@@ -228,7 +228,7 @@ export default function Conseiller({ onNavigate }) {
           style={{ background: 'var(--jd-warning-soft)', border: '1px solid rgba(240,184,108,0.3)' }}
         >
           <p className="text-xs font-semibold mb-1" style={{ color: 'var(--jd-warning)' }}>
-            💡 Pour votre sol {sol.label.toLowerCase()}
+            💡 Pour ton sol {sol.label.toLowerCase()}
           </p>
           <p className="text-sm" style={{ color: 'var(--jd-ink)' }}>{sol.tips}</p>
         </div>

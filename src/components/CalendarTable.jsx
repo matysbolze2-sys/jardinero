@@ -62,7 +62,7 @@ function getStageForMonth(plant, monthIdx, regionOffset) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-// Badge chip "Vous"
+// Badge chip "Toi"
 function YouBadge() {
   return (
     <span
@@ -81,7 +81,7 @@ function YouBadge() {
         flexShrink: 0,
       }}
     >
-      Vous
+      Toi
     </span>
   )
 }

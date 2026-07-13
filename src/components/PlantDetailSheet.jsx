@@ -384,7 +384,7 @@ function TabDiagnostic({ plant }) {
     <div className="flex flex-col gap-4">
       <div>
         <p className="text-xs mb-2" style={{ color: 'var(--jd-ink-muted)' }}>
-          Quel symptôme observez-vous ?
+          Quel symptôme observes-tu ?
         </p>
         <select
           value={selected}
@@ -439,7 +439,7 @@ function TabDiagnostic({ plant }) {
           <div className="text-center py-6">
             <p className="text-3xl mb-2">🔍</p>
             <p className="text-sm" style={{ color: 'var(--jd-ink-muted)' }}>
-              Sélectionnez un symptôme pour voir le diagnostic
+              Sélectionne un symptôme pour voir le diagnostic
             </p>
           </div>
         )

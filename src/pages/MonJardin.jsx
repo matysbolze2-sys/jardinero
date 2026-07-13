@@ -117,10 +117,10 @@ export default function MonJardin() {
         >
           <span className="text-5xl mb-4">🌱</span>
           <p className="font-display font-bold text-lg mb-1" style={{ color: 'var(--jd-accent)' }}>
-            Votre jardin est vide
+            Ton jardin est vide
           </p>
           <p className="text-sm mb-5" style={{ color: 'var(--jd-ink-muted)' }}>
-            Ajoutez vos premières plantes pour commencer à suivre votre potager.
+            Ajoute tes premières plantes pour commencer à suivre ton potager.
           </p>
           <button
             onClick={() => setShowAddModal(true)}

@@ -54,7 +54,7 @@ export default function GardenSetup({ garden, onSave }) {
             Configurer le jardin
           </h2>
           <p className="text-sm mt-0.5" style={{ color: 'var(--jd-ink-muted)' }}>
-            Définissez le nom et la taille de votre espace.
+            Définis le nom et la taille de ton espace.
           </p>
         </div>
       </div>

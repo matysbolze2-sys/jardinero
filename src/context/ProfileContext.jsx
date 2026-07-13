@@ -434,9 +434,9 @@ export function ProfileProvider({ children, user }) {
 
   const saveGarden = useCallback(async (data) => {
     const gardenId = profile.activeGardenId
-    if (!gardenId) return
+    if (!gardenId) return { error: null }
 
-    await supabase.from('gardens').update({
+    const { error: gardenError } = await supabase.from('gardens').update({
       name: data.name,
       width: data.width,
       height: data.height,
@@ -444,43 +444,56 @@ export function ProfileProvider({ children, user }) {
       updated_at: new Date().toISOString(),
     }).eq('id', gardenId).eq('user_id', user.id)
 
+    if (gardenError) {
+      console.error('Erreur saveGarden (jardin):', gardenError)
+      return { error: gardenError.message }
+    }
+
     if (data.plots) {
-      await supabase.from('plots').delete().eq('garden_id', gardenId)
+      // RPC transactionnel : delete + insert atomiques côté Postgres,
+      // un échec ne détruit pas les parcelles existantes.
+      const { error } = await supabase.rpc('save_garden', {
+        p_garden_id: gardenId,
+        p_plots: data.plots.map(p => ({
+          id: p.id,
+          label: p.label ?? null,
+          x: p.x, y: p.y,
+          width: p.width, height: p.height,
+          plants: (p.plants ?? []).map(plantId => ({
+            plant_id: plantId,
+            quantity: p.plantQuantities?.[plantId] ?? 1,
+          })),
+        })),
+      })
 
-      if (data.plots.length > 0) {
-        await supabase.from('plots').insert(
-          data.plots.map(p => ({
-            id: p.id,
-            garden_id: gardenId,
-            user_id: user.id,
-            label: p.label ?? null,
-            x: p.x, y: p.y,
-            width: p.width, height: p.height,
-          }))
-        )
-
-        const plotPlants = []
-        for (const p of data.plots) {
-          for (const plantId of (p.plants ?? [])) {
-            plotPlants.push({ plot_id: p.id, plant_id: plantId })
-          }
-        }
-        if (plotPlants.length > 0) {
-          await supabase.from('plot_plants').insert(plotPlants)
-        }
+      if (error) {
+        console.error('Erreur saveGarden (parcelles):', error)
+        return { error: error.message }
       }
     }
 
     setProfile(prev => ({
       ...prev,
       gardens: prev.gardens.map(g => g.id === gardenId ? { ...g, ...data } : g),
+      plants: data.plots
+        ? prev.plants.map(pl => {
+            const plot = data.plots.find(p => (p.plants ?? []).includes(pl.id))
+            return { ...pl, plotId: plot?.id ?? null }
+          })
+        : prev.plants,
     }))
+    return { error: null }
   }, [user, profile.activeGardenId])
 
   const assignPlantToPlot = useCallback(async (plotId, plantId) => {
     await supabase.from('plot_plants').upsert({ plot_id: plotId, plant_id: plantId })
+    // plants.plot_id : source de vérité pour la rotation par parcelle
+    await supabase.from('plants')
+      .update({ plot_id: plotId, updated_at: new Date().toISOString() })
+      .eq('id', plantId).eq('user_id', user.id)
     setProfile(prev => ({
       ...prev,
+      plants: prev.plants.map(p => p.id === plantId ? { ...p, plotId } : p),
       gardens: prev.gardens.map(g => ({
         ...g,
         plots: g.plots.map(p =>
@@ -498,8 +511,14 @@ export function ProfileProvider({ children, user }) {
 
   const removePlantFromPlot = useCallback(async (plotId, plantId) => {
     await supabase.from('plot_plants').delete().eq('plot_id', plotId).eq('plant_id', plantId)
+    await supabase.from('plants')
+      .update({ plot_id: null, updated_at: new Date().toISOString() })
+      .eq('id', plantId).eq('plot_id', plotId).eq('user_id', user.id)
     setProfile(prev => ({
       ...prev,
+      plants: prev.plants.map(p =>
+        p.id === plantId && p.plotId === plotId ? { ...p, plotId: null } : p
+      ),
       gardens: prev.gardens.map(g => ({
         ...g,
         plots: g.plots.map(p => {
@@ -550,6 +569,7 @@ export function ProfileProvider({ children, user }) {
 
   return (
     <ProfileContext.Provider value={{
+      user,
       profile,
       loading,
       updateProfile,
