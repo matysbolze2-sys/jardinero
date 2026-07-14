@@ -4,6 +4,7 @@ import { useToast } from './Toast'
 import { getSoilById } from '../data/soils'
 import { getRegionById } from '../data/regions'
 import { useMeteo } from '../hooks/useMeteo'
+import { shouldSkipWatering } from '../utils/meteoAlerts'
 import { getEffectiveStatus, getStageMessage } from '../utils/plantStatusUtils'
 import {
   getFrequencePlante,
@@ -251,7 +252,8 @@ export default function ArrosageCalendar() {
   const arrosages    = profile.arrosages ?? {}
   const sol          = getSoilById(profile.soil)
   const regionOffset = getRegionById(profile.region)?.offset ?? 0
-  const { aPluiePrevue } = useMeteo(profile.region)
+  const { meteo, aPluiePrevue } = useMeteo(profile.region, profile.coords)
+  const rainSkip = shouldSkipWatering(meteo?.daily)
 
   const handleArroser = async (plantId) => {
     const res = await marquerArrose(plantId)
@@ -277,8 +279,19 @@ export default function ArrosageCalendar() {
         )}
       </div>
       <p className="text-xs mb-4" style={{ color: 'var(--jd-ink-muted)' }}>
-        Fréquences adaptées à chaque plante · Touchez 💧 pour cocher · 🌧️ = pluie prévue
+        Fréquences adaptées à chaque plante · Touche 💧 pour cocher · 🌧️ = pluie prévue
       </p>
+
+      {/* Suggestion pluie — n'annule aucun arrosage, l'utilisateur reste maître */}
+      {rainSkip.skip && (
+        <div
+          className="rounded-card mb-4 px-4 py-3 flex items-center gap-2"
+          style={{ background: 'var(--jd-water-soft)', border: '1px solid var(--jd-water-ring)' }}
+        >
+          <span style={{ fontSize: 18, flexShrink: 0 }}>🌧️</span>
+          <p className="text-sm font-semibold" style={{ color: 'var(--jd-water)' }}>{rainSkip.raison}</p>
+        </div>
+      )}
 
       {/* Cartes plantes avec cascade */}
       {plants.map((plant, i) => {

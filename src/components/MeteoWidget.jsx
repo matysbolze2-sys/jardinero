@@ -45,7 +45,7 @@ function JourMeteo({ dateStr, tMax, tMin, pluie, weathercode, isToday }) {
 
 export default function MeteoWidget() {
   const { profile } = useProfile()
-  const { meteo, loading, error, alertes } = useMeteo(profile.region, profile.coords)
+  const { meteo, loading, error, alertes, todayIdx } = useMeteo(profile.region, profile.coords)
 
   if (!profile.region) return null
   if (loading) return (
@@ -58,27 +58,24 @@ export default function MeteoWidget() {
 
   const { time, temperature_2m_max, temperature_2m_min, precipitation_sum, weathercode } = meteo.daily
 
+  // 7 jours à partir d'aujourd'hui (past_days décale l'origine des tableaux).
+  // Le gel est désormais porté par <FrostAlert> en haut de Home → on ne garde
+  // ici que la sécheresse pour éviter le doublon.
+  const jours = time.slice(todayIdx, todayIdx + 7)
+  const secheresse = alertes.filter(a => a.type === 'secheresse')
+
   return (
     <div className="mb-4">
-      {/* Alertes */}
-      {alertes.map((alerte, i) => (
+      {/* Alertes (sécheresse uniquement) */}
+      {secheresse.map((alerte, i) => (
         <div
           key={i}
           className="rounded-card px-4 py-3 mb-2 flex items-center gap-2"
-          style={
-            alerte.type === 'gel'
-              ? { background: 'var(--jd-water-soft)', border: '1px solid var(--jd-water-ring)' }
-              : { background: '#1A1208',              border: '1px solid rgba(252,186,106,0.3)' }
-          }
+          style={{ background: '#1A1208', border: '1px solid rgba(252,186,106,0.3)' }}
         >
-          <span className="text-xl flex-shrink-0">{alerte.type === 'gel' ? '🧊' : '☀️'}</span>
-          <p
-            className="text-sm font-semibold"
-            style={{ color: alerte.type === 'gel' ? 'var(--jd-water)' : 'var(--jd-warning)' }}
-          >
-            {alerte.type === 'gel'
-              ? `Risque de gel ${alerte.dansNJours === 0 ? "aujourd'hui" : alerte.dansNJours === 1 ? 'demain' : `dans ${alerte.dansNJours} jours`} — protège tes semis !`
-              : '4+ jours sans pluie — pensez à arroser'}
+          <span className="text-xl flex-shrink-0">☀️</span>
+          <p className="text-sm font-semibold" style={{ color: 'var(--jd-warning)' }}>
+            4+ jours sans pluie — pense à arroser
           </p>
         </div>
       ))}
@@ -95,17 +92,20 @@ export default function MeteoWidget() {
           ☁️ Météo 7 jours
         </p>
         <div className="flex gap-1">
-          {time.map((dateStr, i) => (
-            <JourMeteo
-              key={dateStr}
-              dateStr={dateStr}
-              tMax={temperature_2m_max[i]}
-              tMin={temperature_2m_min[i]}
-              pluie={precipitation_sum[i] ?? 0}
-              weathercode={weathercode[i]}
-              isToday={i === 0}
-            />
-          ))}
+          {jours.map((dateStr, i) => {
+            const idx = todayIdx + i
+            return (
+              <JourMeteo
+                key={dateStr}
+                dateStr={dateStr}
+                tMax={temperature_2m_max[idx]}
+                tMin={temperature_2m_min[idx]}
+                pluie={precipitation_sum[idx] ?? 0}
+                weathercode={weathercode[idx]}
+                isToday={i === 0}
+              />
+            )
+          })}
         </div>
       </div>
     </div>

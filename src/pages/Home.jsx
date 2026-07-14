@@ -5,10 +5,12 @@ import { getRegionById } from '../data/regions'
 import { MOIS_LABELS } from '../data/plants'
 import { getPlantsToSowThisMonth, getPlantsToHarvestThisMonth } from '../utils/calendarUtils'
 import MeteoWidget from '../components/MeteoWidget'
+import FrostAlert from '../components/FrostAlert'
 import { getTachesSemaine, getWeekKey } from '../data/taches'
 import { openmoji } from '../utils/openmoji'
 import { getEffectiveStatus, ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
 import { getDailyAlerts, getWeeklyActions, getSeasonalContext } from '../utils/homeInsights'
+import { shouldSkipWatering } from '../utils/meteoAlerts'
 
 // ── Shared icons ───────────────────────────────────────────────────────────────
 
@@ -74,8 +76,11 @@ function AlertCard({ alert, onNavigate }) {
 
 // ── SectionAlertesJour ─────────────────────────────────────────────────────────
 
-function SectionAlertesJour({ plants, soilId, arrosages, regionOffset, meteoAlerts, onNavigate }) {
-  const alerts = getDailyAlerts(plants, arrosages, soilId, regionOffset, meteoAlerts)
+function SectionAlertesJour({ plants, soilId, arrosages, regionOffset, rainSkip, onNavigate }) {
+  const alerts = getDailyAlerts(plants, arrosages, soilId, regionOffset)
+  // Suggestion pluie : uniquement s'il y a par ailleurs un besoin d'arrosage
+  // (sinon hors-sujet). C'est une suggestion — on n'annule aucun arrosage.
+  const showRainSkip = rainSkip?.skip && alerts.some(a => a.type === 'water_urgent')
 
   return (
     <div className="mb-5">
@@ -116,6 +121,16 @@ function SectionAlertesJour({ plants, soilId, arrosages, regionOffset, meteoAler
       {alerts.length > 0 && (
         <div className="flex flex-col gap-2">
           {alerts.map((alert, i) => <AlertCard key={i} alert={alert} onNavigate={onNavigate} />)}
+        </div>
+      )}
+
+      {showRainSkip && (
+        <div
+          className="rounded-card mt-2 px-3 py-2.5 flex items-center gap-2"
+          style={{ background: 'var(--jd-water-soft)', border: '1px solid var(--jd-water-ring)' }}
+        >
+          <span style={{ fontSize: 16, flexShrink: 0 }}>🌧️</span>
+          <p className="text-xs font-medium" style={{ color: 'var(--jd-water)' }}>{rainSkip.raison}</p>
         </div>
       )}
     </div>
@@ -224,7 +239,8 @@ export default function Home({ onNavigate }) {
   const moisLabel   = MOIS_LABELS[moisIdx]
   const plants      = profile.plants ?? []
 
-  const { alertes: meteoAlerts } = useMeteo(profile.region, profile.coords)
+  const { meteo } = useMeteo(profile.region, profile.coords)
+  const rainSkip = shouldSkipWatering(meteo?.daily)
 
   const plantesSemer   = getPlantsToSowThisMonth(regionOffset)
   const plantesRecolte = getPlantsToHarvestThisMonth(regionOffset)
@@ -274,6 +290,8 @@ export default function Home({ onNavigate }) {
         </div>
       </div>
 
+      <FrostAlert daily={meteo?.daily} plants={plants} />
+
       <MeteoWidget />
 
       <SectionAlertesJour
@@ -281,7 +299,7 @@ export default function Home({ onNavigate }) {
         soilId={profile.soil}
         arrosages={profile.arrosages ?? {}}
         regionOffset={regionOffset}
-        meteoAlerts={meteoAlerts ?? []}
+        rainSkip={rainSkip}
         onNavigate={onNavigate}
       />
 

@@ -3,11 +3,9 @@ import { getEffectiveStatus } from './plantStatusUtils'
 import { getFrequencePlante, getEtatArrosage } from './arrosageUtils'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-
-const FROST_SENSITIVE = new Set([
-  'tomate', 'tomate-cerise', 'basilic', 'courgette', 'concombre',
-  'poivron', 'aubergine', 'melon', 'pasteque', 'haricot', 'mais-doux',
-])
+// Note : le risque de gel est désormais porté par le composant <FrostAlert>
+// (bannière proéminente en haut de Home) via src/utils/meteoAlerts.js, pour
+// éviter un double affichage. Il n'est donc plus généré ici comme insight.
 
 const STAGE_ACTIONS = {
   'tomate': {
@@ -137,8 +135,7 @@ function saveLastStatuses(map) {
 // ── getDailyAlerts ─────────────────────────────────────────────────────────────
 
 // Returns sorted array of daily alerts (max 5).
-// meteoAlerts: alertes[] from useMeteo — passed optionally for frost_risk detection.
-export function getDailyAlerts(plants, arrosages, soilId, regionOffset, meteoAlerts = []) {
+export function getDailyAlerts(plants, arrosages, soilId, regionOffset) {
   if (!plants?.length) return []
 
   const today = new Date().toISOString().split('T')[0]
@@ -216,21 +213,6 @@ export function getDailyAlerts(plants, arrosages, soilId, regionOffset, meteoAle
           priority: PRIORITY.perennial_start,
         })
       }
-    }
-  }
-
-  // ── frost_risk ─────────────────────────────────────────────────────────────
-  if (meteoAlerts.some(a => a.type === 'gel')) {
-    const fragiles = plants.filter(p => FROST_SENSITIVE.has(p.plantId))
-    if (fragiles.length > 0) {
-      const names = fragiles.slice(0, 2).map(p => p.name).join(', ')
-      const extra = fragiles.length > 2 ? ` +${fragiles.length - 2}` : ''
-      alerts.push({
-        type: 'frost_risk',
-        plants: fragiles,
-        message: `Risque de gel — protège ${names}${extra}`,
-        priority: PRIORITY.frost_risk,
-      })
     }
   }
 

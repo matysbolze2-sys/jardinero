@@ -30,11 +30,14 @@ export function useMeteo(regionId, coordsOverride = null) {
     setLoading(true)
     setError(null)
 
+    // past_days=1 : ramène la pluie d'hier (nécessaire pour "il a plu → sauter l'arrosage").
+    // Conséquence : time[0] devient hier, pas aujourd'hui → tous les consommateurs
+    // repèrent aujourd'hui via time.indexOf(getToday()) (voir todayIdx ci-dessous).
     const url =
       `https://api.open-meteo.com/v1/forecast` +
       `?latitude=${lat}&longitude=${lon}` +
       `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode` +
-      `&timezone=Europe%2FParis&forecast_days=7`
+      `&timezone=Europe%2FParis&past_days=1&forecast_days=7`
 
     fetch(url)
       .then(r => { if (!r.ok) throw new Error('réseau'); return r.json() })
@@ -42,20 +45,27 @@ export function useMeteo(regionId, coordsOverride = null) {
       .catch(err => { setError(err); setLoading(false) })
   }, [lat, lon])
 
+  // Index d'aujourd'hui dans les tableaux daily (past_days décale l'origine).
+  const todayIdx = meteo?.daily?.time
+    ? Math.max(0, meteo.daily.time.indexOf(new Date().toISOString().split('T')[0]))
+    : 0
+
   const alertes = []
   if (meteo?.daily) {
     const { temperature_2m_min, precipitation_sum } = meteo.daily
 
-    for (let i = 0; i < Math.min(3, temperature_2m_min.length); i++) {
-      if (temperature_2m_min[i] < 2) {
+    for (let i = 0; i < 3; i++) {
+      const idx = todayIdx + i
+      if (idx >= temperature_2m_min.length) break
+      if (temperature_2m_min[idx] < 2) {
         alertes.push({ type: 'gel', dansNJours: i })
         break
       }
     }
 
     let secCount = 0
-    for (const pluie of precipitation_sum) {
-      if ((pluie ?? 0) < 1) { secCount++; if (secCount >= 4) { alertes.push({ type: 'secheresse' }); break } }
+    for (let idx = todayIdx; idx < precipitation_sum.length; idx++) {
+      if ((precipitation_sum[idx] ?? 0) < 1) { secCount++; if (secCount >= 4) { alertes.push({ type: 'secheresse' }); break } }
       else secCount = 0
     }
   }
@@ -67,5 +77,5 @@ export function useMeteo(regionId, coordsOverride = null) {
     return (meteo.daily.precipitation_sum[idx] ?? 0) >= 3
   }
 
-  return { meteo, loading, error, alertes, aPluiePrevue }
+  return { meteo, loading, error, alertes, aPluiePrevue, todayIdx }
 }
