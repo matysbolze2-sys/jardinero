@@ -330,3 +330,93 @@ utilisateur) comme onglet de Mon Jardin.
 - Aucun appel réseau ajouté.
 - Test manuel restant : appliquer la migration `quantite_kg`, récolter une plante avec/sans
   quantité, vérifier la carte € et le filtre année en conditions réelles.
+
+---
+
+# Proxy Gemini serverless + quotas serveur — passe du 2026-07-15
+
+**Problème corrigé** : `useGemini.js` appelait l'API Gemini directement depuis le
+client avec `VITE_GEMINI_API_KEY`. La clé était donc **lisible dans le bundle JS de
+prod** (extractible par n'importe qui), et les quotas (10 messages/jour) vivaient en
+localStorage, contournables en vidant le stockage.
+
+## 1. Fonction serverless `api/gemini.js` (nouveau)
+
+- Runtime Node (Vercel). Toutes les requêtes Gemini passent par `POST /api/gemini`.
+  La clé Gemini vit **uniquement côté serveur**, jamais dans le client.
+- **Auth** : header `Authorization: Bearer <access_token Supabase>`, vérifié via
+  `supabase.auth.getUser(token)` (client créé avec la **service role key**). Pas de
+  token / token invalide → 401 « Session expirée, reconnecte-toi. »
+- **Modèle hardcodé côté serveur** (`gemini-2.0-flash-lite`) : le client ne choisit
+  ni le modèle ni l'URL. `maxOutputTokens` plafonné à 800 quoi que demande le client.
+  Taille du body plafonnée (~6 Mo, marge pour les images du futur diagnostic).
+- **Quotas dans Supabase** (chat 10/j, diagnostic 5/j ; suggestions sans quota) via
+  `increment_ai_quota` appelée **avant** l'appel Gemini. Retour `-1` → 429 « Tu as
+  utilisé tous tes messages du jour. Reviens demain ! 🌱 ». La réponse succès renvoie
+  `remaining` (quota restant) pour resynchroniser l'UI.
+- **Mapping erreurs upstream → français** (jamais le corps brut Gemini) : 429 → 503
+  « très sollicité » ; 400 → 502 « n'a pas compris » ; 5xx/timeout/réseau → 503
+  « momentanément indisponible » ; réponse sans candidates (blocage safety) → 200 avec
+  message neutre « Reformule ta question sur ton jardin. 🌱 ». Timeout ~25 s.
+- Le case `kind === 'diagnostic'` est **déjà prévu** (quota `diag`, images
+  `inline_data` dans `contents`) : le prompt Diagnostic s'y branchera sans retoucher
+  ce fichier.
+
+## 2. Migration `supabase/migrations/20260715_ai_quotas.sql` (nouveau)
+
+- Table `ai_quotas (user_id, day, chat_count, diag_count)`, RLS activée : **select
+  par le propriétaire** uniquement, **aucune policy insert/update** (seul le service
+  role écrit).
+- Fonction `increment_ai_quota(p_user_id, p_kind, p_max)` `SECURITY DEFINER` :
+  incrément atomique avec vérification de plafond, retourne le nouveau compteur ou
+  `-1` si plafond atteint. `EXECUTE` révoqué à `public/anon/authenticated`.
+- **⚠️ À appliquer manuellement** : dashboard Supabase → SQL Editor → coller le
+  fichier → Run (le projet n'utilise pas la CLI de migrations).
+
+## 3. Refactor `src/hooks/useGemini.js`
+
+- Suppression de `GEMINI_API_URL`, `GEMINI_API_KEY` et de toute référence à
+  `VITE_GEMINI_API_KEY`. Nouveau helper `callGemini(kind, payload)` qui joint le token
+  Supabase et appelle `/api/gemini`.
+- `useGeminiChat` : plus de compteur localStorage (`jd_chat_usage` nettoyé via
+  `localStorage.removeItem`). `remaining` initialisé à `MAX_CHAT`, resynchronisé sur
+  la réponse serveur ; sur épuisement (429) l'UI bascule en « Reviens demain ». Les
+  erreurs (déjà en français et sûres) s'affichent dans la bulle assistant.
+- `useGeminiSuggestions` : cache localStorage 24h **conservé** ; fetch direct remplacé
+  par `callGemini('suggestions', …)`.
+- `buildGardenContext` : **inchangée et toujours exportée**. `AiChat.jsx` et
+  `Conseiller.jsx` fonctionnent sans modification (mêmes retours de hooks).
+
+## ⚠️ Actions manuelles restantes (à faire par toi)
+
+1. **Appliquer la migration SQL** `20260715_ai_quotas.sql` (SQL Editor Supabase).
+2. **Variables d'environnement Vercel** (Settings → Environment Variables) :
+   - `GEMINI_API_KEY` = l'ancienne clé (déplacée hors du client) ;
+   - `SUPABASE_URL` = même valeur que `VITE_SUPABASE_URL` ;
+   - `SUPABASE_SERVICE_ROLE_KEY` = clé service role (Supabase → Settings → API →
+     `service_role`). **Ne jamais** la préfixer `VITE_` ni l'exposer au client.
+3. **RÉVOQUER / RÉGÉNÉRER l'ancienne clé Gemini** dans Google AI Studio : elle a été
+   exposée dans les bundles JS **déjà déployés** en prod, donc considère-la comme
+   compromise. Génère-en une nouvelle et mets `GEMINI_API_KEY` (Vercel) à jour avec.
+4. `VITE_GEMINI_API_KEY` a été retirée de `.env.local` — retire-la aussi côté Vercel
+   si elle y était (elle ne sert plus).
+
+## Dev local
+
+`vite dev` (`npm run dev`) **ne sert pas** le dossier `api/` : pour tester le proxy en
+local, lancer `npx vercel dev` (avec les variables serveur dans un `.env` Vercel).
+Si `/api/gemini` échoue en `npm run dev`, l'erreur s'affiche proprement dans le chat
+(bulle assistant) — la page ne plante pas.
+
+## Validation
+
+- `npm run build` : ✅ sans erreur.
+- `grep -rn "VITE_GEMINI\|generativelanguage.googleapis" src/` : **vide**.
+- Bundle `dist/` après build : **aucune** trace de la clé (`AIzaSy…`), de l'URL Gemini
+  ni de `VITE_GEMINI` (vérifié par grep).
+- `.env.local` et `.env` sont bien dans `.gitignore` (`.env` + `.env.*`).
+- Tests manuels restants (nécessitent `vercel dev` + variables serveur + migration) :
+  - [ ] requête sans token → 401 message français ;
+  - [ ] 11e message chat du jour → 429 « Reviens demain », UI en état épuisé ;
+  - [ ] suggestions toujours chargées (cache 24h intact) ;
+  - [ ] diagnostic (quand le prompt sera fait) → quota `diag` 5/j.

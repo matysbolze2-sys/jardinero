@@ -1,13 +1,29 @@
 import { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import { getEffectiveStatus, getCycleProgress, getStageMessage } from '../utils/plantStatusUtils'
 import { ASSOCIATIONS } from '../data/associations'
 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent'
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY
-
-const CHAT_STORAGE_KEY        = 'jd_chat_usage'
 const SUGGESTIONS_STORAGE_KEY = 'jd_suggestions_cache'
 const MAX_CHAT = 10
+
+// ── Proxy serverless ──────────────────────────────────────────────────────────
+// La clé Gemini vit uniquement côté serveur (api/gemini.js). On relaie le payload
+// Gemini construit ici, avec le token Supabase pour l'auth + les quotas serveur.
+
+async function callGemini(kind, payload) {
+  const { data: { session } } = await supabase.auth.getSession()
+  const res = await fetch('/api/gemini', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token ?? ''}`,
+    },
+    body: JSON.stringify({ kind, ...payload }),
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw new Error(data.error ?? 'Une erreur est survenue, réessaie.')
+  return data // { text, remaining }
+}
 
 // ── Garden context builder — exported for reuse by Diagnostic prompt ──────────
 
@@ -69,28 +85,16 @@ ${conflits.length > 0 ? `Conflits d'associations détectés :\n${conflits.map(c 
 // ── Chat hook ─────────────────────────────────────────────────────────────────
 
 export function useGeminiChat(profile, regionOffset) {
-  const [history, setHistory] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [history, setHistory]     = useState([])
+  const [loading, setLoading]     = useState(false)
+  // Le quota fait désormais foi côté serveur. On l'affiche optimiste à MAX_CHAT
+  // et on se resynchronise sur le `remaining` renvoyé à chaque réponse.
+  const [remaining, setRemaining] = useState(MAX_CHAT)
 
-  const getUsage = () => {
-    try {
-      const raw = localStorage.getItem(CHAT_STORAGE_KEY)
-      if (!raw) return { count: 0, date: null }
-      return JSON.parse(raw)
-    } catch { return { count: 0, date: null } }
-  }
-
-  const today      = new Date().toDateString()
-  const usage      = getUsage()
-  const usedToday  = usage.date === today ? usage.count : 0
-  const remaining  = MAX_CHAT - usedToday
-
-  const incrementUsage = () => {
-    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
-      count: usedToday + 1,
-      date:  today,
-    }))
-  }
+  // Nettoyage de l'ancien compteur localStorage, désormais obsolète.
+  useEffect(() => {
+    localStorage.removeItem('jd_chat_usage')
+  }, [])
 
   const sendMessage = async (userMessage) => {
     if (!userMessage.trim() || loading || remaining <= 0) return
@@ -98,7 +102,6 @@ export function useGeminiChat(profile, regionOffset) {
     const newEntry = { user: userMessage, assistant: null }
     setHistory(prev => [...prev, newEntry])
     setLoading(true)
-    incrementUsage()
 
     const gardenContext = buildGardenContext(profile, regionOffset)
     const systemPrompt = `
@@ -121,42 +124,32 @@ RÈGLES :
       { role: 'model', parts: [{ text: h.assistant ?? '' }] },
     ])).flat()
 
-    const body = {
-      contents: [
-        ...conversationHistory,
-        { role: 'user', parts: [{ text: userMessage }] },
-      ],
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-      generationConfig: {
-        temperature:      0.7,
-        maxOutputTokens:  400,
-      },
-    }
-
     try {
-      const res = await fetch(
-        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-      )
-      if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}))
-        console.error('[Gemini chat error]', res.status, errBody)
-        throw new Error(`${res.status} — ${errBody?.error?.message ?? 'erreur API'}`)
-      }
-      const data = await res.json()
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'Pas de réponse.'
+      const data = await callGemini('chat', {
+        contents: [
+          ...conversationHistory,
+          { role: 'user', parts: [{ text: userMessage }] },
+        ],
+        systemInstruction: systemPrompt,
+        generationConfig: {
+          temperature:     0.7,
+          maxOutputTokens: 400,
+        },
+      })
+      const text = data.text ?? 'Pas de réponse.'
+      if (typeof data.remaining === 'number') setRemaining(data.remaining)
       setHistory(prev => prev.map((h, i) =>
         i === prev.length - 1 ? { ...h, assistant: text } : h
       ))
     } catch (err) {
-      console.error('[Gemini chat]', err)
+      // Les messages du proxy sont déjà en français et sûrs.
       setHistory(prev => prev.map((h, i) =>
         i === prev.length - 1
-          ? { ...h, assistant: `Erreur : ${err.message}` }
+          ? { ...h, assistant: err.message }
           : h
       ))
+      // Épuisement du quota : bascule l'UI en état "reviens demain".
+      if (/Reviens demain/.test(err.message)) setRemaining(0)
     } finally {
       setLoading(false)
     }
@@ -203,19 +196,11 @@ Réponds UNIQUEMENT avec un JSON valide, sans markdown, sans texte avant ou apr�
 `
 
     try {
-      const res = await fetch(
-        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-        {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({
-            contents:         [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.8, maxOutputTokens: 200 },
-          }),
-        }
-      )
-      const data  = await res.json()
-      const text  = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '{}'
+      const data  = await callGemini('suggestions', {
+        contents:         [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.8, maxOutputTokens: 200 },
+      })
+      const text  = data.text ?? '{}'
       const clean = text.replace(/```json|```/g, '').trim()
       const parsed = JSON.parse(clean)
       const result = parsed.suggestions ?? []
