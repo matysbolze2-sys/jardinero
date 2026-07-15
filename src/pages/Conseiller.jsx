@@ -7,6 +7,7 @@ import { MOIS_LABELS } from '../data/plants'
 import { ALL_STATUT_LABELS } from '../utils/plantStatusUtils'
 import { getPersonalizedAdvice, getEnrichedMonthlyAdvice } from '../utils/adviceEngine'
 import SuggestionsProactives from '../components/SuggestionsProactives'
+import RisquesSaison from '../components/RisquesSaison'
 import AiChat from '../components/AiChat'
 import { useGeminiSuggestions } from '../hooks/useGemini'
 
@@ -147,6 +148,9 @@ export default function Conseiller({ onNavigate }) {
           )}
         </div>
       </div>
+
+      {/* Ravageurs & maladies à surveiller ce mois-ci (rien si aucun risque) */}
+      <RisquesSaison plants={plants} />
 
       {/* Enrichissements contextuels */}
       {enrichments.length > 0 && (

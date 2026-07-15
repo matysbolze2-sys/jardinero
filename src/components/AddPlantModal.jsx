@@ -168,6 +168,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
   const [selectedPlant, setSelectedPlant] = useState(null)
   const [customName,    setCustomName]    = useState('')
   const [variety,       setVariety]       = useState('')
+  const [container,     setContainer]     = useState(false)
   const [plantedAt,     setPlantedAt]     = useState(getToday())
   const [search,        setSearch]        = useState('')
 
@@ -215,6 +216,7 @@ export default function AddPlantModal({ onAdd, onClose }) {
       plantedAt,
       status:    'sowed',
       variety:   variety.trim() || null,
+      container,
     })
     setSubmitting(false)
     if (result?.error) {
@@ -416,6 +418,37 @@ export default function AddPlantModal({ onAdd, onClose }) {
                 onFocus={e => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
                 onBlur={e  => (e.target.style.borderColor = 'var(--jd-border)')}
               />
+
+              {/* Toggle culture en pot */}
+              <button
+                onClick={() => setContainer(c => !c)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-card mb-4 text-left tap-scale"
+                style={{
+                  background: container ? 'var(--jd-accent-soft)' : 'var(--jd-surface-alt)',
+                  border:     `1px solid ${container ? 'var(--jd-accent-ring)' : 'var(--jd-border)'}`,
+                }}
+              >
+                <span style={{ fontSize: 22, flexShrink: 0 }}>🪴</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold" style={{ color: container ? 'var(--jd-accent)' : 'var(--jd-ink)' }}>
+                    Culture en pot
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--jd-ink-muted)' }}>
+                    Arrosage plus fréquent, hors rotation des cultures
+                  </p>
+                </div>
+                <span
+                  className="flex-shrink-0 flex items-center rounded-pill"
+                  style={{
+                    width: 40, height: 24, padding: 2,
+                    background: container ? 'var(--jd-accent)' : 'var(--jd-border)',
+                    justifyContent: container ? 'flex-end' : 'flex-start',
+                    transition: 'all 0.2s var(--jd-ease-out)',
+                  }}
+                >
+                  <span style={{ width: 20, height: 20, borderRadius: '50%', background: 'white' }} />
+                </span>
+              </button>
 
               {/* Dates estimées */}
               {estimatedDates?.estimatedHarvestStart && (

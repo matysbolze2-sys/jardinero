@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useProfile } from '../hooks/useProfile'
+import { estimerValeurRecolte, uniteSaisie } from '../data/prixRecoltes'
 import EmojiIllo from './EmojiIllo'
+
+function formatEuro(v) {
+  return `~${v.toFixed(2).replace('.', ',')} €`
+}
 
 const CONFETTI_COLORS = ['#a6e36b', '#9DC044', '#DE5F1D', '#FCBA6A', '#f1f6ed']
 const CONFETTI_COUNT  = 40
@@ -21,8 +26,25 @@ export default function HarvestCelebration({ plant, onClose, onReplant }) {
   const { addHistorique, removePlant } = useProfile()
   const [phase,    setPhase]    = useState('celebrate')
   const [confetti]              = useState(generateConfetti)
+  const [quantite, setQuantite] = useState('')
+  const piece    = uniteSaisie(plant.plantId)              // { poidsPiece } ou null
+  const [unite,  setUnite]      = useState(piece ? 'piece' : 'kg')
 
   useEffect(() => {
+    const t = setTimeout(() => setPhase('replant'), 2200)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Quantité saisie → kg (null si vide/invalide → l'estimation utilise le rendement)
+  const raw = parseFloat(quantite.replace(',', '.'))
+  const quantiteKg = !isNaN(raw) && raw > 0
+    ? (unite === 'piece' && piece ? raw * piece.poidsPiece : raw)
+    : null
+
+  const valeur = estimerValeurRecolte(plant.plantId, quantiteKg)
+
+  // L'écriture de l'historique se fait ici (pas au montage) pour inclure la quantité
+  const persistHarvest = () => {
     addHistorique({
       id:          crypto.randomUUID(),
       name:        plant.name,
@@ -32,14 +54,13 @@ export default function HarvestCelebration({ plant, onClose, onReplant }) {
       harvestedAt: new Date().toISOString().split('T')[0],
       variety:     plant.variety ?? null,
       plotId:      plant.plotId ?? null,
+      container:   plant.container ?? false,
+      quantiteKg,
     })
-    const t = setTimeout(() => setPhase('replant'), 2200)
-    return () => clearTimeout(t)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }
 
-  const handleReplant = () => { removePlant(plant.id); onReplant() }
-  const handleDone    = () => { removePlant(plant.id); onClose()   }
+  const handleReplant = () => { persistHarvest(); removePlant(plant.id); onReplant() }
+  const handleDone    = () => { persistHarvest(); removePlant(plant.id); onClose()   }
 
   return (
     <div
@@ -88,9 +109,62 @@ export default function HarvestCelebration({ plant, onClose, onReplant }) {
           <h2 className="font-display font-extrabold text-2xl mt-3 mb-1" style={{ color: 'var(--jd-ink)' }}>
             Belle récolte !
           </h2>
-          <p className="text-sm mb-6" style={{ color: 'var(--jd-ink-muted)' }}>
+          <p className="text-sm mb-5" style={{ color: 'var(--jd-ink-muted)' }}>
             Tu veux replanter immédiatement ?
           </p>
+
+          {/* Quantité récoltée — optionnel, discret. Sert à affiner la valeur en € */}
+          {valeur !== null && (
+            <div className="w-full mb-5">
+              <label className="block text-xs font-semibold mb-1.5 text-left" style={{ color: 'var(--jd-ink-muted)' }}>
+                Quantité récoltée (optionnel)
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min="0"
+                  value={quantite}
+                  onChange={e => setQuantite(e.target.value)}
+                  placeholder={piece ? 'ex : 3' : 'ex : 1,5'}
+                  className="flex-1 px-4 py-3 rounded-card text-sm outline-none"
+                  style={{ border: '1px solid var(--jd-border)', background: 'var(--jd-surface-alt)', color: 'var(--jd-ink)' }}
+                  onFocus={e => (e.target.style.borderColor = 'var(--jd-accent-ring)')}
+                  onBlur={e  => (e.target.style.borderColor = 'var(--jd-border)')}
+                />
+                {piece ? (
+                  <div className="flex rounded-card overflow-hidden" style={{ border: '1px solid var(--jd-border)' }}>
+                    {['piece', 'kg'].map(u => (
+                      <button
+                        key={u}
+                        onClick={() => setUnite(u)}
+                        className="px-3 text-sm font-semibold tap-scale"
+                        style={{
+                          background: unite === u ? 'var(--jd-accent)' : 'var(--jd-surface-alt)',
+                          color:      unite === u ? 'var(--jd-accent-ink)' : 'var(--jd-ink-muted)',
+                        }}
+                      >
+                        {u === 'piece' ? 'pièces' : 'kg'}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span
+                    className="flex items-center px-4 rounded-card text-sm font-semibold"
+                    style={{ background: 'var(--jd-surface-alt)', color: 'var(--jd-ink-muted)', border: '1px solid var(--jd-border)' }}
+                  >
+                    kg
+                  </span>
+                )}
+              </div>
+              <p className="text-sm mt-2 text-left font-semibold" style={{ color: 'var(--jd-accent)' }}>
+                💶 {formatEuro(valeur)}
+                <span className="font-normal" style={{ color: 'var(--jd-ink-muted)' }}>
+                  {quantiteKg === null ? ' (estimation par défaut)' : ''}
+                </span>
+              </p>
+            </div>
+          )}
 
           <button
             onClick={handleReplant}

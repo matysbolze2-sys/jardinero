@@ -359,7 +359,8 @@ function SectionProchaines({ historique }) {
 
 export default function RotationDashboard() {
   const { profile } = useProfile()
-  const historique  = profile.historique ?? []
+  // Les cultures en pot sont exclues de la rotation (substrat renouvelé)
+  const historique  = (profile.historique ?? []).filter(h => !h.container)
   const gardens     = profile.gardens    ?? []
   const hasAnyData  = historique.length > 0
 

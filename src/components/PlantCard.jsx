@@ -87,6 +87,21 @@ export default function PlantCard({ plant, onOpenDetail }) {
             >
               {statut.label}
             </span>
+            {plant.container && (
+              <span
+                className="jd-chip"
+                title="Culture en pot"
+                style={{
+                  background: 'var(--jd-surface-alt)',
+                  color:      'var(--jd-ink-muted)',
+                  border:     '1px solid var(--jd-border)',
+                  fontSize:   10,
+                  padding:    '3px 7px',
+                }}
+              >
+                🪴 Pot
+              </span>
+            )}
             <CompatibilityBadge plantId={plant.plantId} gardenPlants={otherPlants} size="sm" />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

@@ -156,3 +156,177 @@ Le gel était affiché à 3 endroits potentiels. Centralisé sur `FrostAlert` :
 - Logique pure validée par mocks (voir §1).
 - Test manuel restant : vérifier le rendu réel avec des coords ayant un gel/pluie prévus
   (dépend de la météo réelle Open-Meteo).
+
+---
+
+# Alertes ravageurs & maladies saisonnières — passe du 2026-07-14
+
+Prévention **avant** dégâts : croisement mois courant × plantes du jardin → conseils
+ciblés. 100 % statique, zéro appel réseau/IA, fonctionne hors-ligne.
+
+## 1. `src/data/ravageursSaison.js` (nouveau)
+
+- `RISQUES_SAISON` : 11 risques documentés pour le climat français (mildiou, oïdium,
+  doryphore, piéride du chou, mouche de la carotte, pucerons, limaces/escargots,
+  altises, teigne du poireau, cul noir/carence calcium, fonte des semis). Chaque entrée :
+  `mois`, `cibles`, `gravite`, `signes`, `prevention`, et `conseilCourt` (accroche Home).
+- `cibles` accepte des `plantId` **ou** des familles préfixées `fam:` résolues via
+  `PLANTE_FAMILLE` de `rotation.js` (ex : `fam:Brassicacées` couvre chou, radis, roquette…).
+- `getRisquesActifs(plants, date=new Date())` → `[{ risque, plantesTouchees }]`,
+  gravité forte d'abord. Retourne `[]` si aucune plante concernée (pas de faux positif).
+
+## 2. `src/components/RisquesSaison.jsx` (nouveau)
+
+- Section « 🛡️ À surveiller en {mois} » insérée dans `Conseiller.jsx` **entre le hero
+  mensuel et les enrichissements/conseils** existants.
+- Cards compactes (nom + badge gravité + emojis des plantes touchées), **expand au tap**
+  pour révéler `signes` + `prevention` complets. Tri gravité forte d'abord.
+- **N'affiche rien** si aucun risque actif ce mois pour ce jardin (pas de section vide).
+- Bouton « Photographier un doute » **omis** : aucun composant `DiagnosticFlow`/flux photo
+  n'existe dans le code (le diagnostic actuel est un sélecteur de symptômes texte dans
+  `PlantDetailSheet`). Conforme à la consigne « seulement si le composant existe ».
+- Style aligné sur les cards existantes du Conseiller (tokens `--jd-*`, emojis bruts
+  comme le reste de la page).
+
+## 3. Insight Home (`homeInsights.js`)
+
+- **Un seul** insight ajouté quand un risque `gravite: 'forte'` est actif pour ≥ 1 plante :
+  `🛡️ Période à risque mildiou pour tes plants de tomate — évite d'arroser le feuillage…`
+- Intégré au mécanisme existant : nouveau type `pest_risk` dans la table `PRIORITY`
+  (priorité 2, l'ancien slot `frost_risk` désormais libre), tri + `slice(0, 5)` inchangés.
+- **Tap → onglet Conseiller** : ajout d'un champ optionnel `navigateTo` sur l'alerte ;
+  `AlertCard` navigue vers `alert.navigateTo ?? 'mon-jardin'`.
+
+## Validation
+
+- `npm run build` : ✅ sans erreur.
+- Mocks (esbuild+node) :
+  - tomates/juillet → `mildiou-tomate[forte]` visible + insight Home « → conseiller » ;
+  - mâche seule/juillet → `[]` (aucun faux positif) ;
+  - `fam:Brassicacées` matche bien chou **et** radis ;
+  - tri gravité forte d'abord (Mildiou, Doryphore avant les modérés).
+- `npx eslint` sur les fichiers touchés : seules 2 erreurs **préexistantes** subsistent
+  (`weekKey` inutilisé dans `Home`, catch vide dans `homeInsights`). `ravageursSaison.js`
+  et `RisquesSaison.jsx` sont clean.
+- Aucun appel réseau ajouté (données 100 % statiques).
+
+---
+
+# Templates de jardins à l'onboarding + mode pot — passe du 2026-07-14
+
+Réduire l'abandon à l'entrée : proposer des jardins prêts à l'emploi après la
+confirmation région/sol, et ajouter un mode « culture en pot » minimal.
+
+## 1. `src/data/gardenTemplates.js` (nouveau)
+
+- 4 templates : Balcon du débutant (pot), Carré potager familial, Coin aromatiques
+  (pot), Impossible à rater. Chaque `plantId` **vérifié** contre `plantsUnified.js`
+  (tous existent).
+- `getTemplatePlants(template, { regionOffset, date })` : résout les plantes, **ignore
+  avec `console.warn` explicite** tout `plantId` absent de `plantsUnified` (pas de crash
+  ni d'id inventé), et expose `enSaison` (fenêtre de semis du mois via `calendarUtils`).
+- **Décision saisonnalité** : le modèle de statuts n'a pas d'état « à semer / pas encore
+  la saison » (une plante sans date retombe sur `sowed`/« à arroser »). On crée donc
+  toutes les plantes du template comme **semées aujourd'hui** (cohérent avec AddPlantModal),
+  et le calendrier/Conseiller guident — conforme au « sinon ajoute tout et laisse le
+  calendrier guider ». `enSaison` sert d'info d'affichage (note « certaines se sèment
+  plus tard »).
+
+## 2. Onboarding — nouvelle étape `StepTemplate` (5e étape)
+
+- Après StepConfirmation : « C'est parti ! » → StepTemplate ; « Passer pour l'instant »
+  → jardin vide (comportement inchangé).
+- Cards tapables (nom, description, aperçu emojis) via le composant partagé
+  `GardenTemplateList.jsx`. Lien discret **« Je préfère partir de zéro »** = complétion
+  vide, strictement identique à avant.
+- Au choix d'un template : `applyGardenTemplate` (batch insert) **puis** écran de fin
+  « Ton jardin est prêt 🌱 — N plantes t'attendent » **avant** de compléter l'onboarding
+  (sinon la modal serait démontée par `onboardingDone` avant l'écran de succès).
+- `applyGardenTemplate(templateId, regionId)` dans `ProfileContext` : `regionId` passé
+  explicitement car `profile.region` n'est pas encore à jour pendant l'onboarding.
+- Point d'entrée aussi dans **l'état vide de Mon Jardin** (`TemplatePicker.jsx`) pour les
+  utilisateurs existants qui ne revoient jamais l'onboarding.
+
+## 3. Mode pot (`container: boolean`) — minimal
+
+- **Migration** `supabase/migrations/20260714_container_mode.sql` : `ALTER TABLE`
+  ajoutant `container` sur `plants` **et** `historique` (à appliquer à la main via le
+  dashboard, cf. en-tête du fichier). Propagé partout : `loadProfile`, `addPlant`,
+  `addHistorique`, `applyGardenTemplate`, HarvestCelebration.
+- **Arrosage** : facteur nommé `CONTAINER_FACTOR = 0.6` dans `arrosageUtils.getFrequencePlante`
+  (les pots sèchent plus vite → intervalle raccourci).
+- **Rotation** : les plantes en pot sont exclues des calculs/alertes — filtre `!h.container`
+  dans `getRotationConflicts` et `getHistoriqueByPlot` (`rotation.js`) et en amont du
+  `RotationDashboard`. C'est pourquoi `historique` porte aussi `container`.
+- **AddPlantModal** : toggle « 🪴 Culture en pot » à l'étape 3.
+- **PlantCard** : badge discret « 🪴 Pot ».
+- GardenEditor **non touché** (hors scope).
+
+## Validation
+
+- `npm run build` : ✅ sans erreur.
+- Mocks (esbuild+node) : les 4 templates résolvent toutes leurs plantes ; un `plantId`
+  bidon déclenche un `console.warn` explicite et est ignoré (pas de crash) ; `enSaison`
+  calculé correctement depuis le calendrier.
+- `npx eslint` sur les fichiers touchés : seules des erreurs **préexistantes** subsistent
+  (`getBestNeighbors` inutilisé dans AddPlantModal, setState-in-effect + catch vide dans
+  OnboardingModal/ProfileContext, `Date.now()` en render dans PlantCard). Les nouveaux
+  fichiers (`gardenTemplates.js`, `GardenTemplateList.jsx`, `TemplatePicker.jsx`) sont clean.
+- Tests manuels restants (nécessitent la base + la migration appliquée) :
+  - [ ] onboarding neuf → « Balcon du débutant » → 5 plantes créées, `container=true` ;
+  - [ ] « Partir de zéro » → jardin vide, comportement identique à avant ;
+  - [ ] plante en pot → fréquence d'arrosage raccourcie, absente des alertes de rotation,
+    badge 🪴 visible.
+
+---
+
+# Valeur des récoltes en euros — passe du 2026-07-14
+
+« Le chiffre le plus motivant » : estimer en € la valeur de ce que le jardin a produit.
+La page « Mes Récoltes » de base n'existait pas → **vue Récoltes construite** (choix
+utilisateur) comme onglet de Mon Jardin.
+
+## 1. `src/data/prixRecoltes.js` (nouveau)
+
+- `PRIX_RECOLTES` : prix marché (€/kg) + rendement amateur (kg/plant/saison) pour ~80
+  plantes comestibles de `plantsUnified` (légumes, aromatiques, petits fruits, arbres).
+  Ordres de grandeur assumés (jamais de fausse précision → toujours préfixé « ~ »).
+  Les ornementales n'ont pas d'entrée → non valorisées.
+- `poidsPiece` optionnel (salade, radis, courgette…) pour saisir la récolte à l'unité.
+- `estimerValeurRecolte(plantId, quantiteKg = null)` → € (rendement par défaut si non
+  saisi), ou `null` si la plante n'a pas de prix connu. + `poidsRecolte`, `uniteSaisie`.
+
+## 2. Saisie optionnelle à la récolte (`HarvestCelebration.jsx`)
+
+- Champ discret « Quantité récoltée (optionnel) » à l'écran de récolte : input numérique
+  + unité **kg**, ou bascule **pièces/kg** pour les plantes vendues à l'unité (converti
+  via `poidsPiece`). Estimation « 💶 ~X,XX € » affichée en direct.
+- `quantiteKg` (nullable) stocké dans l'entrée historique. L'écriture de l'historique a
+  été **déplacée du montage vers les boutons** (Replanter / Pas pour l'instant) pour
+  inclure la quantité saisie. Colonne SQL : migration
+  `supabase/migrations/20260714_historique_quantite.sql` (`historique.quantite_kg`,
+  à appliquer via le dashboard). Propagé dans `addHistorique` + `loadProfile`.
+
+## 3. Affichage (`src/components/RecoltesView.jsx`, onglet « 🧺 Récoltes »)
+
+- **Filtre par année** (déduit des dates de récolte) ; toutes les stats suivent l'année active.
+- Cartes de stats : Récoltes (nb), Variétés (distinctes), Poids estimé ~, et la carte
+  vedette **« 💶 ~87 € · estimation prix marché »** (accent). Les cartes Poids/Valeur
+  **n'apparaissent pas** si aucune plante de l'historique n'a de prix connu.
+- Liste des récoltes de l'année : chaque entrée affiche « ~4,50 € » si estimable.
+- Le `~` est **toujours** présent (estimation assumée) ; totaux arrondis à l'euro,
+  entrées au centime.
+- Monté comme 5e onglet de Mon Jardin, **et** rendu dans l'état vide (0 plante) si un
+  historique existe — pour que le chiffre reste visible même après avoir tout récolté.
+
+## Validation
+
+- `npm run build` : ✅ sans erreur.
+- Mocks (esbuild+node) : tomate sans saisie → 10,50 € (rendement défaut) ; tomate 2 kg →
+  7 € (recalcul) ; salade 3 pièces → 4,80 € ; ornementale → `null` ; total annuel 2026
+  cohérent (12,10 €, entrées d'autres années et sans prix exclues).
+- `npx eslint` : `prixRecoltes.js`, `RecoltesView.jsx`, `HarvestCelebration.jsx` clean ;
+  seules des erreurs **préexistantes** subsistent dans `ProfileContext`.
+- Aucun appel réseau ajouté.
+- Test manuel restant : appliquer la migration `quantite_kg`, récolter une plante avec/sans
+  quantité, vérifier la carte € et le filtre année en conditions réelles.

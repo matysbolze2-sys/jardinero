@@ -31,7 +31,7 @@ function LoadingScreen() {
 
 function AppContent() {
   const [activePage, setActivePage] = useState('home')
-  const { profile, loading: profileLoading, completeOnboarding } = useProfile()
+  const { profile, loading: profileLoading, completeOnboarding, applyGardenTemplate } = useProfile()
 
   const renderPage = () => {
     switch (activePage) {
@@ -48,7 +48,7 @@ function AppContent() {
   return (
     <div className="flex flex-col flex-1" style={{ background: 'var(--jd-bg)', minHeight: '100dvh' }}>
       {!profile.settings.onboardingDone && (
-        <OnboardingModal onComplete={completeOnboarding} />
+        <OnboardingModal onComplete={completeOnboarding} onApplyTemplate={applyGardenTemplate} />
       )}
 
       <main className="flex-1" style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>

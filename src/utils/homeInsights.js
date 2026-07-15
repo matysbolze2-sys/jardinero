@@ -1,6 +1,7 @@
 import { PLANT_DURATIONS } from '../data/plantDurations'
 import { getEffectiveStatus } from './plantStatusUtils'
 import { getFrequencePlante, getEtatArrosage } from './arrosageUtils'
+import { getRisquesActifs } from '../data/ravageursSaison'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 // Note : le risque de gel est désormais porté par le composant <FrostAlert>
@@ -101,7 +102,7 @@ const STAGE_ACTIONS = {
 const PRIORITY = {
   water_urgent:    0,
   ready_harvest:   1,
-  frost_risk:      2,
+  pest_risk:       2,
   stage_change:    3,
   germinating:     4,
   perennial_start: 5,
@@ -214,6 +215,21 @@ export function getDailyAlerts(plants, arrosages, soilId, regionOffset) {
         })
       }
     }
+  }
+
+  // ── pest_risk — un seul insight, sur le risque fort le plus prioritaire ──────
+  const risquesForts = getRisquesActifs(plants).filter(r => r.risque.gravite === 'forte')
+  if (risquesForts.length > 0) {
+    const { risque, plantesTouchees } = risquesForts[0]
+    const noms  = [...new Set(plantesTouchees.map(p => p.name.toLowerCase()))].slice(0, 2)
+    const cible = noms.join(' et ')
+    const court = risque.conseilCourt ?? risque.prevention.split(/[.!]/)[0].trim().toLowerCase()
+    alerts.push({
+      type: 'pest_risk',
+      message: `Période à risque ${risque.nom.toLowerCase()} pour tes plants de ${cible} — ${court}.`,
+      navigateTo: 'conseiller',
+      priority: PRIORITY.pest_risk,
+    })
   }
 
   saveLastStatuses(nextStatuses)

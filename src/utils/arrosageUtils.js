@@ -38,6 +38,11 @@ function getWaterDays(plantId) {
   return 3
 }
 
+// ─── Facteur « culture en pot » ───────────────────────────────────────────────
+// Les pots ont un faible volume de substrat et sèchent plus vite que la pleine
+// terre → on raccourcit l'intervalle entre deux arrosages.
+const CONTAINER_FACTOR = 0.6
+
 // ─── Multiplicateurs par stade ────────────────────────────────────────────────
 const STAGE_MULT = {
   sowed:               0.7,  // germination → arrosage plus fréquent
@@ -60,7 +65,8 @@ export function getFrequencePlante(gardenPlant, soilId, regionOffset = 0) {
   const saisonMult = getMultiplicateurSaison()
   const status     = getEffectiveStatus(gardenPlant, regionOffset)
   const stageMult  = STAGE_MULT[status] ?? 1.0
-  return Math.max(1, Math.round(waterDays * solMult * saisonMult * stageMult))
+  const potMult    = gardenPlant.container ? CONTAINER_FACTOR : 1.0
+  return Math.max(1, Math.round(waterDays * solMult * saisonMult * stageMult * potMult))
 }
 
 // ─── Suspension d'arrosage ───────────────────────────────────────────────────

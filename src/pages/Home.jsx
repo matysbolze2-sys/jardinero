@@ -55,13 +55,14 @@ const ALERT_STYLES = {
   germinating:     { bg: 'rgba(166,227,107,0.06)', border: 'rgba(166,227,107,0.18)', color: 'var(--jd-accent)', icon: '🌱' },
   perennial_start: { bg: 'rgba(166,227,107,0.08)', border: 'rgba(166,227,107,0.22)', color: 'var(--jd-accent)', icon: '🌿' },
   frost_risk:      { bg: 'var(--jd-frost-soft)',   border: 'var(--jd-frost-ring)',   color: 'var(--jd-frost)',   icon: '🧊' },
+  pest_risk:       { bg: 'var(--jd-harvest-soft)', border: 'var(--jd-harvest-ring)', color: 'var(--jd-harvest)', icon: '🛡️' },
 }
 
 function AlertCard({ alert, onNavigate }) {
   const s = ALERT_STYLES[alert.type] ?? ALERT_STYLES.stage_change
   return (
     <button
-      onClick={() => onNavigate('mon-jardin')}
+      onClick={() => onNavigate(alert.navigateTo ?? 'mon-jardin')}
       className="w-full rounded-card p-3 flex items-center gap-3 tap-scale text-left"
       style={{ background: s.bg, border: `1px solid ${s.border}` }}
     >

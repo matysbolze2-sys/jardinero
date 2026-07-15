@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { REGIONS } from '../data/regions'
+import { REGIONS, getRegionById } from '../data/regions'
 import { SOILS } from '../data/soils'
 import { useSoilData } from '../hooks/useSoilData'
+import { getTemplateById, getTemplatePlants } from '../data/gardenTemplates'
+import GardenTemplateList from './GardenTemplateList'
 import EmojiIllo from './EmojiIllo'
 
 const REGION_EMOJI = {
@@ -371,12 +373,94 @@ function StepConfirmation({ region, soil, coords, onConfirm, onSkip, onBack }) {
   )
 }
 
+// ── Étape 5 : Choix d'un template de jardin ───────────────────────────────────
+function StepTemplate({ busyId, onPick, onStartEmpty, onBack }) {
+  return (
+    <div className="flex flex-col" style={{ flex: 1, minHeight: 0 }}>
+      <div className="px-5 pt-4 pb-2 flex-shrink-0">
+        <button onClick={onBack} className="text-sm font-semibold mb-3" style={{ color: 'var(--jd-ink-muted)' }} disabled={busyId != null}>← Retour</button>
+
+        <div className="flex flex-col items-center mb-4">
+          <div className="fade-up" style={{ animationDelay: '0ms' }}>
+            <EmojiIllo emoji="🌱" size={80} ring />
+          </div>
+          <h2
+            className="jd-title mt-3 text-center fade-up"
+            style={{ fontSize: 26, color: 'var(--jd-ink)', animationDelay: 'var(--jd-stagger)' }}
+          >
+            Comment veux-tu commencer ?
+          </h2>
+          <p
+            className="text-sm mt-1 text-center fade-up"
+            style={{ color: 'var(--jd-ink-muted)', animationDelay: 'calc(var(--jd-stagger) * 2)' }}
+          >
+            Choisis un jardin prêt à l'emploi, ou pars de zéro.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
+        <GardenTemplateList onPick={onPick} busyId={busyId} />
+
+        <button
+          onClick={onStartEmpty}
+          disabled={busyId != null}
+          className="w-full py-3 mt-3 text-sm font-semibold tap-scale"
+          style={{ color: 'var(--jd-ink-muted)' }}
+        >
+          Je préfère partir de zéro
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Écran de fin : jardin créé ────────────────────────────────────────────────
+function StepTemplateDone({ template, count, plants, onFinish }) {
+  const horsSaison = plants.filter(p => !p.enSaison).length
+
+  return (
+    <div className="flex flex-col items-center px-6 pt-8" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+      <div className="fade-up" style={{ animationDelay: '0ms' }}>
+        <EmojiIllo emoji={template?.emoji ?? '🌱'} size={100} ring />
+      </div>
+
+      <h2 className="jd-title mt-4 text-center fade-up" style={{ fontSize: 26, color: 'var(--jd-accent)', animationDelay: 'var(--jd-stagger)' }}>
+        Ton jardin est prêt 🌱
+      </h2>
+      <p className="text-sm mt-2 text-center fade-up" style={{ color: 'var(--jd-ink)', animationDelay: 'calc(var(--jd-stagger) * 2)' }}>
+        {count} plante{count > 1 ? 's' : ''} t'attend{count > 1 ? 'ent' : ''} dans « {template?.nom} ».
+      </p>
+
+      <div className="flex items-center gap-2 mt-4 mb-2 flex-wrap justify-center fade-up" style={{ animationDelay: 'calc(var(--jd-stagger) * 3)' }}>
+        {plants.map(p => (
+          <span key={p.id} style={{ fontSize: 26, lineHeight: 1 }} title={p.name}>{p.emoji}</span>
+        ))}
+      </div>
+
+      {horsSaison > 0 && (
+        <p className="text-xs mt-1 mb-2 text-center" style={{ color: 'var(--jd-ink-muted)' }}>
+          Certaines se sèment plus tard dans la saison — le calendrier te guidera.
+        </p>
+      )}
+
+      <button
+        onClick={onFinish}
+        className="w-full py-4 rounded-card font-bold text-base mt-6 tap-scale fade-up"
+        style={{ background: 'var(--jd-accent)', color: 'var(--jd-accent-ink)', animationDelay: 'calc(var(--jd-stagger) * 4)' }}
+      >
+        Découvrir mon jardin →
+      </button>
+    </div>
+  )
+}
+
 // ── Modal principale ──────────────────────────────────────────────────────────
 
-const TOTAL_STEPS = 4
+const TOTAL_STEPS = 5
 const STORAGE_KEY = 'jd_onboarding'
 
-export default function OnboardingModal({ onComplete }) {
+export default function OnboardingModal({ onComplete, onApplyTemplate }) {
   const [step,           setStep]           = useState(1)
   const [direction,      setDirection]      = useState('forward')
   const [selectedRegion, setSelectedRegion] = useState(null)
@@ -384,6 +468,8 @@ export default function OnboardingModal({ onComplete }) {
   const [coords,         setCoords]         = useState(null)
   const [geoLoading,     setGeoLoading]     = useState(false)
   const [geoError,       setGeoError]       = useState(null)
+  const [applyingId,     setApplyingId]     = useState(null)
+  const [doneInfo,       setDoneInfo]       = useState(null) // { templateId, count }
 
   useEffect(() => {
     try {
@@ -429,13 +515,24 @@ export default function OnboardingModal({ onComplete }) {
   const handleSelectRegion = (id) => { setSelectedRegion(id); goTo(3, 'forward') }
   const handleSelectSoil   = (id) => { setSelectedSoil(id);   goTo(4, 'forward') }
 
-  const handleConfirm = () => {
+  // Termine l'onboarding (démonte la modal). Appelé après un template ou « zéro ».
+  const handleComplete = () => {
     sessionStorage.removeItem(STORAGE_KEY)
     onComplete(selectedRegion ?? 'loire', selectedSoil ?? 'inconnu', coords)
   }
-  const handleSkip = () => {
-    sessionStorage.removeItem(STORAGE_KEY)
-    onComplete(selectedRegion ?? 'loire', selectedSoil ?? 'inconnu', coords)
+
+  // « C'est parti ! » → propose les templates. « Passer » → jardin vide direct.
+  const handleConfirm = () => goTo(5, 'forward')
+  const handleSkip    = () => handleComplete()
+
+  // Applique un template puis affiche l'écran de fin (avant de compléter, sinon
+  // la modal serait démontée par onboardingDone avant qu'on montre le succès).
+  const handlePickTemplate = async (templateId) => {
+    if (applyingId) return
+    setApplyingId(templateId)
+    const res = await onApplyTemplate?.(templateId, selectedRegion)
+    setApplyingId(null)
+    setDoneInfo({ templateId, count: res?.count ?? 0 })
   }
 
   const enterClass = direction === 'back' ? 'page-enter-back' : 'page-enter'
@@ -478,6 +575,24 @@ export default function OnboardingModal({ onComplete }) {
                 onConfirm={handleConfirm}
                 onSkip={handleSkip}
                 onBack={() => goTo(3, 'back')}
+              />
+            )}
+            {step === 5 && !doneInfo && (
+              <StepTemplate
+                busyId={applyingId}
+                onPick={handlePickTemplate}
+                onStartEmpty={handleComplete}
+                onBack={() => goTo(4, 'back')}
+              />
+            )}
+            {step === 5 && doneInfo && (
+              <StepTemplateDone
+                template={getTemplateById(doneInfo.templateId)}
+                count={doneInfo.count}
+                plants={getTemplatePlants(getTemplateById(doneInfo.templateId), {
+                  regionOffset: getRegionById(selectedRegion)?.offset ?? 0,
+                })}
+                onFinish={handleComplete}
               />
             )}
           </div>

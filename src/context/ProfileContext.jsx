@@ -4,6 +4,7 @@ import { getRegionById } from '../data/regions'
 import { calculatePlantDates } from '../data/plantDurations'
 import { getWeekKey } from '../data/taches'
 import { getToday } from '../utils/arrosageUtils'
+import { getTemplateById, getTemplatePlants } from '../data/gardenTemplates'
 
 export const ProfileContext = createContext(null)
 
@@ -99,6 +100,7 @@ export function ProfileProvider({ children, user }) {
         statusOverride: p.status_override,
         variety: p.variety,
         plotId: p.plot_id,
+        container: p.container ?? false,
         estimatedHarvestStart: p.estimated_harvest_start,
         estimatedHarvestEnd: p.estimated_harvest_end,
         seasonEnd: p.season_end,
@@ -122,6 +124,8 @@ export function ProfileProvider({ children, user }) {
           harvestedAt: h.harvested_at,
           variety: h.variety,
           plotId: h.plot_id,
+          container: h.container ?? false,
+          quantiteKg: h.quantite_kg ?? null,
         })),
         gardens,
         activeGardenId: activeGarden?.id ?? null,
@@ -164,6 +168,7 @@ export function ProfileProvider({ children, user }) {
       status: plant.status ?? 'sowed',
       status_override: null,
       variety: plant.variety ?? null,
+      container: plant.container ?? false,
       estimated_harvest_start: dates?.estimatedHarvestStart ?? null,
       estimated_harvest_end: dates?.estimatedHarvestEnd ?? null,
       season_end: dates?.seasonEnd ?? null,
@@ -185,6 +190,7 @@ export function ProfileProvider({ children, user }) {
           status: data.status,
           statusOverride: null,
           variety: data.variety,
+          container: data.container ?? false,
           ...(dates ?? {}),
         }],
       }))
@@ -331,6 +337,8 @@ export function ProfileProvider({ children, user }) {
       harvested_at: entry.harvestedAt,
       variety: entry.variety ?? null,
       plot_id: entry.plotId ?? null,
+      container: entry.container ?? false,
+      quantite_kg: entry.quantiteKg ?? null,
     }).select().single()
 
     if (!error && data) {
@@ -345,10 +353,70 @@ export function ProfileProvider({ children, user }) {
           harvestedAt: data.harvested_at,
           variety: data.variety,
           plotId: data.plot_id,
+          container: data.container ?? false,
+          quantiteKg: data.quantite_kg ?? null,
         }, ...prev.historique],
       }))
     }
   }, [user])
+
+  // ── Templates de jardin ───────────────────────────────────────────────────────
+
+  // Crée en un lot les plantes d'un template. regionId est passé explicitement
+  // (l'état profile.region peut ne pas encore être à jour pendant l'onboarding).
+  const applyGardenTemplate = useCallback(async (templateId, regionId = null) => {
+    const template = getTemplateById(templateId)
+    if (!template) {
+      console.warn('[applyGardenTemplate] template introuvable :', templateId)
+      return { error: 'Template introuvable', count: 0 }
+    }
+
+    const offset = getRegionById(regionId ?? profile.region)?.offset ?? 0
+    const today  = getToday()
+    const resolved = getTemplatePlants(template, { regionOffset: offset })
+    if (resolved.length === 0) return { error: null, count: 0 }
+
+    const rows = resolved.map(p => {
+      const dates = calculatePlantDates(p.id, today, offset)
+      return {
+        user_id: user.id,
+        name: p.name,
+        emoji: p.emoji,
+        plant_id: p.id,
+        planted_at: today,
+        status: 'sowed',
+        status_override: null,
+        variety: null,
+        container: template.container,
+        estimated_harvest_start: dates?.estimatedHarvestStart ?? null,
+        estimated_harvest_end: dates?.estimatedHarvestEnd ?? null,
+        season_end: dates?.seasonEnd ?? null,
+      }
+    })
+
+    const { data, error } = await supabase.from('plants').insert(rows).select()
+    if (error) {
+      console.error('Erreur applyGardenTemplate:', error)
+      return { error: error.message, count: 0 }
+    }
+
+    const mapped = (data ?? []).map(d => ({
+      id: d.id,
+      name: d.name,
+      emoji: d.emoji,
+      plantId: d.plant_id,
+      plantedAt: d.planted_at,
+      status: d.status,
+      statusOverride: null,
+      variety: d.variety,
+      container: d.container ?? false,
+      estimatedHarvestStart: d.estimated_harvest_start,
+      estimatedHarvestEnd: d.estimated_harvest_end,
+      seasonEnd: d.season_end,
+    }))
+    setProfile(prev => ({ ...prev, plants: [...prev.plants, ...mapped] }))
+    return { error: null, count: mapped.length }
+  }, [user, profile.region])
 
   // ── Checklist ───────────────────────────────────────────────────────────────
 
@@ -583,6 +651,7 @@ export function ProfileProvider({ children, user }) {
       deleteJournalNote,
       toggleChecklistTask,
       addHistorique,
+      applyGardenTemplate,
       addGarden,
       removeGarden,
       renameGarden,

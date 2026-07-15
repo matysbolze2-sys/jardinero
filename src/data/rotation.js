@@ -89,7 +89,7 @@ export function respecteRotation(plantId, harvestedAt) {
 
 export function getHistoriqueByPlot(plotId, historique) {
   return (historique ?? [])
-    .filter(h => h.plotId === plotId)
+    .filter(h => h.plotId === plotId && !h.container)
     .sort((a, b) => new Date(b.harvestedAt) - new Date(a.harvestedAt))
 }
 
@@ -113,6 +113,7 @@ export function getRotationConflicts(plantId, historique) {
   const cutoff = new Date()
   cutoff.setFullYear(cutoff.getFullYear() - delai)
   return (historique ?? []).filter(h => {
+    if (h.container) return false // cultures en pot : hors rotation (substrat renouvelé)
     const famH = getFamillePlante(h.plantId)
     if (famH !== famille) return false
     const dateRecolte = new Date(h.harvestedAt)

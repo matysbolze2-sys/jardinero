@@ -8,6 +8,8 @@ import AssociationsView from '../components/AssociationsView'
 import RotationDashboard from '../components/RotationDashboard'
 import GardenEditor from '../components/GardenEditor'
 import PlantDetailSheet from '../components/PlantDetailSheet'
+import TemplatePicker from '../components/TemplatePicker'
+import RecoltesView from '../components/RecoltesView'
 import { ASSOCIATIONS } from '../data/associations'
 import { getRegionById } from '../data/regions'
 import { PLANT_DURATIONS } from '../data/plantDurations'
@@ -15,7 +17,8 @@ import { getCycleProgress } from '../utils/plantStatusUtils'
 
 export default function MonJardin() {
   const { profile, addPlant } = useProfile()
-  const [showAddModal,   setShowAddModal]   = useState(false)
+  const [showAddModal,     setShowAddModal]     = useState(false)
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false)
   const [activeTab,      setActiveTab]      = useState('plantes')
   const [assocSubTab,    setAssocSubTab]    = useState('voisines')
   const [detailSheet,    setDetailSheet]    = useState(null)
@@ -92,6 +95,7 @@ export default function MonJardin() {
             { id: 'plantes',      label: '🌱 Plantes',   onClick: () => setActiveTab('plantes') },
             { id: 'arrosage',     label: '💧 Arrosage',  onClick: () => setActiveTab('arrosage') },
             { id: 'associations', label: hasConflits ? '⚠️ Voisines' : '🤝 Voisines', onClick: () => setActiveTab('associations') },
+            { id: 'recoltes',     label: '🧺 Récoltes',  onClick: () => setActiveTab('recoltes') },
             { id: 'jardin3d',     label: '🌿 Jardin 3D', onClick: () => setActiveTab('jardin3d') },
           ].map(tab => (
             <button
@@ -129,6 +133,23 @@ export default function MonJardin() {
           >
             Ajouter ma première plante
           </button>
+          <button
+            onClick={() => setShowTemplatePicker(true)}
+            className="mt-3 text-sm font-semibold tap-scale"
+            style={{ color: 'var(--jd-accent)' }}
+          >
+            🌱 Ou partir d'un modèle de jardin →
+          </button>
+        </div>
+      )}
+
+      {/* Récoltes toujours accessibles, même sans plante en cours */}
+      {plants.length === 0 && (profile.historique?.length ?? 0) > 0 && (
+        <div className="mt-6">
+          <h2 className="font-display font-bold text-lg mb-1" style={{ color: 'var(--jd-accent)' }}>
+            🧺 Tes récoltes
+          </h2>
+          <RecoltesView />
         </div>
       )}
 
@@ -145,6 +166,8 @@ export default function MonJardin() {
       )}
 
       {plants.length > 0 && activeTab === 'arrosage' && <ArrosageCalendar />}
+
+      {plants.length > 0 && activeTab === 'recoltes' && <RecoltesView />}
 
       {plants.length > 0 && activeTab === 'associations' && (
         <>
@@ -186,6 +209,10 @@ export default function MonJardin() {
           onAdd={addPlant}
           onClose={() => setShowAddModal(false)}
         />
+      )}
+
+      {showTemplatePicker && (
+        <TemplatePicker onClose={() => setShowTemplatePicker(false)} />
       )}
 
       {detailSheet && (
